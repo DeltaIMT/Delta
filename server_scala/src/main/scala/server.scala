@@ -27,7 +27,7 @@ case class Vector(x: Double, y : Double)
   def unit =
   {
     var Result = Vector(1,0)
-    var length = this.length;
+    var length = this.length
     if (length != 0)
     {
       val lengthInv = 1/ length
@@ -40,7 +40,7 @@ case class Vector(x: Double, y : Double)
 }
 case class Tick()
 
-class Region extends Actor {
+class Region(webSocket: WebSocket) extends Actor {
   var players = collection.mutable.LinkedHashMap.empty[String, PlayerActor]
   var time= 0
 
@@ -97,8 +97,8 @@ class Region extends Actor {
   {
     if(p.player.lastCommand != null) {
       val objcom = Json.parse(p.player.lastCommand)
-      val mouse_x = ((objcom \ "mouse" \ "x").as[Double])
-      val mouse_y = ((objcom \ "mouse" \ "y").as[Double])
+      val mouse_x = (objcom \ "mouse" \ "x").as[Double]
+      val mouse_y = (objcom \ "mouse" \ "y").as[Double]
       val oldPlayerActor = p
       val oldPlayer = oldPlayerActor.player
       val actor = oldPlayerActor.actor
@@ -134,39 +134,23 @@ class Region extends Actor {
 object server extends App {
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val flowMaterializer = ActorMaterializer()
-  val rand = scala.util.Random
   val region  = actorSystem.actorOf(Props[Region], "region")
+  val region1 = actorSystem.actorOf(Props[Region], "region1")
   val cancellable  = actorSystem.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, region, Tick())
-  val playerActorSource= Source.actorRef[GameEvent](60,OverflowStrategy.fail)
-  def echoService(id: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) {implicit builder => playerActor =>
-    import GraphDSL.Implicits._
-    println(id + " connected")
-    val materialization = builder.materializedValue.map(playerActorRef => AddPlayer(Player( id, Vector(0,0),Vector(0,0),40, Array(rand.nextInt(255),rand.nextInt(255),rand.nextInt(255)),null), playerActorRef))
-    val merge = builder.add(Merge[GameEvent](2))
+  val cancellable1  = actorSystem.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, region1, Tick())
+  val regionMap = Map[String, ActorRef](("region", region), ("region1", region1))
 
-    val messageToEventFlow = builder.add(Flow[Message].map {
-      case TextMessage.Strict(txt) => Command(id,txt)
-    })
-    val eventToMessageFlow= builder.add(Flow[GameEvent].map{
-      case PlayersUpdate(json) =>TextMessage(json)
-    })
-    val RegionSink = Sink.actorRef[GameEvent](region,DelPlayer(id))
-
-    materialization ~> merge
-    messageToEventFlow ~> merge
-    merge ~> RegionSink
-    playerActor ~>  eventToMessageFlow
-    FlowShape(messageToEventFlow.in, eventToMessageFlow.out)
-  })
 
   import Directives._
-  val route = (get & parameter("id") ){id =>  handleWebSocketMessages(echoService(id))}
+  val ws = new WebSocket(regionMap)
+  val route = (get & parameter("id") ){id =>  handleWebSocketMessages(ws.flow(id, "region"))}
   val interface ="localhost"
   val port = 8080
   val binding = Http().bindAndHandle(route, "0.0.0.0", port)
   println(s"Server is now online at http://$interface:$port\nPress RETURN to stop...")
   StdIn.readLine()
   cancellable.cancel()
+  cancellable1.cancel()
   actorSystem.terminate()
   println("Server is down...")
 }

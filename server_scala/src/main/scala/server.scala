@@ -12,15 +12,19 @@ import scala.concurrent.duration._
 import play.api.libs.json._
 
 trait GameEvent
-case class Player(id : String, p:  Vector,v:  Vector,r : Double, color : Array[Int], lastCommand : String )extends GameEvent
-case class PlayerActor(player : Player, actor : ActorRef)extends GameEvent
-case class AddPlayer(player : Player, actor : ActorRef)extends GameEvent
+case class PlayerData(id : String, p:  Iterable[Vector], v:  Double, l : Double, r : Double, color : Array[Int], lastCommand : String )extends GameEvent
+case class Player(data : PlayerData, actor : ActorRef)extends GameEvent
+{
+  def setCommand(command : String) = Player( PlayerData(this.data.id,data.p,data.v,data.l,data.r,data.color,command ), actor )
+}
+case class AddPlayer(playerData : PlayerData, actorRef : ActorRef)extends GameEvent
 case class DelPlayer(id : String)extends GameEvent
 case class Command(id : String,command : String )extends GameEvent
 case class PlayersUpdate(json : String)extends GameEvent
 case class Vector(x: Double, y : Double)
 {
   def * (scale : Double) = Vector ( x *scale ,y *scale)
+  def * (v : Vector) = Vector ( x *v.x ,y *v.y)
   def + (offset : Vector) = Vector ( x + offset.x ,y + offset.y)
   def - (offset : Vector) = Vector ( x - offset.x ,y - offset.y)
   def clamp(min : Double, max : Double) = Vector (  Math.min(Math.max(x ,0),500) ,Math.min(Math.max(y ,0),500))
@@ -34,25 +38,20 @@ case class Vector(x: Double, y : Double)
       Result = Vector( x* lengthInv, y * lengthInv)
     }
     Result
-
   }
   def length = Math.sqrt(x*x+y*y)
 }
 case class Tick()
 
-class Region(webSocket: WebSocket) extends Actor {
-  var players = collection.mutable.LinkedHashMap.empty[String, PlayerActor]
+class Region extends Actor {
+  var players = collection.mutable.LinkedHashMap.empty[String, Player]
   var time= 0
 
   override def receive: Receive = {
-    case AddPlayer(player, actor) => players += (player.id -> PlayerActor(player, actor))
+    case AddPlayer(player, actor) => players += (player.id -> Player(player, actor))
     case DelPlayer(id) => println("Deleting " + id); players.remove(id)
     case Command(id, command) => {
-      //  println("COMMAND : " + command)
-      val oldPlayerActor = players(id)
-      val oldPlayer = oldPlayerActor.player
-      val actor = oldPlayerActor.actor
-      players(id) = PlayerActor(Player(id, oldPlayer.p, oldPlayer.v,oldPlayer.r,oldPlayer.color,command), actor)
+      players(id) = players(id).setCommand(command)
     }
     case Tick() => physics();physics();notifyPlayers()
   }
@@ -67,21 +66,21 @@ class Region(webSocket: WebSocket) extends Actor {
     while (playersList.size >1)
     {
       val a = playersList.head
-      playersList.tail.foreach( b =>  {
+        playersList.tail.foreach( b =>  {
 
-        var vector = a.player.p - b.player.p
+        var vector = a.data.p - b.data.p
         var length = vector.length
-        var intersect = (a.player.r + b.player.r) - length
+        var intersect = (a.data.r + b.data.r) - length
         val vectorUnit = vector.unit
 
 
         if (intersect > 0) {
           if(intersect > 5) intersect =  5
-          val oldPlayerA = a.player
-          players(oldPlayerA.id) = PlayerActor(Player(oldPlayerA.id, oldPlayerA.p + (vectorUnit * intersect * 0.5), oldPlayerA.v + (vectorUnit * intersect * 1), oldPlayerA.r, oldPlayerA.color, oldPlayerA.lastCommand), a.actor)
+          val oldPlayerA = a.data
+          players(oldPlayerA.id) = Player(PlayerData(oldPlayerA.id, oldPlayerA.p + (vectorUnit * intersect * 0.5), oldPlayerA.v + (vectorUnit * intersect * 1), oldPlayerA.r, oldPlayerA.color, oldPlayerA.lastCommand), a.actor)
 
-          val oldPlayerB = b.player
-          players(oldPlayerB.id) = PlayerActor(Player(oldPlayerB.id, oldPlayerB.p - (vectorUnit * intersect * 0.5), oldPlayerB.v - (vectorUnit * intersect * 1), oldPlayerB.r, oldPlayerB.color, oldPlayerB.lastCommand), b.actor)
+          val oldPlayerB = b.data
+          players(oldPlayerB.id) = Player(PlayerData(oldPlayerB.id, oldPlayerB.p - (vectorUnit * intersect * 0.5), oldPlayerB.v - (vectorUnit * intersect * 1), oldPlayerB.r, oldPlayerB.color, oldPlayerB.lastCommand), b.actor)
         }
 
       })
@@ -90,10 +89,10 @@ class Region(webSocket: WebSocket) extends Actor {
     }
 
 
-    players.foreach{ case (s: String,p : PlayerActor)   => physic(s,p) }
+    players.foreach{ case (s: String,p : Player)   => physic(s,p) }
   }
 
-  def physic(s : String, p : PlayerActor): Unit =
+  def physic(s : String, p : Player): Unit =
   {
     if(p.player.lastCommand != null) {
       val objcom = Json.parse(p.player.lastCommand)
@@ -104,7 +103,7 @@ class Region(webSocket: WebSocket) extends Actor {
       val actor = oldPlayerActor.actor
       val direction2go = Vector(mouse_x, mouse_y) - oldPlayer.p
       val newSpeed = (oldPlayer.v + (direction2go * 0.1)) * 0.8
-      players(s) = PlayerActor(Player(s, oldPlayer.p + newSpeed, newSpeed, 40*(1+0.2*Math.  sin(time/10.0)), oldPlayer.color, oldPlayer.lastCommand), actor)
+      players(s) = Player(PlayerData(s, oldPlayer.p + newSpeed, newSpeed, 40*(1+0.2*Math.  sin(time/10.0)), oldPlayer.color, oldPlayer.lastCommand), actor)
     }
   }
 
@@ -128,7 +127,7 @@ class Region(webSocket: WebSocket) extends Actor {
     players.values.foreach(_.actor ! PlayersUpdate(s))
   }
 
-  def playerToJson(player: Player): String = "{\"id\":\""+player.id+"\",\"pos\":["+player.p.x+","+player.p.y+"],\"r\":"+player.r+",\"color\":["+player.color(0) +","+player.color(1) +","+player.color(2) +"]" + "}"
+  def playerToJson(player: PlayerData): String = "{\"id\":\""+player.id+"\",\"pos\":["+player.p.x+","+player.p.y+"],\"r\":"+player.r+",\"color\":["+player.color(0) +","+player.color(1) +","+player.color(2) +"]" + "}"
 }
 
 object server extends App {

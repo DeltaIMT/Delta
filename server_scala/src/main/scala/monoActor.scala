@@ -5,6 +5,7 @@ import Formatters._
 class Region extends Actor {
   var players = collection.mutable.LinkedHashMap.empty[String, Player]
   var time= 0
+  val rand = scala.util.Random
 
   override def receive: Receive = {
     case AddPlayer(player, actor) => players += (player.id -> Player(player, actor))
@@ -12,28 +13,61 @@ class Region extends Actor {
     case Command(id, command) => {
       players(id) = players(id).setCommand(command)
     }
-    case Tick() => physics();physics();notifyPlayers()
-  }
+    case Tick() => {
+      physics()
+      notifyPlayers()
+    };
+}
 
   def physics() : Unit   = {
     time += 1
-    players.foreach { case (s: String, p: Player) => physic(s, p) }
+    players.foreach { case (s: String, p: Player) => players(s) = Player(physic(p.data),p.actor) }
     //players.foreach { case (s: String, p: Player) => println(p.data.p.toString())}
+    val playersValues = players.values
+
+    playersValues.foreach(  x => {
+      val c = collision(x, playersValues.filter(  y => x!=y ))
+      if(c != "0")
+        {
+
+          players(x.data.id) = players(x.data.id).newPosAng(Vector(rand.nextInt(500),rand.nextInt(500)),rand.nextDouble())
+          players(x.data.id) = players(x.data.id).setLength(10)
+          players(c) = players(c).addLength
+
+        }
+
+    })
+
+
+
   }
 
-  def physic(s : String, p : Player): Unit =
+  def physic(playerData : PlayerData): PlayerData =
   {
-    if(p.data.lastCommand != null) {
-      val objcom = Json.parse(p.data.lastCommand)
-      val mouse_x = ((objcom \ "mouse" \ "x").as[Double])
-      val mouse_y = ((objcom \ "mouse" \ "y").as[Double])
-      val oldPlayer = p.data
-      val direction2go = Vector(mouse_x, mouse_y) - oldPlayer.p.head
-      val dir = (  Vector(mouse_x,mouse_y) - oldPlayer.p.head)
-      var newAngle = Angle.modulify(oldPlayer.angle)*0.0 + Angle.arctan(dir.x,dir.y)*1
-      val newSpeed = Vector.fromAngle(oldPlayer.angle)*1
-      players(s) = players(s).newPosAng(oldPlayer.p.head + newSpeed,newAngle)
+    if(playerData.lastCommand != null) {
+      val jsonObject = Json.parse(playerData.lastCommand)
+      val mouse_x = ((jsonObject \ "mouse" \ "x").as[Double])
+      val mouse_y = ((jsonObject \ "mouse" \ "y").as[Double])
+      val direction2go = Vector(mouse_x, mouse_y) - playerData.p.head
+      val dir = (  Vector(mouse_x,mouse_y) - playerData.p.head)
+      var newAngle  = 0.0
+
+      var vectorAngle = Vector(Math.cos(playerData.angle), Math.sin(playerData.angle))
+      var MeanVector =( dir.unit*0.2 + vectorAngle*0.8).unit
+
+      newAngle = Angle.arctan(MeanVector.x,MeanVector.y)
+
+      val newSpeed = Vector.fromAngle(playerData.angle)*5
+
+      var remove = 1
+      if (playerData.p.size < playerData.l)
+        remove = 0
+      val newPositions =playerData.p.head +newSpeed  ::playerData.p.take(playerData.p.size-remove)
+
+    return PlayerData(playerData.id,newPositions, playerData.v,newAngle,playerData.l, playerData.r, playerData.color, playerData.lastCommand  )
     }
+    else
+     return playerData
   }
 
   def notifyPlayers(): Unit = {
@@ -57,18 +91,19 @@ class Region extends Actor {
   }
 
   //method which gives a bool in order to know if the player p is hurting one of the other players (players)
-  def collision(p : Player, players : Iterable[Player] ):Boolean =
+  def collision(p : Player, players : Iterable[Player] ):String =
   {
-    var collisionBool = false
+    var collision = "0"
     val initPosition = p.data.p.head
     // for each players, we first see if p is close enough to collide with.
     players.foreach( player_i=>
     {
       val position = player_i.data.p.head
-      val length = player_i.data.l
+      val length = player_i.data.l*player_i.data.v
       if((initPosition-position).length < length){
         var minimumDistance = length
         var closestPoint = position
+
         // in order to see that, we first look after the player's element which is the closest to p, and save that point in pt1
         player_i.data.p.foreach(eachPoint =>
         {
@@ -79,13 +114,13 @@ class Region extends Actor {
         })
         //finally, we conclude on the collision : p is too close to pt1
         if ((initPosition-closestPoint).length < p.data.r + player_i.data.r ){
-          collisionBool = true;
+          collision = player_i.data.id  ;
         }
       }
     }
     )
     // and we don't forget to return c, which is the result ;)
-    collisionBool
+    collision
   }
 
 
@@ -97,8 +132,13 @@ class Region extends Actor {
     "]" + "}"*/
 
   def playerToJson(player: PlayerData): String = {
-    val message = PlayerMessage(player.id, player.p.head, player.r, player.color)
-    val jsonMessage = Json.toJson(message)
-    Json.stringify(jsonMessage)
+//    val message = PlayerMessage(player.id, player.p.head, player.r, player.color)
+//    val jsonMessage = Json.toJson(message)
+//    Json.stringify(jsonMessage)
+var messages =player.p.map( x =>  Json.stringify(Json.toJson( PlayerMessage(player.id, x, player.r, player.color) )  ))
+    var jsonMessage = messages.head
+    messages.tail.foreach(  x => jsonMessage =x ++ ","++ jsonMessage  )
+    jsonMessage
+
   }
 }

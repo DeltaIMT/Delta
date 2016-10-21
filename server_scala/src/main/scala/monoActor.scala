@@ -55,6 +55,40 @@ class Region extends Actor {
     players.values.foreach(_.actor ! PlayersUpdate(s))
   }
 
+  //method which gives a bool in order to know if the player p is hurting one of the other players (players)
+  def collision(p : Player, players : Iterable[Player] ):Boolean =
+  {
+    var c = false
+    val pos = p.data.p.head
+    val l = p.data.l
+    // for each players, we first see if p is close enough to collide with.
+    players.foreach( pi=>
+    {
+      val posi = pi.data.p.head
+      val li = pi.data.l
+      if((pos-posi).length < li){
+        var l1 = li
+        var pt1 = posi
+        // in order to see that, we first look after the player's element which is the closest to p, and save that point in pt1
+        pi.data.p.foreach(pt =>
+        {
+          if ((pos-pt).length < l1){
+            pt1 = pt
+            l1 = (pos-pt).length
+          }
+        })
+        //finally, we conclude on the collision : p is too close to pt1
+        if ((pos-pt1).length < p.data.r + pi.data.r ){
+          c = true;
+        }
+      }
+    }
+    )
+    // and we don't forget to return c, which is the result ;)
+    c
+  }
+
+
   def playerToJson(player: PlayerData): String = "{\"id\":\""+player.id+
     "\",\"pos\":["+player.p.head.x+
     ","+player.p.head.y+"],\"r\":"+player.r+

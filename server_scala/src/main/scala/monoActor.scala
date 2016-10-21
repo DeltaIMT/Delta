@@ -1,5 +1,6 @@
 import akka.actor.Actor
 import play.api.libs.json.Json
+import Formatters._
 
 class Region extends Actor {
   var players = collection.mutable.LinkedHashMap.empty[String, Player]
@@ -98,6 +99,6 @@ class Region extends Actor {
   def playerToJson(player: PlayerData): String = {
     val message = new PlayerMessage(player.id, player.p.head, player.r, player.color)
     val jsonMessage = Json.toJson(message)
-    jsonMessage
+    Json.stringify(jsonMessage)
   }
 }

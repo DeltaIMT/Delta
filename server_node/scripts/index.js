@@ -72,8 +72,8 @@ var draw = () =>
         .data (jsonData)
         .enter()
         .append("circle")
-        .attr("cx", (e) => e.pos[0])
-        .attr("cy", (e) => e.pos[1])
+        .attr("cx", (e) => e.pos.x)
+        .attr("cy", (e) => e.pos.y)
         .attr("r", (e)=> e.r)
         .attr("fill", (e) => d3.rgb(e.color[0] , e.color[1],e.color[2])  )
 

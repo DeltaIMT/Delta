@@ -97,7 +97,7 @@ class Region extends Actor {
     "]" + "}"*/
 
   def playerToJson(player: PlayerData): String = {
-    val message = new PlayerMessage(player.id, player.p.head, player.r, player.color)
+    val message = PlayerMessage(player.id, player.p.head, player.r, player.color)
     val jsonMessage = Json.toJson(message)
     Json.stringify(jsonMessage)
   }

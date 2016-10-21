@@ -8,12 +8,15 @@ case class PlayerData(id : String, p:  List[Vector], v:  Double,angle: Double, l
 
 object PlayerData
 {
-  def newOne(id : String,rand : Random) : PlayerData =  PlayerData(id,  Vector(0,0)::List.empty[Vector]  ,5,0,100,40, Array(rand.nextInt(255),rand.nextInt(255),rand.nextInt(255)) ,null )
+  def newOne(id : String,rand : Random) : PlayerData =  PlayerData(id,  Vector(0,0)::List.empty[Vector]  ,50,0,1000,10, Array(rand.nextInt(255),rand.nextInt(255),rand.nextInt(255)) ,null )
 }
 
 case class Player(data : PlayerData, actor : ActorRef)extends GameEvent
 {
+  def setLength(l : Int) = Player( PlayerData(this.data.id,data.p,data.v,data.angle,l,data.r,data.color,data.lastCommand ), actor )
+  def addLength() = Player( PlayerData(this.data.id,data.p,data.v,data.angle,data.l+10,data.r,data.color,data.lastCommand ), actor )
   def setCommand(command : String) = Player( PlayerData(this.data.id,data.p,data.v,data.angle,data.l,data.r,data.color,command ), actor )
+  def setColor(color : Array[Int]) = Player( PlayerData(this.data.id,data.p,data.v,data.angle,data.l,data.r,color,data.lastCommand ), actor )
   def newPosAng(pos : Vector,angle:Double) =
     {
       var remove = 1
@@ -66,9 +69,11 @@ case class Tick()
 object Angle
 {
   def modulify(a:Double) :Double   = {
-     var b = a-  Math.PI
-     b = b - ( b / ( Math.PI ) ).toInt   *Math.PI
-     b + Math.PI
+
+     var b = a - ( a / (2* Math.PI ) ).toInt   *2*Math.PI
+     if( Math.abs(b) >Math.PI )
+       b = b -Math.signum(b) * 2*Math.PI
+    b
   }
 
   def arctan(x:Double, y:Double) :Double = {
@@ -85,6 +90,7 @@ object Angle
 //      a+= Math.PI
 
     modulify(a)
+    a
   }
 
 }

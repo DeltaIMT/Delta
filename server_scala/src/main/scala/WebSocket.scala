@@ -13,7 +13,7 @@ class WebSocket(regionMap: Map[String, ActorRef]) {
   def flow(id: String, regionName: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>
     import GraphDSL.Implicits._
     println(id + " connected")
-    val materialization = builder.materializedValue.map(playerActorRef => AddPlayer(Player( id, Vector(0,0),Vector(0,0),40, Array(rand.nextInt(255),rand.nextInt(255),rand.nextInt(255)),null), playerActorRef))
+    val materialization = builder.materializedValue.map(playerActorRef => AddPlayer(PlayerData.newOne(id,rand), playerActorRef))
     val merge = builder.add(Merge[GameEvent](2))
 
     val messageToEventFlow = builder.add(Flow[Message].map {

@@ -14,10 +14,10 @@ class Region extends Actor {
     case Tick() => physics();physics();notifyPlayers()
   }
 
-  def physics() : Unit   =
-  {
-    time+=1
-    players.foreach{ case (s: String,p : Player)   => physic(s,p) }
+  def physics() : Unit   = {
+    time += 1
+    players.foreach { case (s: String, p: Player) => physic(s, p) }
+    //players.foreach { case (s: String, p: Player) => println(p.data.p.toString())}
   }
 
   def physic(s : String, p : Player): Unit =
@@ -28,13 +28,15 @@ class Region extends Actor {
       val mouse_y = ((objcom \ "mouse" \ "y").as[Double])
       val oldPlayer = p.data
       val direction2go = Vector(mouse_x, mouse_y) - oldPlayer.p.head
+      val dir = (  Vector(mouse_x,mouse_y) - oldPlayer.p.head)
+      var newAngle = Angle.modulify(oldPlayer.angle)*0.0 + Angle.arctan(dir.x,dir.y)*1
       val newSpeed = Vector.fromAngle(oldPlayer.angle)*1
-      players(s) = players(s).newPos(oldPlayer.p.head + newSpeed)
+      players(s) = players(s).newPosAng(oldPlayer.p.head + newSpeed,newAngle)
     }
   }
 
   def notifyPlayers(): Unit = {
-    println("Telling " + players.size + " players the updates")
+ //   println("Telling " + players.size + " players the updates")
     var s = ""
     val list = players.values.map(_.data)
     if (list.size == 1) {

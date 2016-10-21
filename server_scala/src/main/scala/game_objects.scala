@@ -1,15 +1,26 @@
 import akka.actor.ActorRef
 
+import scala.util.Random
+
 
 trait GameEvent
 case class PlayerData(id : String, p:  List[Vector], v:  Double,angle: Double, l : Double, r : Double, color : Array[Int], lastCommand : String )extends GameEvent
+
+object PlayerData
+{
+  def newOne(id : String,rand : Random) : PlayerData =  PlayerData(id,  Vector(0,0)::List.empty[Vector]  ,5,0,100,40, Array(rand.nextInt(255),rand.nextInt(255),rand.nextInt(255)) ,null )
+}
+
 case class Player(data : PlayerData, actor : ActorRef)extends GameEvent
 {
   def setCommand(command : String) = Player( PlayerData(this.data.id,data.p,data.v,data.angle,data.l,data.r,data.color,command ), actor )
-  def newPos(pos : Vector) =
+  def newPosAng(pos : Vector,angle:Double) =
     {
-      var newPositions =pos ::data.p.take(data.p.size)
-      Player( PlayerData(this.data.id,newPositions,data.v,data.angle,data.l,data.r,data.color,data.lastCommand ), actor )
+      var remove = 1
+      if (data.p.size < data.l)
+        remove = 0
+      val newPositions =pos ::data.p.take(data.p.size-remove)
+      Player( PlayerData(this.data.id,newPositions,data.v,angle,data.l,data.r,data.color,data.lastCommand ), actor )
     }
 
 
@@ -26,8 +37,9 @@ object Vector
 
 case class Vector(x: Double, y : Double)
 {
-  def * (arg : Any) : Vector =
+  def * (arg : Any) : Vector = arg match
     {
+      case scale : Int => Vector( x *scale ,y *scale)
       case scale : Double => Vector( x *scale ,y *scale)
       case v : Vector => Vector ( x *v.x ,y *v.y)
     }
@@ -37,7 +49,7 @@ case class Vector(x: Double, y : Double)
   def unit =
   {
     var Result = Vector(1,0)
-    var length = this.length;
+    val length = this.length;
     if (length != 0)
     {
       val lengthInv = 1/ length
@@ -49,3 +61,30 @@ case class Vector(x: Double, y : Double)
 
 }
 case class Tick()
+
+
+object Angle
+{
+  def modulify(a:Double) :Double   = {
+     var b = a-  Math.PI
+     b = b - ( b / ( Math.PI ) ).toInt   *Math.PI
+     b + Math.PI
+  }
+
+  def arctan(x:Double, y:Double) :Double = {
+
+    var a = Math.atan(y/x)
+
+    if(y/x< 0)
+      a= a + Math.PI
+
+    if(y<0)
+      a = a + Math.PI
+
+//    if(x <0)
+//      a+= Math.PI
+
+    modulify(a)
+  }
+
+}

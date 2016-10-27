@@ -6,7 +6,7 @@ import core.CoreMessage.Command
 import game.GameEvent.{Angle, Player, PlayerData, PlayerMessage, PlayersUpdate, Tick, Vector}
 import game.GameEvent.PlayerData.newOne
 import play.api.libs.json.Json
-
+import game.Formatters._
 
 /**
   * Created by vannasay on 27/10/16.

@@ -1,10 +1,11 @@
-package game.MonoActor
+package game.monoActor
 
 import akka.actor.{Actor, ActorRef}
-import core.CoreMessage.{AddClient, Command}
+import core.CoreMessage.{AddClient, Command, DeleteClient}
 import game.Formatters._
 import game.GameEvent._
 import play.api.libs.json.Json
+
 
 class MonoActor extends Actor {
   var players = collection.mutable.LinkedHashMap.empty[String, Player]
@@ -14,10 +15,10 @@ class MonoActor extends Actor {
   override def receive: Receive = {
 
     case AddClient(id :String , client : ActorRef) => {
-      val playerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, 0, 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)),null)
+      val playerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 1, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
       players += (id -> Player(playerData, client))
     }
-
+    case DeleteClient(id:String) => players -= id
     case Command(id, command) => {
       players(id) = players(id).setCommand(command)
     }
@@ -38,9 +39,7 @@ class MonoActor extends Actor {
       if(c != "0")
         {
 
-          players(x.data.id) = players(x.data.id).newPosAng(Vector(rand.nextInt(500),rand.nextInt(500)),rand.nextDouble())
-          players(x.data.id) = players(x.data.id).setLength(10)
-          players(c) = players(c).addLength
+          players(x.data.id) = players(x.data.id).newPosAng(Vector(rand.nextInt(800),rand.nextInt(800)),rand.nextDouble())
 
         }
     })
@@ -54,14 +53,10 @@ class MonoActor extends Actor {
       val mouse_y = (jsonObject \ "mouse" \ "y").as[Double]
       val direction2go = Vector(mouse_x, mouse_y) - playerData.p.head
       var newAngle  = 0.0
-
       val vectorAngle = Vector(Math.cos(playerData.angle), Math.sin(playerData.angle))
       val MeanVector =( direction2go.unit*0.2 + vectorAngle*0.8).unit
-
       newAngle = Angle.arctan(MeanVector.x,MeanVector.y)
-
       val newSpeed = Vector.fromAngle(playerData.angle)*5
-
       var remove = 1
       if (playerData.p.size < playerData.l)
         remove = 0
@@ -122,17 +117,9 @@ class MonoActor extends Actor {
       }
     }
     )
-    // and we don't forget to return c, which is the result ;)
+    // and we don't forget to return collision, which is the result ;)
     collision
   }
-
-
-  /*def playerToJson(player: PlayerData): String = "{\"id\":\""+player.id+
-    "\",\"pos\":["+player.p.head.x+
-    ","+player.p.head.y+"],\"r\":"+player.r+
-    ",\"color\":["+player.color(0) +","+
-    player.color(1) +","+player.color(2) +
-    "]" + "}"*/
 
   def playerToJson(player: PlayerData): String = {
 //    val message = PlayerMessage(player.id, player.p.head, player.r, player.color)

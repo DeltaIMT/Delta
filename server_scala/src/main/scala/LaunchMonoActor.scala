@@ -1,7 +1,7 @@
 import akka.actor.{ActorSystem, Props}
 import core.{Provider, Server}
 import game.GameEvent.Tick
-import game.MonoActor.{ManagerMonoActor, MonoActor}
+import game.monoActor.{ManagerMonoActor, MonoActor}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 

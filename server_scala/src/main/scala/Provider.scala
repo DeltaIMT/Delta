@@ -1,41 +1,42 @@
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRef}
 import akka.actor.Actor.Receive
 
 
 object Provider {
 
-  def apply(default : Actor) = {
+  def apply(default : ActorRef) = {
   new Provider(default)
   }
 
 }
 
-class Provider(default : Actor) extends Actor {
+class Provider(default : ActorRef) extends Actor {
 
-  var map_ID_Actor = Map.empty[Int,Actor]
-  var map_ID_Client = Map.empty[Int,Actor]
+  var map_ID_Actor = collection.mutable.HashMap.empty[String,ActorRef]
+  var map_ID_Client = collection.mutable.HashMap.empty[String,ActorRef]
 
   override def receive: Receive = {
 
     case AddClient(id: String, client: Actor) => {
-      map_ID_Actor[id] = default
-      default ! AddClient(id,client)
-      map_ID_Client[id] = client
+      map_ID_Client(id) = client
+      map_ID_Actor(id) = default
+
+      default ! AddClient(id,map_ID_Client(id))
     }
 
     case DeleteClient(id : String) => {
-      default ! DeleteClient(id)
-      map_ID_Actor[id] = null
-      map_ID_Client[id] = null
+      map_ID_Actor(id) ! DeleteClient(id)
+      map_ID_Actor(id) = null
+      map_ID_Client(id) = null
     }
 
     case Command(id:  String, txt : String) =>{
-      map_ID_Actor[id] ! Command(id,txt)
+      map_ID_Actor(id) ! Command(id,txt)
     }
 
-    case ChangeActor(id: String, Actor nextActor) =>{
-      nextActor ! AddClient(id,map_ID_Client[id] )
-      map_ID_Actor[id] = nextActor
+    case ChangeActor(id: String, next : ActorRef) =>{
+      next ! AddClient(id,map_ID_Client(id) )
+      map_ID_Actor(id) = next
     }
   }
 

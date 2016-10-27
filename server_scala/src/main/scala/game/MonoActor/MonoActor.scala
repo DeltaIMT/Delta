@@ -50,14 +50,13 @@ class MonoActor extends Actor {
   {
     if(playerData.lastCommand != null) {
       val jsonObject = Json.parse(playerData.lastCommand)
-      val mouse_x = ((jsonObject \ "mouse" \ "x").as[Double])
-      val mouse_y = ((jsonObject \ "mouse" \ "y").as[Double])
+      val mouse_x = (jsonObject \ "mouse" \ "x").as[Double]
+      val mouse_y = (jsonObject \ "mouse" \ "y").as[Double]
       val direction2go = Vector(mouse_x, mouse_y) - playerData.p.head
-      val dir = (  Vector(mouse_x,mouse_y) - playerData.p.head)
       var newAngle  = 0.0
 
-      var vectorAngle = Vector(Math.cos(playerData.angle), Math.sin(playerData.angle))
-      var MeanVector =( dir.unit*0.2 + vectorAngle*0.8).unit
+      val vectorAngle = Vector(Math.cos(playerData.angle), Math.sin(playerData.angle))
+      val MeanVector =( direction2go.unit*0.2 + vectorAngle*0.8).unit
 
       newAngle = Angle.arctan(MeanVector.x,MeanVector.y)
 
@@ -139,7 +138,7 @@ class MonoActor extends Actor {
 //    val message = PlayerMessage(player.id, player.p.head, player.r, player.color)
 //    val jsonMessage = Json.toJson(message)
 //    Json.stringify(jsonMessage)
-var messages =player.p.map( x =>  Json.stringify(Json.toJson( PlayerMessage(player.id, x, player.r, player.color) )  ))
+    val messages =player.p.map( x =>  Json.stringify(Json.toJson( PlayerMessage(player.id, x, player.r, player.color) )  ))
     var jsonMessage = messages.head
     messages.tail.foreach(  x => jsonMessage =x ++ ","++ jsonMessage  )
     jsonMessage

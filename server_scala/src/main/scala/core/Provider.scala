@@ -1,5 +1,7 @@
+package core
+
 import akka.actor.{Actor, ActorRef}
-import akka.actor.Actor.Receive
+import core.CoreMessage.{AddClient, ChangeActor, Command, DeleteClient}
 
 
 object Provider {
@@ -17,7 +19,7 @@ class Provider(default : ActorRef) extends Actor {
 
   override def receive: Receive = {
 
-    case AddClient(id: String, client: Actor) => {
+    case AddClient(id: String, client: ActorRef) => {
       map_ID_Client(id) = client
       map_ID_Actor(id) = default
 

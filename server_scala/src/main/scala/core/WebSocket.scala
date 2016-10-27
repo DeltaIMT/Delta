@@ -1,14 +1,18 @@
-import akka.actor.{ActorRef, Props}
+package core
+
+import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.stream.{FlowShape, OverflowStrategy}
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Sink, Source}
+import akka.stream.{FlowShape, OverflowStrategy}
+import core.CoreMessage.{AddClient, Command, DeleteClient}
+import game.GameEvent.PlayersUpdate
 
 /**
   * Created by vannasay on 20/10/16.
   */
 class WebSocket(provider: ActorRef) {
   val rand = scala.util.Random
-  val playerActorSource= Source.actorRef[GameEvent](60,OverflowStrategy.fail)
+  val playerActorSource= Source.actorRef[Any](60,OverflowStrategy.fail)
   def flow(id: String, regionName: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>
     import GraphDSL.Implicits._
     println(id + " connected")

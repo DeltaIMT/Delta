@@ -1,8 +1,12 @@
-import akka.actor.Actor
-import play.api.libs.json.Json
-import Formatters._
+package game.MonoActor
 
-class Region extends Actor {
+import akka.actor.Actor
+import core.CoreMessage.Command
+import game.Formatters._
+import game.GameEvent._
+import play.api.libs.json.Json
+
+class MonoActor extends Actor {
   var players = collection.mutable.LinkedHashMap.empty[String, Player]
   var time= 0
   val rand = scala.util.Random

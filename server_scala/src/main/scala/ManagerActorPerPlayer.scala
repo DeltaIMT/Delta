@@ -2,12 +2,12 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.actor.Actor.Receive
 
 /**
-  * Created by vannasay on 27/10/16.
+  * Created by vannasay on 21/10/16.
   */
-class Manager(Provider: ActorRef) extends Actor{
+class ManagerActorPerPlayer(Provider: ActorRef) extends Actor{
   override def receive: Receive = {
     case AddClient(id, playerActorRef) => {
-      val actor = context.actorOf(Props[ManagerActorPerPlayer],"actor")
+      val actor = context.actorOf(Props[ManagerActorPerPlayer],"actor" + id)
       Provider ! ChangeActor(id, actor)
     }
   }

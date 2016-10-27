@@ -1,5 +1,6 @@
+package actorPerPlayer
+
 import akka.actor.{Actor, ActorRef, Props}
-import akka.actor.Actor.Receive
 
 /**
   * Created by vannasay on 21/10/16.

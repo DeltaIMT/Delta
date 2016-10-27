@@ -2,10 +2,13 @@ package core
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives
+import akka.stream.ActorMaterializer
+
 import scala.io.StdIn
 
 object Server{
-  def launch(provider : ActorRef) = {
+  def launch(implicit  actorSystem : ActorSystem ,provider : ActorRef) = {
+    implicit val flowMaterializer = ActorMaterializer()
     import Directives._
     val ws = new WebSocket(provider)
     val route = (get & parameter("id") ){id =>  handleWebSocketMessages(ws.flow(id, "region"))}

@@ -1,8 +1,8 @@
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives
 import akka.stream.ActorMaterializer
-import core.WebSocket
+import core.{Provider, WebSocket}
 import game.GameEvent.Tick
 import game.MonoActor.MonoActor
 
@@ -13,10 +13,12 @@ import scala.io.StdIn
 object server extends App {
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val flowMaterializer = ActorMaterializer()
-  val region  = actorSystem.actorOf(Props[MonoActor], "region")
-  val cancellable  = actorSystem.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, region, Tick())
+  val manager  = actorSystem.actorOf(Props[MonoActor], "manager")
+  val provider  = actorSystem.actorOf(Props(new Provider(manager)), "provider")
+  val monoactor  = actorSystem.actorOf(Props[MonoActor], "monoactor")
+  val cancellable  = actorSystem.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, monoactor, Tick())
   import Directives._
-  val ws = new WebSocket(region)
+  val ws = new WebSocket(provider)
   val route = (get & parameter("id") ){id =>  handleWebSocketMessages(ws.flow(id, "region"))}
   val interface ="localhost"
   val port = 8080

@@ -1,15 +1,11 @@
 package core
-
 import akka.actor.{Actor, ActorRef}
 import core.CoreMessage.{AddClient, ChangeActor, Command, DeleteClient}
 
-
 object Provider {
-
   def apply(default : ActorRef) = {
   new Provider(default)
   }
-
 }
 
 class Provider(default : ActorRef) extends Actor {
@@ -41,6 +37,4 @@ class Provider(default : ActorRef) extends Actor {
       map_ID_Actor(id) = next
     }
   }
-
-
 }

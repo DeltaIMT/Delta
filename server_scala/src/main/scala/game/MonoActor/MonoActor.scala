@@ -1,7 +1,7 @@
 package game.MonoActor
 
-import akka.actor.Actor
-import core.CoreMessage.Command
+import akka.actor.{Actor, ActorRef}
+import core.CoreMessage.{AddClient, Command}
 import game.Formatters._
 import game.GameEvent._
 import play.api.libs.json.Json
@@ -12,14 +12,18 @@ class MonoActor extends Actor {
   val rand = scala.util.Random
 
   override def receive: Receive = {
-    case AddPlayer(player, actor) => players += (player.id -> Player(player, actor))
-    case DelPlayer(id) => println("Deleting " + id); players.remove(id)
+
+    case AddClient(id :String , client : ActorRef) => {
+      val playerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, 0, 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)),null)
+      players += (id -> Player(playerData, client))
+    }
+
     case Command(id, command) => {
       players(id) = players(id).setCommand(command)
     }
     case Tick() => {
-      physics()
-      notifyPlayers()
+      physics
+      notifyPlayers
     };
 }
 
@@ -39,11 +43,7 @@ class MonoActor extends Actor {
           players(c) = players(c).addLength
 
         }
-
     })
-
-
-
   }
 
   def physic(playerData : PlayerData): PlayerData =

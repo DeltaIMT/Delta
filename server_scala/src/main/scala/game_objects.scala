@@ -90,3 +90,5 @@ object Angle
 }
 
 case class PlayerMessage(id: String, pos: Vector, r: Double, color: Array[Int])
+case class AddClient(id: String, playerActorRef: ActorRef)
+case class DeleteClient(id: String)

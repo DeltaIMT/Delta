@@ -11,9 +11,8 @@ object server extends App {
   implicit val flowMaterializer = ActorMaterializer()
   val region  = actorSystem.actorOf(Props[Region], "region")
   val cancellable  = actorSystem.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, region, Tick())
-  val regionMap = Map[String, ActorRef](("region", region))
   import Directives._
-  val ws = new WebSocket(regionMap)
+  val ws = new WebSocket(region)
   val route = (get & parameter("id") ){id =>  handleWebSocketMessages(ws.flow(id, "region"))}
   val interface ="localhost"
   val port = 8080

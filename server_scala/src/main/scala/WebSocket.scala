@@ -6,32 +6,27 @@ import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Sink, Source}
 /**
   * Created by vannasay on 20/10/16.
   */
-class WebSocket(regionMap: Map[String, ActorRef]) {
+class WebSocket(provider: ActorRef) {
   val rand = scala.util.Random
   val playerActorSource= Source.actorRef[GameEvent](60,OverflowStrategy.fail)
-  var region = regionMap("region")
   def flow(id: String, regionName: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>
     import GraphDSL.Implicits._
     println(id + " connected")
-    val materialization = builder.materializedValue.map(playerActorRef => AddPlayer(PlayerData.newOne(id,rand), playerActorRef))
-    val merge = builder.add(Merge[GameEvent](2))
+    val materialization = builder.materializedValue.map(playerActorRef => AddClient(id, playerActorRef))
+    val merge = builder.add(Merge[Any](2))
 
-    val messageToEventFlow = builder.add(Flow[Message].map {
+    val messageToEventFlow = builder.add(Flow[Any].map {
       case TextMessage.Strict(txt) => Command(id,txt)
     })
-    val eventToMessageFlow= builder.add(Flow[GameEvent].map{
+    val eventToMessageFlow= builder.add(Flow[Any].map{
       case PlayersUpdate(json) =>TextMessage(json)
     })
-    val RegionSink = Sink.actorRef[GameEvent](region,DelPlayer(id))
+    val ProviderSink = Sink.actorRef[Any](provider,DeleteClient(id))
 
     materialization ~> merge
     messageToEventFlow ~> merge
-    merge ~> RegionSink
+    merge ~> ProviderSink
     playerActor ~>  eventToMessageFlow
     FlowShape(messageToEventFlow.in, eventToMessageFlow.out)
   })
-
-  def changeRegion(regionName: String) = {
-    region = regionMap(regionName)
-  }
 }

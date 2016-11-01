@@ -72,10 +72,10 @@ var draw = () =>
         .data (jsonData)
         .enter()
         .append("circle")
-        .attr("cx", (e) => e.pos.x)
-        .attr("cy", (e) => e.pos.y)
+        .attr("cx", (e) => e.x)
+        .attr("cy", (e) => e.y)
         .attr("r", (e)=> e.r)
-        .attr("fill", (e) => d3.rgb(e.color[0] , e.color[1],e.color[2])  )
+        .attr("fill", (e) => d3.rgb(e.rgb[0] , e.rgb[1],e.rgb[2])  )
 
 
 window.requestAnimationFrame(draw);

@@ -15,7 +15,7 @@ class MonoActor extends Actor {
   override def receive: Receive = {
 
     case AddClient(id :String , client : ActorRef) => {
-      val playerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 1, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
+      val playerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
       players += (id -> Player(playerData, client))
     }
     case DeleteClient(id:String) => players -= id
@@ -122,13 +122,13 @@ class MonoActor extends Actor {
   }
 
   def playerToJson(player: PlayerData): String = {
-//    val message = PlayerMessage(player.id, player.p.head, player.r, player.color)
-//    val jsonMessage = Json.toJson(message)
-//    Json.stringify(jsonMessage)
-    val messages =player.p.map( x =>  Json.stringify(Json.toJson( PlayerMessage(player.id, x, player.r, player.color) )  ))
-    var jsonMessage = messages.head
-    messages.tail.foreach(  x => jsonMessage =x ++ ","++ jsonMessage  )
-    jsonMessage
+    val message = PlayerMessage(player.id, player.p.head.x,player.p.head.y , player.r,player.l, player.color)
+    val jsonMessage = Json.toJson(message)
+    Json.stringify(jsonMessage)
+//    val messages =player.p.map( x =>  Json.stringify(Json.toJson( PlayerMessage(player.id, x, player.r, player.color) )  ))
+//    var jsonMessage = messages.head
+//    messages.tail.foreach(  x => jsonMessage =x ++ ","++ jsonMessage  )
+  //  jsonMessage
 
   }
 }

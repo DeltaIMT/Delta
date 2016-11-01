@@ -96,6 +96,6 @@ object GameEvent {
 
   }
 
-  case class PlayerMessage(id: String, pos: Vector, r: Double, color: Array[Int])
+  case class PlayerMessage(id: String, x: Double,y:Double, r: Double, l :Double, rgb: Array[Int])
 
 }

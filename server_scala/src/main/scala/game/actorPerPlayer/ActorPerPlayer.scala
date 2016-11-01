@@ -14,6 +14,7 @@ import game.Formatters._
 class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
   val rand = scala.util.Random
   var player = Player(newOne(id, rand), playerActorRef)
+  var message = ""
 
   override def receive: Receive = {
     case Command(id, command) => {
@@ -21,7 +22,8 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
     }
     case Tick() => {
       player = Player(physic(player.data), player.actor)
-      notifyPlayer()
+      updateMessage
+      notifyPlayer
     };
   }
 
@@ -51,13 +53,16 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
       return data
   }
 
+  def updateMessage() : Unit = {
+    message = playerToJson(player.data)
+  }
+
   def notifyPlayer(): Unit = {
-    val message = playerToJson(player.data)
-    player.actor ! PlayersUpdate(message)
+    player.actor ! PlayersUpdate("["+message+"]")
   }
 
   def playerToJson(data: PlayerData): String = {
-    val message = PlayerMessage(data.id, data.p.head, data.r, data.color)
+    val message = PlayerMessage(data.id, data.p.head.x ,data.p.head.y , data.r,data.l, data.color)
     val jsonMessage = Json.toJson(message)
     Json.stringify(jsonMessage)
   }

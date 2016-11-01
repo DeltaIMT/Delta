@@ -1,15 +1,15 @@
 import * as d3 from "d3";
 var canvas = d3.select("div")
 .append("svg")
-.attr("width",500)
-.attr("height",500)
+.attr("width",800)
+.attr("height",800)
 
 var grayBackground = canvas
 .append("rect")
 .attr("x", 0)
 .attr("y", 0)
-.attr("width", 500)
-.attr("height", 500)
+.attr("width", 800)
+.attr("height", 800)
 .attr("fill",d3.rgb(200, 210, 220))
 
 var jsonData = []
@@ -29,11 +29,11 @@ var h = window.innerHeight;
 var mousePosition = {x:250, y:250};
 document.addEventListener('mousemove', function(mouseMoveEvent){
 
-  if (mouseMoveEvent.pageX > 500 || mouseMoveEvent.pageX<0
-   || mouseMoveEvent.pageY<0 || mouseMoveEvent.pageY >500)
+  if (mouseMoveEvent.pageX > 800 || mouseMoveEvent.pageX<0
+   || mouseMoveEvent.pageY<0 || mouseMoveEvent.pageY >800)
 {
-  mousePosition.x = 250
-  mousePosition.y = 250
+  mousePosition.x = 400
+  mousePosition.y = 400
 }
 else
 {
@@ -72,10 +72,10 @@ var draw = () =>
         .data (jsonData)
         .enter()
         .append("circle")
-        .attr("cx", (e) => e.pos[0])
-        .attr("cy", (e) => e.pos[1])
+        .attr("cx", (e) => e.x)
+        .attr("cy", (e) => e.y)
         .attr("r", (e)=> e.r)
-        .attr("fill", (e) => d3.rgb(e.color[0] , e.color[1],e.color[2])  )
+        .attr("fill", (e) => d3.rgb(e.rgb[0] , e.rgb[1],e.rgb[2])  )
 
 
 window.requestAnimationFrame(draw);

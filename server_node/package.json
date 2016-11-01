@@ -45,6 +45,7 @@
     "node-uuid": "^1.4.7",
     "react-transform-hmr": "^1.0.1",
     "webpack": "^1.8.4",
-    "webpack-dev-server": "^1.8.0"
+    "webpack-dev-server": "^1.8.0",
+    "websocket": "^1.0.23"
   }
 }

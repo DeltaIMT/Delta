@@ -33,17 +33,21 @@ window.onload = function()
             jsonData = JSON.parse(event.data) 
             for (var i = 0; i<jsonData.length; i++) {
               var exists = false
+              var data = jsonData[i]
               var j = 0
               while (!exists && j<snakes.length) {
-                if (snakes[j].is(jsonData[i].id)) {
+                var snake = snakes[j]
+                if (snake.is(data.id)) {
                   exists = true
-                  snakes[j].l = jsonData[i].l
-                  snakes[j].add(jsonData[i].x, jsonData[i].y)
+                  snake.l = data.l
+                  snake.r = data.r
+                  // snake.color = data.color
+                  snake.add(data.x, data.y)
                 }
                 j++
               }
               if (!exists) {
-                snakes.push(new Snake(jsonData[i].id, jsonData[i].l, jsonData[i].x, jsonData[i].y))
+                snakes.push(new Snake(data.id, data.x, data.y, data.r, data.l, data.rgb))
               }
             }
             //TODO delete snakes when dead    
@@ -79,14 +83,13 @@ window.onload = function()
     var draw = () =>
     {
       context.clearRect(0, 0, canvas.width, canvas.height)
-      context.beginPath()
 
       for (var i=0; i<snakes.length; i++) {
-        for (var j=0; j<snakes[i].positions.length; j++) {
-          context.arc(snakes[i].positions[j].x, snakes[i].positions[j].y, snakes[i].l /*the radius*/, 0, Math.PI*2)
-          context.strokeStyle = "#6D071A"
-          context.stroke()
-          context.fillStyle = "#A5260A"
+        var snake = snakes[i]
+        for (var j=0; j<snake.positions.length; j++) {
+          context.beginPath()
+          context.arc(snake.positions[j].x, snake.positions[j].y, snake.r, 0, Math.PI*2)
+          context.fillStyle = "rgb(" + snake.rgb[0] + ", " + snake.rgb[1] + ", " + snake.rgb[2] + ")"
           context.fill()
         }
       }

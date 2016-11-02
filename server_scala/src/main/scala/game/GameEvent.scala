@@ -104,6 +104,6 @@ object GameEvent {
   case class ListPlayers(players: mutable.LinkedHashMap[String, ActorRef])
   case class NewPlayer(id: String, playerActorRef: ActorRef)
   case class DeletePlayer(id: String)
-  case class AskJson(id: String)
+  case object AskJson
   case class PlayerJson(jsonMessage: String)
 }

@@ -5,7 +5,7 @@ import core.CoreMessage.{AddClient, ChangeActor}
 
 class ManagerSpatialHost (spatialHosts : List[ActorRef]) extends Actor {
   override def receive: Receive = {
-    case AddClient(id : String, client : ActorRef) =>    sender ! ChangeActor(id, monoactor)
+    case AddClient(id : String, client : ActorRef) =>    sender ! ChangeActor(id, spatialHosts(0))
   }
 }
 

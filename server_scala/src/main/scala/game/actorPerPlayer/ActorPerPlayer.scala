@@ -13,7 +13,7 @@ import game.Formatters._
   */
 class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
   val rand = scala.util.Random
-  var player = Player(newOne(id, rand), playerActorRef)
+  var player = Player( PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
   var message = ""
 
   override def receive: Receive = {

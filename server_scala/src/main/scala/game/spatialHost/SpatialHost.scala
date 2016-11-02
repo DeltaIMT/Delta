@@ -4,11 +4,11 @@ import akka.actor.{Actor, ActorRef}
 import core.CoreMessage.{AddClient, Command, DeleteClient}
 import game.GameEvent.{Angle, Player, PlayerData, PlayerMessage, PlayersUpdate, Tick, Vector}
 import play.api.libs.json.Json
-
+import game.Formatters._
 
 case class OtherSpatial(other : ActorRef)
 
-class SpatialHost(val position : Vector, val dimension : Vector) extends Actor {
+class SpatialHost(val position : Vector, val dimension : Vector,val factor:Double) extends Actor {
   var players = collection.mutable.LinkedHashMap.empty[String, Player]
   var time= 0
   val rand = scala.util.Random
@@ -31,9 +31,18 @@ class SpatialHost(val position : Vector, val dimension : Vector) extends Actor {
     case OtherSpatial(other : ActorRef) =>{
       this.other  = other
     }
-      
+  }
 
 
+  def isInside(p:Player) : Boolean =
+  {
+    val player_pos = p.data.p;
+
+    (   (position.x <= player_pos.head.x)
+      &&(position.y <= player_pos.head.y)
+      &&(player_pos.head.x <= position.x + dimension.x)
+      &&(player_pos.head.y <= position.y + dimension.y)
+      )
   }
 
   def physics() : Unit   = {
@@ -68,7 +77,7 @@ class SpatialHost(val position : Vector, val dimension : Vector) extends Actor {
       var remove = 1
       if (playerData.p.size < playerData.l)
         remove = 0
-      val newPositions =playerData.p.head +newSpeed  ::playerData.p.take(playerData.p.size-remove)
+      val newPositions =playerData.p.head +newSpeed*factor  ::playerData.p.take(playerData.p.size-remove)
 
       return PlayerData(playerData.id,newPositions, playerData.v,newAngle,playerData.l, playerData.r, playerData.color, playerData.lastCommand  )
     }

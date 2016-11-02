@@ -2,6 +2,9 @@ package game
 
 import akka.actor.ActorRef
 import game.GameEvent.{Player, PlayerData, Vector}
+
+import scala.collection.immutable.HashMap.HashMap1
+import scala.collection.mutable
 import scala.util.Random
 
 object GameEvent {
@@ -98,4 +101,9 @@ object GameEvent {
 
   case class PlayerMessage(id: String, x: Double,y:Double, r: Double, l :Double, rgb: Array[Int])
 
+  case class ListPlayers(players: mutable.LinkedHashMap[String, ActorRef])
+  case class NewPlayer(id: String, playerActorRef: ActorRef)
+  case class DeletePlayer(id: String)
+  case class AskJson(id: String)
+  case class PlayerJson(jsonMessage: String)
 }

@@ -84,6 +84,16 @@ window.onload = function()
     {
       context.clearRect(0, 0, canvas.width, canvas.height)
 
+      // draws the background
+      var background = new Image()
+      background.src = 'pictures/background.png'
+      var pattern = context.createPattern(background, 'repeat')
+
+      context.beginPath()
+      context.rect(0, 0, canvas.width, canvas.height); // TODO with camera : context.rect(camX, camY, canvas.width + camX, canvas.height + camY);
+      context.fillStyle = pattern
+      context.fill()
+
       for (var i=0; i<snakes.length; i++) {
         var snake = snakes[i]
         for (var j=0; j<snake.positions.length; j++) {
@@ -91,6 +101,8 @@ window.onload = function()
           context.arc(snake.positions[j].x, snake.positions[j].y, snake.r, 0, Math.PI*2)
           context.fillStyle = "rgb(" + snake.rgb[0] + ", " + snake.rgb[1] + ", " + snake.rgb[2] + ")"
           context.fill()
+          context.strokeStyle = "black"
+          context.stroke()
         }
       }
     

@@ -1,12 +1,11 @@
 package game.actorPerPlayer
 
 import akka.actor.{Actor, ActorRef}
-import akka.actor.Actor.Receive
-import core.CoreMessage.Command
-import game.GameEvent.{Angle, Player, PlayerData, PlayerMessage, PlayersUpdate, Tick, Vector}
-import game.GameEvent.PlayerData.newOne
-import play.api.libs.json.Json
+import akka.pattern._
+import core.CoreMessage.{Command, DeleteClient}
 import game.Formatters._
+import game.GameEvent._
+import play.api.libs.json.Json
 
 /**
   * Created by vannasay on 27/10/16.
@@ -15,6 +14,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
   val rand = scala.util.Random
   var player = Player( PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
   var message = ""
+  var players = collection.mutable.LinkedHashMap.empty[String, ActorRef]
 
   override def receive: Receive = {
     case Command(id, command) => {
@@ -25,6 +25,27 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
       updateMessage
       notifyPlayer
     };
+
+    case ListPlayers(list) => {
+      players = list
+      players.foreach(_._2 ! NewPlayer(id, playerActorRef))
+    }
+
+    case NewPlayer(id, playerActorRef) => {
+      players += id -> playerActorRef
+    }
+
+    case DeleteClient(id) => {
+      players.foreach(_._2 ! DeletePlayer(id))
+    }
+
+    case DeletePlayer(id) => {
+      players -= id
+    }
+
+    case AskJson(id) => {
+      players(id) ! PlayerJson(playerToJson(player.data))
+    }
   }
 
   def physic(data: PlayerData): PlayerData = {
@@ -58,7 +79,24 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
   }
 
   def notifyPlayer(): Unit = {
-    player.actor ! PlayersUpdate("["+message+"]")
+    var listPositions = List[String]()
+    val positions = players.map(actor => actor._2 ? AskJson(id))
+    positions.foreach(_.foreach(msg => {
+      case PlayerJson(json) => listPositions = json :: listPositions
+    }))
+    var msg = ""
+    if (players.size == 1){
+      msg = "[" + listPositions.head + "]"
+    }
+    else {
+      msg = "[" + listPositions.head
+      listPositions = listPositions.drop(1)
+      for (elem <- listPositions) {
+        msg += "," + elem
+      }
+      msg += "]"
+    }
+    player.actor ! PlayersUpdate(msg)
   }
 
   def playerToJson(data: PlayerData): String = {

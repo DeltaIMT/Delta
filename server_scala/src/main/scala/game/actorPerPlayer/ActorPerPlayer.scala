@@ -15,7 +15,7 @@ import scala.util.{Failure, Success, Try}
 
 class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
   val rand = scala.util.Random
-  var player = Player(PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
+  var player = Player( PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
   var message = ""
   var players = collection.mutable.LinkedHashMap.empty[String, ActorRef]
 

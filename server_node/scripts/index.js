@@ -17,7 +17,10 @@ window.onload = function()
     context.canvas.width  = window.innerWidth
     context.canvas.height = window.innerHeight
 
-    var worldSize = {x: 2000,y: 2000}
+    var worldSize = {x: 2000, y: 2000}
+    var cam = {x: 0, y: 0}
+
+    var currentSnake = {x: 0, y: 0} // position of the snake's head : the camera has to be centered around it
  
     var Snake = require('./Snake')
     var snakes = []
@@ -41,8 +44,16 @@ window.onload = function()
                   exists = true
                   snake.l = data.l
                   snake.r = data.r
-                  // snake.color = data.color
-                  snake.add(data.x, data.y)
+                  snake.rgb = data.rgb
+                  
+                  if (snake.is(id)) {
+                    currentSnake.x = data.x + cam.x
+                    currentSnake.y = data.y + cam.y
+                    snake.add(currentSnake.x, currentSnake.y)
+                  }
+                  else {
+                    snake.add(data.x, data.y)
+                  }
                 }
                 j++
               }
@@ -50,7 +61,7 @@ window.onload = function()
                 snakes.push(new Snake(data.id, data.x, data.y, data.r, data.l, data.rgb))
               }
             }
-            //TODO delete snakes when dead    
+            //TODO delete dead snakes  
           }
 
     var mousePosition = {x:0, y:0}
@@ -82,18 +93,25 @@ window.onload = function()
     
     var draw = () =>
     {
-      context.clearRect(0, 0, canvas.width, canvas.height)
+      // clamp the camera position to the world bounds while centering the camera around the snake                    
+      cam.x = clamp(currentSnake.x - canvas.width/2, 0, worldSize.x - canvas.width);
+      cam.y = clamp(currentSnake.y - canvas.height/2, 0, worldSize.y - canvas.height);
 
-      // draws the background
+      context.setTransform(1,0,0,1,0,0);  // because the transform matrix is cumulative // TODO FIND HOW IT WORKS
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.translate(-cam.x, -cam.y); 
+
+      // draw the background
       var background = new Image()
       background.src = 'pictures/background.png'
       var pattern = context.createPattern(background, 'repeat')
 
       context.beginPath()
-      context.rect(0, 0, canvas.width, canvas.height); // TODO with camera : context.rect(camX, camY, canvas.width + camX, canvas.height + camY);
+      context.rect(cam.x, cam.y, canvas.width + cam.x, canvas.height + cam.y);
       context.fillStyle = pattern
       context.fill()
 
+      // draw the snakes
       for (var i=0; i<snakes.length; i++) {
         var snake = snakes[i]
         for (var j=0; j<snake.positions.length; j++) {
@@ -101,7 +119,7 @@ window.onload = function()
           context.arc(snake.positions[j].x, snake.positions[j].y, snake.r, 0, Math.PI*2)
           context.fillStyle = "rgb(" + snake.rgb[0] + ", " + snake.rgb[1] + ", " + snake.rgb[2] + ")"
           context.fill()
-          context.strokeStyle = "black"
+          context.strokeStyle = "rgb(" + snake.rgb[0]/2 + ", " + snake.rgb[1]/2 + ", " + snake.rgb[2]/2 + ")"
           context.stroke()
         }
       }
@@ -110,5 +128,9 @@ window.onload = function()
     }
     
     window.requestAnimationFrame(draw)
+
+    function clamp(value, min, max){
+        return Math.min(Math.max(value, min), max);
+    } 
 
 }

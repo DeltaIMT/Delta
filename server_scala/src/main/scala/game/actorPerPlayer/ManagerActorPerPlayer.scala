@@ -3,7 +3,7 @@ package game.actorPerPlayer
 import akka.actor
 import akka.actor.{Actor, ActorRef, Props}
 import core.CoreMessage.{AddClient, ChangeActor}
-import game.GameEvent.{DeletePlayer, ListPlayers, Player, Tick}
+import game.GameEvent._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -23,6 +23,8 @@ class ManagerActorPerPlayer() extends Actor{
       sender ! ChangeActor(id, actor)
       actor ! ListPlayers(players)
     }
+
+    case AskJson => { sender ! PlayerJson("")}
 
     case DeletePlayer(id) => {
       players -= id

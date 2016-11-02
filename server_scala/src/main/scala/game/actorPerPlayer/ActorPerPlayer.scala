@@ -6,13 +6,11 @@ import core.CoreMessage.{Command, DeleteClient}
 import game.Formatters._
 import game.GameEvent._
 import play.api.libs.json.Json
-
+import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
-class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
+class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
   val rand = scala.util.Random
   var player = Player( PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
   var message = ""
@@ -46,8 +44,8 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
       players -= id
     }
 
-    case AskJson(id) => {
-      players(id) ! PlayerJson(playerToJson(player.data))
+    case AskJson => {
+      sender ! PlayerJson(playerToJson(player.data))
     }
   }
 
@@ -92,15 +90,16 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
 
   def notifyPlayer(): Unit = {
     var listPositions = List[String]()
-    val positions = players.map(actor => actor._2 ? AskJson(id))
-    positions.foreach(_.foreach(msg => {
+    implicit val timeout = Timeout(1.second)
+    val positions = players.map(actor => players(actor._1) ? AskJson)
+    positions.foreach(_.foreach( {
       case PlayerJson(json) => listPositions = json :: listPositions
     }))
     var msg = ""
-    if (players.size == 1){
+    if (listPositions.size == 1){
       msg = "[" + listPositions.head + "]"
     }
-    else {
+    else if(listPositions.size > 1)  {
       msg = "[" + listPositions.head
       listPositions = listPositions.drop(1)
       for (elem <- listPositions) {
@@ -108,7 +107,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
       }
       msg += "]"
     }
-    player.actor ! PlayersUpdate(msg)
+    player.actor ! PlayersUpdate("truc")
   }
 
   def playerToJson(data: PlayerData): String = {

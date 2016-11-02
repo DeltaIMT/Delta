@@ -3,7 +3,7 @@ package game.actorPerPlayer
 import akka.actor
 import akka.actor.{Actor, ActorRef, Props}
 import core.CoreMessage.{AddClient, ChangeActor}
-import game.GameEvent._
+import game.GameEvent.{DeletePlayer, ListPlayers, Player, Tick}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -17,15 +17,12 @@ class ManagerActorPerPlayer() extends Actor{
 
   override def receive: Receive = {
     case AddClient(id, playerActorRef) => {
-      val host = context.actorOf(Props(new ActorPerPlayer(id, playerActorRef)),"actor" + id)
-      val cancellable  = context.system.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, host, Tick())
-
-      sender ! ChangeActor(id, host)
-      host ! ListPlayers(players.clone())
-      players += id -> host
+      val actor = context.actorOf(Props(new ActorPerPlayer(id, playerActorRef)),"actor" + id)
+      val cancellable  = context.system.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, actor, Tick())
+      players += id -> actor
+      sender ! ChangeActor(id, actor)
+      actor ! ListPlayers(players)
     }
-
-    case AskJson => { sender ! PlayerJson("{}")}
 
     case DeletePlayer(id) => {
       players -= id

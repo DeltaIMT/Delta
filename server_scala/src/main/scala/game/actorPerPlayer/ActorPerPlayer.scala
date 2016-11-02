@@ -6,7 +6,6 @@ import core.CoreMessage.{Command, DeleteClient}
 import game.Formatters._
 import game.GameEvent._
 import play.api.libs.json.Json
-import akka.util.Timeout
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,7 +31,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
 
     case ListPlayers(list) => {
       players = list
-      players.foreach(_._2 ! NewPlayer(id, self))
+      players.foreach(_._2 ! NewPlayer(id, playerActorRef))
     }
 
     case NewPlayer(id, playerActorRef) => {
@@ -47,8 +46,8 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
       players -= id
     }
 
-    case AskJson => {
-      sender ! PlayerJson(message)
+    case AskJson(id) => {
+      players(id) ! PlayerJson(playerToJson(player.data))
     }
   }
 
@@ -93,35 +92,23 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
 
   def notifyPlayer(): Unit = {
     var listPositions = List[String]()
-    implicit val timeout = Timeout(1.second)
-    val positions = players.map(actor => actor._2 ? AskJson)
-
-    //    positions.foreach(_.foreach( {
-    //case PlayerJson(json) => listPositions = json :: listPositions
-    //    }))
-
-    val seqe = positions.toSeq
-
-    val truc = waitAll(seqe)
-    truc.foreach(x => {
-      x.foreach(trie => trie match {
-        case Success(v) => v match {
-          case PlayerJson(json) => listPositions = json :: listPositions
-        }
-        case Failure(e) => {}
-
-      })
-
-      var msg = "[" + message
+    val positions = players.map(actor => actor._2 ? AskJson(id))
+    positions.foreach(_.foreach(msg => {
+      case PlayerJson(json) => listPositions = json :: listPositions
+    }))
+    var msg = ""
+    if (players.size == 1){
+      msg = "[" + listPositions.head + "]"
+    }
+    else {
+      msg = "[" + listPositions.head
+      listPositions = listPositions.drop(1)
       for (elem <- listPositions) {
         msg += "," + elem
       }
       msg += "]"
-      player.actor ! PlayersUpdate(msg)
-
-    })
-
-
+    }
+    player.actor ! PlayersUpdate(msg)
   }
 
   def playerToJson(data: PlayerData): String = {

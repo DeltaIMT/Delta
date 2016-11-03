@@ -10,7 +10,7 @@ object LaunchSpatialHost extends App {
   implicit val actorSystem = ActorSystem("akka-system")
 
   val spatialA  = actorSystem.actorOf(Props(new SpatialHost(Vector(0,0),Vector(500,1000),1)), "spatialA")
-  val spatialB  = actorSystem.actorOf(Props(new SpatialHost(Vector(500,0),Vector(500,1000),10)), "spatialB")
+  val spatialB  = actorSystem.actorOf(Props(new SpatialHost(Vector(500,0),Vector(500,1000),2)), "spatialB")
 
   spatialA ! OtherSpatial(spatialB)
   spatialB ! OtherSpatial(spatialA)

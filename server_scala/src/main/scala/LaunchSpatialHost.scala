@@ -2,7 +2,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import core.CoreMessage.SetProvider
 import core.{Provider, Server}
 import game.GameEvent.Tick
-import game.spatialHost.{ManagerSpatialHost, OtherSpatial, SayPosAll, SpatialHost}
+import game.spatialHost._
 import game.GameEvent.Vector
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -58,6 +58,7 @@ object LaunchSpatialHost extends App {
   val provider  = actorSystem.actorOf(Props(new Provider(manager)), "provider")
 
   listHost.foreach( x => x ! SetProvider(provider))
+  listHost.foreach( x => x ! SetReadList(listHost))
   val cancellableI = listHost.map( x => actorSystem.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, x, Tick()) )
   Server.launch(actorSystem,provider)
   cancellableI.foreach( x => x.cancel())

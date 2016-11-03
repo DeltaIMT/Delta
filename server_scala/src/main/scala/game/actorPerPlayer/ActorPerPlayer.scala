@@ -29,7 +29,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
 
     case ListPlayers(list) => {
       players = list
-      players.foreach(_._2 ! NewPlayer(id, playerActorRef))
+      players.foreach(_._2 ! NewPlayer(id, self))
     }
 
     case NewPlayer(id, playerActorRef) => {
@@ -91,7 +91,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
   def notifyPlayer(): Unit = {
     var listPositions = List[String]()
     implicit val timeout = Timeout(1.second)
-    val positions = players.map(actor => players(actor._1) ? AskJson)
+    val positions = players.map(actor =>actor._2 ? AskJson)
     positions.foreach(_.foreach( {
       case PlayerJson(json) => listPositions = json :: listPositions
     }))
@@ -107,7 +107,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
       }
       msg += "]"
     }
-    player.actor ! PlayersUpdate("truc")
+    player.actor ! PlayersUpdate(msg)
   }
 
   def playerToJson(data: PlayerData): String = {

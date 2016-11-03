@@ -17,11 +17,11 @@ class ManagerActorPerPlayer() extends Actor{
 
   override def receive: Receive = {
     case AddClient(id, playerActorRef) => {
-      val actor = context.actorOf(Props(new ActorPerPlayer(id, playerActorRef)),"actor" + id)
-      val cancellable  = context.system.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, actor, Tick())
-      players += id -> actor
-      sender ! ChangeActor(id, actor)
-      actor ! ListPlayers(players)
+      val host = context.actorOf(Props(new ActorPerPlayer(id, playerActorRef)),"actor" + id)
+      val cancellable  = context.system.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, host, Tick())
+      players += id -> host
+      sender ! ChangeActor(id, host)
+      host ! ListPlayers(players)
     }
 
     case AskJson => { sender ! PlayerJson("")}

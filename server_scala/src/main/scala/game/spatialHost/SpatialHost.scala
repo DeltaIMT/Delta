@@ -2,20 +2,33 @@ package game.spatialHost
 
 import akka.actor.{Actor, ActorRef}
 import core.CoreMessage._
-import game.GameEvent.{AddPlayer, AddPlayerData, Angle, Player, PlayerData, PlayerMessage, PlayersUpdate, Tick, Vector}
+import game.GameEvent.{AddPlayer, AddPlayerData, Angle, AskJson, Player, PlayerData, PlayerMessage, PlayersUpdate, Tick, Vector}
 import play.api.libs.json.Json
 import game.Formatters._
+import akka.util.Timeout
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import akka.pattern._
+
+import scala.util.{Failure, Success}
 
 case class OtherSpatial(other: ActorRef, where: String)
+case class SayPos(where : String)
+case class SayPosAll()
 
 class SpatialHost(val position: Vector, val dimension: Vector, val factor: Double) extends Actor {
+
+
+
   var players = collection.mutable.LinkedHashMap.empty[String, Player]
   var halfPlayerData = collection.mutable.LinkedHashMap.empty[String, PlayerData]
   var halfPlayerActor = collection.mutable.LinkedHashMap.empty[String, ActorRef]
   val rand = scala.util.Random
-  var other: ActorRef = null
-  var where = ""
+  var adjacent = collection.mutable.LinkedHashMap.empty[String, ActorRef]
   var provider: ActorRef = null
+  var message =""
+
 
   override def receive: Receive = {
     case AddClient(id: String, client: ActorRef) => {
@@ -39,14 +52,27 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
     case Tick() => {
       physics
       notifyPlayers
+      updateMessage
       changeIsNeeded
     }
 
     case SetProvider(actor: ActorRef) => provider = actor
     case OtherSpatial(other: ActorRef, where: String) => {
-      this.other = other
-      this.where = where
+      adjacent += where -> other
     }
+
+    case SayPos(where:String) => {
+      println(where + " x:" + position.x + " " + "y:" + position.y)
+    }
+    case SayPosAll() => {
+      println("x:"+position.x + " " +"y:"+position.y)
+      adjacent.foreach( x => x._2  ! SayPos(x._1))
+    }
+
+//    case AskMessage() => {
+//      sender !
+//    }
+
   }
 
   def isInside(p: Player): Boolean = {
@@ -79,24 +105,68 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
 
   }
 
+  def transfert(id:String,where : String ): Unit ={
+    val p = players(id)
+    provider ! ChangeActor(p.data.id, adjacent(where))
+    adjacent(where) ! AddPlayerData(p.data)
+    this.players -= p.data.id
+    println(where)
+  }
 
   def changeArea(p: Player): Unit = {
 
     val player_pos = p.data.p.head;
-    if (player_pos.x > position.x + dimension.x && where == "E") {
-      provider ! ChangeActor(p.data.id, other)
-      other ! AddPlayerData(p.data)
-      this.players -= p.data.id
+    val x = player_pos.x
+    val y = player_pos.y
+    val minX = position.x
+    val maxX = position.x + dimension.x
+    val minY = position.y
+    val maxY = position.y + dimension.y
+    println("x ="+x +" "+ "y ="+y)
+    println("minx ="+minX +" "+ "miny ="+minY)
+    println("maxx ="+maxX +" "+ "maxy ="+maxY)
+    if( x > minX && x < maxX && y > maxY  ){
+      if( adjacent.keySet.exists(_=="N") )
+      transfert(p.data.id,"N")
+      else players(p.data.id) = p.bloc
     }
-    else if (player_pos.x < position.x && where == "W") {
-      provider ! ChangeActor(p.data.id, other)
-      other ! AddPlayerData(p.data)
-      this.players -= p.data.id
+    else if( x> maxX && y > maxY  ){
+      if( adjacent.keySet.exists(_=="NE") )
+        transfert(p.data.id,"NE")
+      else players(p.data.id) = p.bloc
     }
-    else
-      players(p.data.id) = p.bloc
-    //other ! AddClient(p.data.id, p.actor)
-    //this.players.remove(p.data.id)
+    else if( x> maxX &&y > minY &&y < maxY  ){
+      if( adjacent.keySet.exists(_=="E") )
+        transfert(p.data.id,"E")
+      else players(p.data.id) = p.bloc
+    }
+    else if( x> maxX &&y < minY ){
+      if( adjacent.keySet.exists(_=="SE") )
+        transfert(p.data.id,"SE")
+      else players(p.data.id) = p.bloc
+    }
+    else if(  x > minX && x < maxX  &&y < minY ){
+      if( adjacent.keySet.exists(_=="S") )
+        transfert(p.data.id,"S")
+      else players(p.data.id) = p.bloc
+    }
+    else if(  x < minX && y < minY ){
+      if( adjacent.keySet.exists(_=="SW") )
+        transfert(p.data.id,"SW")
+      else players(p.data.id) = p.bloc
+    }
+    else if(  x < minX && y > minY &&  y < maxY   ){
+      if( adjacent.keySet.exists(_=="W") )
+        transfert(p.data.id,"W")
+      else players(p.data.id) = p.bloc
+    }
+    else if(  x < minX && y > maxY   ){
+      if( adjacent.keySet.exists(_=="NW") )
+        transfert(p.data.id,"NW")
+      else players(p.data.id) = p.bloc
+    }
+
+
   }
 
 
@@ -137,8 +207,8 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
       return playerData
   }
 
-  def notifyPlayers(): Unit = {
-    //   println("Telling " + players.size + " players the updates")
+
+  def updateMessage() = {
     var s = ""
     val list = players.values.map(_.data)
     if (list.size == 1) {
@@ -154,7 +224,11 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
       }
       s += "]"
     }
-    players.values.foreach(_.actor ! PlayersUpdate(s))
+    message = s
+  }
+
+  def notifyPlayers(): Unit = {
+    players.values.foreach(_.actor ! PlayersUpdate(message))
   }
 
   //method which gives a bool in order to know if the player p is hurting one of the other players (players)
@@ -197,6 +271,7 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
     //  jsonMessage
 
   }
+
 
 }
 

@@ -7,12 +7,15 @@ import game.Formatters._
 import game.GameEvent._
 import play.api.libs.json.Json
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
-class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
+class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
   val rand = scala.util.Random
-  var player = Player( PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
+  var player = Player(PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
   var message = ""
   var players = collection.mutable.LinkedHashMap.empty[String, ActorRef]
 
@@ -45,7 +48,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
     }
 
     case AskJson => {
-      sender ! PlayerJson(playerToJson(player.data))
+      sender ! PlayerJson(message)
     }
   }
 
@@ -91,16 +94,34 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
   def notifyPlayer(): Unit = {
     var listPositions = List[String]()
     implicit val timeout = Timeout(1.second)
-    val positions = players.map(actor =>actor._2 ? AskJson)
-    positions.foreach(_.foreach( {
-      case PlayerJson(json) => listPositions = json :: listPositions
-    }))
-    var msg = "[" + message
-    for (elem <- listPositions) {
-      msg += "," + elem
-    }
-    msg += "]"
-    player.actor ! PlayersUpdate(msg)
+    val positions = players.map(actor => actor._2 ? AskJson)
+
+    //    positions.foreach(_.foreach( {
+    //case PlayerJson(json) => listPositions = json :: listPositions
+    //    }))
+
+    val seqe = positions.toSeq
+
+    val truc = waitAll(seqe)
+    truc.foreach(x => {
+      x.foreach(trie => trie match {
+        case Success(v) => v match {
+          case PlayerJson(json) => listPositions = json :: listPositions
+        }
+        case Failure(e) => {}
+
+      })
+
+      var msg = "[" + message
+      for (elem <- listPositions) {
+        msg += "," + elem
+      }
+      msg += "]"
+      player.actor ! PlayersUpdate(msg)
+
+    })
+
+
   }
 
   def playerToJson(data: PlayerData): String = {

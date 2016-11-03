@@ -9,6 +9,8 @@ import scala.util.Random
 
 object GameEvent {
 
+  case class AddPlayerData(playerData : PlayerData)
+
   case class PlayerData(id: String, p: List[Vector], v: Double, angle: Double, l: Double, r: Double, color: Array[Int], lastCommand: String)
 
   object PlayerData {

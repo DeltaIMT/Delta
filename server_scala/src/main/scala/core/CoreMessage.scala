@@ -10,4 +10,5 @@ object CoreMessage {
   case class AddClient(id: String, playerActorRef: ActorRef)
   case class Command(id : String,command : String )
   case class ChangeActor(id: String, next : ActorRef)
+  case class SetProvider(actor : ActorRef)
 }

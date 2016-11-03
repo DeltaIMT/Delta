@@ -17,7 +17,7 @@ window.onload = function()
     context.canvas.width  = window.innerWidth
     context.canvas.height = window.innerHeight
 
-    var worldSize = {x: 2000, y: 2000}
+    var worldSize = {x: 6000, y: 6000}
     var cam = {x: 0, y: 0}
 
     var currentSnake = {x: 0, y: 0} // position of the snake's head : the camera has to be centered around it 

@@ -9,7 +9,7 @@ class ManagerSpatialHost (spatialHosts : List[ActorRef]) extends Actor {
   override def receive: Receive = {
     case AddClient(id : String, client : ActorRef) =>  {
 
-      val playerData = PlayerData(id, Vector(50+0*rand.nextInt(500),50+0*rand.nextInt(1000)) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
+      val playerData = PlayerData(id, Vector(50+rand.nextInt(4900),50+1*rand.nextInt(4900)) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
       sender ! ChangeActor(id, spatialHosts(0))
       spatialHosts(0) ! AddPlayerData(playerData)
 

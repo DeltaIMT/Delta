@@ -1,21 +1,24 @@
 package game.spatialHost
 
 import akka.actor.{Actor, ActorRef}
-import core.CoreMessage._
-import game.GameEvent.{AddPlayer, AddPlayerData, Angle, AskJson, Player, PlayerData, PlayerMessage, PlayersUpdate, Tick, Vector}
-import play.api.libs.json.Json
-import game.Formatters._
+import akka.pattern._
 import akka.util.Timeout
-import scala.concurrent.duration._
+import core.CoreMessage._
+import game.Formatters._
+import game.GameEvent.{AddPlayerData, Angle, Player, PlayerData, PlayerJson, PlayerMessage, PlayersUpdate, Tick, Vector}
+import play.api.libs.json.Json
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import akka.pattern._
-
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 case class OtherSpatial(other: ActorRef, where: String)
 case class SayPos(where : String)
 case class SayPosAll()
+case class SetReadList(list : List[ActorRef])
+case class Message( json : String )
+case class AskMessage()
 
 class SpatialHost(val position: Vector, val dimension: Vector, val factor: Double) extends Actor {
 
@@ -26,6 +29,7 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
   var halfPlayerActor = collection.mutable.LinkedHashMap.empty[String, ActorRef]
   val rand = scala.util.Random
   var adjacent = collection.mutable.LinkedHashMap.empty[String, ActorRef]
+  var readList : List[ActorRef] = null
   var provider: ActorRef = null
   var message =""
 
@@ -69,9 +73,11 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
       adjacent.foreach( x => x._2  ! SayPos(x._1))
     }
 
-//    case AskMessage() => {
-//      sender !
-//    }
+    case SetReadList(list :List[ActorRef] ) => readList = list
+
+    case AskMessage() => {
+      sender ! Message(message)
+    }
 
   }
 
@@ -110,7 +116,7 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
     provider ! ChangeActor(p.data.id, adjacent(where))
     adjacent(where) ! AddPlayerData(p.data)
     this.players -= p.data.id
-    println(where)
+
   }
 
   def changeArea(p: Player): Unit = {
@@ -122,9 +128,7 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
     val maxX = position.x + dimension.x
     val minY = position.y
     val maxY = position.y + dimension.y
-    println("x ="+x +" "+ "y ="+y)
-    println("minx ="+minX +" "+ "miny ="+minY)
-    println("maxx ="+maxX +" "+ "maxy ="+maxY)
+
     if( x > minX && x < maxX && y > maxY  ){
       if( adjacent.keySet.exists(_=="N") )
       transfert(p.data.id,"N")
@@ -228,7 +232,34 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
   }
 
   def notifyPlayers(): Unit = {
-    players.values.foreach(_.actor ! PlayersUpdate(message))
+
+    var messages = ""
+
+    implicit val timeout = Timeout(1.second)
+    val listMessage = readList.map(actor => actor ? AskMessage())
+
+    val seq = listMessage.toSeq
+    val truc = waitAll(seq)
+
+    truc.foreach(x => {
+      x.foreach(trie => trie match {
+        case Success(v) => v match {
+          case Message(json) =>   {
+
+            if(json !="") {
+              if (messages == "") messages = json
+              else
+                messages = messages.dropRight(1) + "," + json.drop(1)
+            }
+          }
+        }
+        case Failure(e) => {}
+      })
+      println(messages)
+      players.values.foreach(_.actor ! PlayersUpdate(messages))
+    })
+
+
   }
 
   //method which gives a bool in order to know if the player p is hurting one of the other players (players)
@@ -271,6 +302,15 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
     //  jsonMessage
 
   }
+
+   def lift[T](futures: Seq[Future[T]]) =
+    futures.map(_.map {
+      Success(_)
+    }.recover { case t => Failure(t) })
+
+  def waitAll[T](futures: Seq[Future[T]]) =
+    Future.sequence(lift(futures)) // having neutralized exception completions through the lifting, .sequence can now be used
+
 
 
 }

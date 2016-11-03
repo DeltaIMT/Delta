@@ -12,7 +12,7 @@ object GameEvent {
   case class PlayerData(id: String, p: List[Vector], v: Double, angle: Double, l: Double, r: Double, color: Array[Int], lastCommand: String)
 
   object PlayerData {
-    def newOne(id: String, rand: Random): PlayerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, 0, 1000, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
+    def newOne(id: String, rand: Random): PlayerData = PlayerData(id, Vector(0,0) :: List.empty[Vector], 50, 0, 1000, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
   }
 
   case class Player(data: PlayerData, actor: ActorRef)  {
@@ -31,6 +31,8 @@ object GameEvent {
       val newPositions = pos :: data.p.take(data.p.size - remove)
       Player(PlayerData(this.data.id, newPositions, data.v, angle, data.l, data.r, data.color, data.lastCommand), actor)
     }
+
+    def bloc = Player(PlayerData(this.data.id, data.p.tail.head ::data.p.tail, data.v, data.angle, data.l, data.r, data.color, data.lastCommand), actor)
 
 
   }

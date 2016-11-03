@@ -85,18 +85,11 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
     positions.foreach(_.foreach( {
       case PlayerJson(json) => listPositions = json :: listPositions
     }))
-    var msg = ""
-    if (listPositions.size == 1){
-      msg = "[" + listPositions.head + "]"
+    var msg = "[" + message
+    for (elem <- listPositions) {
+      msg += "," + elem
     }
-    else if(listPositions.size > 1)  {
-      msg = "[" + listPositions.head
-      listPositions = listPositions.drop(1)
-      for (elem <- listPositions) {
-        msg += "," + elem
-      }
-      msg += "]"
-    }
+    msg += "]"
     player.actor ! PlayersUpdate(msg)
   }
 

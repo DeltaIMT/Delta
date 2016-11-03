@@ -17,8 +17,11 @@ window.onload = function()
     context.canvas.width  = window.innerWidth
     context.canvas.height = window.innerHeight
 
-    var worldSize = {x: 2000,y: 2000}
- 
+    var worldSize = {x: 2000, y: 2000}
+    var cam = {x: 0, y: 0}
+
+    var currentSnake = {x: 0, y: 0} // position of the snake's head : the camera has to be centered around it 
+
     var Snake = require('./Snake')
     var snakes = []
 
@@ -33,27 +36,40 @@ window.onload = function()
             jsonData = JSON.parse(event.data) 
             for (var i = 0; i<jsonData.length; i++) {
               var exists = false
+              var data = jsonData[i]
               var j = 0
               while (!exists && j<snakes.length) {
-                if (snakes[j].is(jsonData[i].id)) {
-                  exists = true
-                  snakes[j].l = jsonData[i].l
-                  snakes[j].add(jsonData[i].x, jsonData[i].y)
+                var snake = snakes[j]
+                if (snake.is(data.id)) {
+                  if (data.c) {
+                    snakes.splice(j,1)
+                  }
+                  else {
+                    exists = true
+                    snake.l = data.l
+                    snake.r = data.r
+                    snake.rgb = data.rgb
+                    
+                    if (snake.is(id)) {
+                      currentSnake.x = data.x
+                      currentSnake.y = data.y
+                    }
+                    snake.add(data.x, data.y)  
+                  }
                 }
                 j++
               }
-              if (!exists) {
-                snakes.push(new Snake(jsonData[i].id, jsonData[i].l, jsonData[i].x, jsonData[i].y))
+              if (!exists && !data.c) {
+                snakes.push(new Snake(data.id, data.x, data.y, data.r, data.l, data.rgb))
               }
             }
-            //TODO delete snakes when dead    
           }
 
     var mousePosition = {x:0, y:0}
 
     document.addEventListener('mousemove', function(mouseMoveEvent){   
-        mousePosition.x = mouseMoveEvent.pageX
-        mousePosition.y = mouseMoveEvent.pageY
+        mousePosition.x = mouseMoveEvent.pageX + cam.x
+        mousePosition.y = mouseMoveEvent.pageY + cam.y
     }, false)   
     
     var sendCommand = () =>
@@ -75,19 +91,36 @@ window.onload = function()
     }
     setTimeout(countFPS,1000)
     
-    
     var draw = () =>
     {
-      context.clearRect(0, 0, canvas.width, canvas.height)
-      context.beginPath()
+      // clamp the camera position to the world bounds while centering the camera around the snake                    
+      cam.x = clamp(currentSnake.x - canvas.width/2, 0, worldSize.x - canvas.width);
+      cam.y = clamp(currentSnake.y - canvas.height/2, 0, worldSize.y - canvas.height);
 
+      context.setTransform(1,0,0,1,0,0);  // because the transform matrix is cumulative
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.translate(-cam.x, -cam.y); 
+
+      // draw the background
+      var background = new Image()
+      background.src = 'pictures/background.png'
+      var pattern = context.createPattern(background, 'repeat')
+
+      context.beginPath()
+      context.rect(cam.x, cam.y, canvas.width + cam.x, canvas.height + cam.y);
+      context.fillStyle = pattern
+      context.fill()
+
+      // draw the snakes
       for (var i=0; i<snakes.length; i++) {
-        for (var j=0; j<snakes[i].positions.length; j++) {
-          context.arc(snakes[i].positions[j].x, snakes[i].positions[j].y, snakes[i].l /*the radius*/, 0, Math.PI*2)
-          context.strokeStyle = "#6D071A"
-          context.stroke()
-          context.fillStyle = "#A5260A"
+        var snake = snakes[i]
+        for (var j=0; j<snake.positions.length; j++) {
+          context.beginPath()
+          context.arc(snake.positions[j].x, snake.positions[j].y, snake.r, 0, Math.PI*2)
+          context.fillStyle = "rgb(" + snake.rgb[0] + ", " + snake.rgb[1] + ", " + snake.rgb[2] + ")"
           context.fill()
+          context.strokeStyle = "rgb(" + snake.rgb[0]/2 + ", " + snake.rgb[1]/2 + ", " + snake.rgb[2]/2 + ")"
+          context.stroke()
         }
       }
     
@@ -95,5 +128,9 @@ window.onload = function()
     }
     
     window.requestAnimationFrame(draw)
+
+    function clamp(value, min, max){
+        return Math.min(Math.max(value, min), max);
+    } 
 
 }

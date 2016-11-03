@@ -1,8 +1,10 @@
 class Snake {
-    constructor(id, l, x, y) {
+    constructor(id, x, y, r, l, rgb) {
         this.id = id
-        this.l = l
         this.positions = [{x: x, y: y}]
+        this.r = r
+        this.l = l
+        this.rgb = rgb
     }
 
     add(x,y) {

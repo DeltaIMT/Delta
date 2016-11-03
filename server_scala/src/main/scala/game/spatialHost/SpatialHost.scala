@@ -183,7 +183,7 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
       val c = collision(x, playersValues.filter(y => x != y))
       if (c != "0") {
 
-        players(x.data.id) = players(x.data.id).newPosAng(Vector(rand.nextInt(800), rand.nextInt(800)), rand.nextDouble())
+        players(x.data.id) = players(x.data.id).newPosAng(Vector(50*rand.nextInt(490),50+1*rand.nextInt(490)), rand.nextDouble())
 
       }
     })
@@ -236,7 +236,12 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
     var messages = ""
 
     implicit val timeout = Timeout(1.second)
-    val listMessage = readList.map(actor => actor ? AskMessage())
+
+    var readlistOnlyAdj = List[ActorRef]()
+    adjacent.foreach(x => readlistOnlyAdj= x._2 :: readlistOnlyAdj)
+    readlistOnlyAdj = self::readlistOnlyAdj
+
+    val listMessage = /*readList*/  readlistOnlyAdj.map(actor => actor ? AskMessage())
 
     val seq = listMessage.toSeq
     val truc = waitAll(seq)
@@ -255,7 +260,6 @@ class SpatialHost(val position: Vector, val dimension: Vector, val factor: Doubl
         }
         case Failure(e) => {}
       })
-      println(messages)
       players.values.foreach(_.actor ! PlayersUpdate(messages))
     })
 

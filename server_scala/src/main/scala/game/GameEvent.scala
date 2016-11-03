@@ -34,7 +34,7 @@ object GameEvent {
       Player(PlayerData(this.data.id, newPositions, data.v, angle, data.l, data.r, data.color, data.lastCommand), actor)
     }
 
-    def bloc = Player(PlayerData(this.data.id, data.p.tail.head ::data.p.tail, data.v, data.angle, data.l, data.r, data.color, data.lastCommand), actor)
+    def bloc = this//Player(PlayerData(this.data.id, data.p.tail.head ::data.p.tail, data.v, data.angle, data.l, data.r, data.color, data.lastCommand), actor)
 
 
   }

@@ -7,12 +7,15 @@ import game.Formatters._
 import game.GameEvent._
 import play.api.libs.json.Json
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
-class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
+class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor {
   val rand = scala.util.Random
-  var player = Player( PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
+  var player = Player(PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null), playerActorRef)
   var message = ""
   var players = collection.mutable.LinkedHashMap.empty[String, ActorRef]
 
@@ -24,6 +27,7 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
       player = Player(physic(player.data), player.actor)
       updateMessage
       notifyPlayer
+
     };
 
     case ListPlayers(list) => {
@@ -44,57 +48,84 @@ class ActorPerPlayer(id: String, playerActorRef: ActorRef) extends Actor{
     }
 
     case AskJson => {
-      sender ! PlayerJson(playerToJson(player.data))
+      sender ! PlayerJson(message)
     }
   }
 
   def physic(data: PlayerData): PlayerData = {
-    if(data.lastCommand != null) {
+    if (data.lastCommand != null) {
       val jsonObject = Json.parse(data.lastCommand)
       val mouse_x = (jsonObject \ "mouse" \ "x").as[Double]
       val mouse_y = (jsonObject \ "mouse" \ "y").as[Double]
       val direction2go = Vector(mouse_x, mouse_y) - data.p.head
-      var newAngle  = 0.0
+      var newAngle = 0.0
 
       val vectorAngle = Vector(Math.cos(data.angle), Math.sin(data.angle))
-      val MeanVector =( direction2go.unit*0.2 + vectorAngle*0.8).unit
+      val MeanVector = (direction2go.unit * 0.2 + vectorAngle * 0.8).unit
 
-      newAngle = Angle.arctan(MeanVector.x,MeanVector.y)
+      newAngle = Angle.arctan(MeanVector.x, MeanVector.y)
 
-      val newSpeed = Vector.fromAngle(data.angle)*5
+      val newSpeed = Vector.fromAngle(data.angle) * 5
 
       var remove = 1
       if (data.p.size < data.l)
         remove = 0
-      val newPositions =data.p.head +newSpeed  ::data.p.take(data.p.size-remove)
+      val newPositions = data.p.head + newSpeed :: data.p.take(data.p.size - remove)
 
-      return PlayerData(data.id,newPositions, data.v,newAngle,data.l, data.r, data.color, data.lastCommand  )
+      return PlayerData(data.id, newPositions, data.v, newAngle, data.l, data.r, data.color, data.lastCommand)
     }
     else
       return data
   }
 
-  def updateMessage() : Unit = {
+  def updateMessage(): Unit = {
     message = playerToJson(player.data)
   }
+
+
+  private def lift[T](futures: Seq[Future[T]]) =
+    futures.map(_.map {
+      Success(_)
+    }.recover { case t => Failure(t) })
+
+  def waitAll[T](futures: Seq[Future[T]]) =
+    Future.sequence(lift(futures)) // having neutralized exception completions through the lifting, .sequence can now be used
 
   def notifyPlayer(): Unit = {
     var listPositions = List[String]()
     implicit val timeout = Timeout(1.second)
-    val positions = players.map(actor =>actor._2 ? AskJson)
-    positions.foreach(_.foreach( {
-      case PlayerJson(json) => listPositions = json :: listPositions
-    }))
-    var msg = "[" + message
-    for (elem <- listPositions) {
-      msg += "," + elem
-    }
-    msg += "]"
-    player.actor ! PlayersUpdate(msg)
+    val positions = players.map(actor => actor._2 ? AskJson)
+
+    //    positions.foreach(_.foreach( {
+    //case PlayerJson(json) => listPositions = json :: listPositions
+    //    }))
+
+    val seqe = positions.toSeq
+
+    val truc = waitAll(seqe)
+    truc.foreach(x => {
+      x.foreach(trie => trie match {
+        case Success(v) => v match {
+          case PlayerJson(json) => listPositions = json :: listPositions
+        }
+        case Failure(e) => {}
+
+      })
+
+      var msg = "[" + message
+      for (elem <- listPositions) {
+        msg += "," + elem
+      }
+      msg += "]"
+      player.actor ! PlayersUpdate(msg)
+
+    })
+
+
   }
 
   def playerToJson(data: PlayerData): String = {
-    val message = PlayerMessage(data.id, data.p.head.x ,data.p.head.y , data.r,data.l, data.color)
+    val message = PlayerMessage(data.id, data.p.head.x, data.p.head.y, data.r, data.l, data.color)
     val jsonMessage = Json.toJson(message)
     Json.stringify(jsonMessage)
   }

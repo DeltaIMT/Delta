@@ -19,12 +19,13 @@ class ManagerActorPerPlayer() extends Actor{
     case AddClient(id, playerActorRef) => {
       val host = context.actorOf(Props(new ActorPerPlayer(id, playerActorRef)),"actor" + id)
       val cancellable  = context.system.scheduler.schedule( 1000 milliseconds , 33.3333 milliseconds, host, Tick())
-      players += id -> host
+
       sender ! ChangeActor(id, host)
-      host ! ListPlayers(players)
+      host ! ListPlayers(players.clone())
+      players += id -> host
     }
 
-    case AskJson => { sender ! PlayerJson("")}
+    case AskJson => { sender ! PlayerJson("{}")}
 
     case DeletePlayer(id) => {
       players -= id

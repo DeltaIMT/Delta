@@ -13,10 +13,10 @@ class SpatialHost(val position : Vector, val dimension : Vector,val factor:Doubl
   var time= 0
   val rand = scala.util.Random
   var other : ActorRef = null
-  override def receive: Receive = {
 
+  override def receive: Receive = {
     case AddClient(id :String , client : ActorRef) => {
-      val playerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
+      val playerData = PlayerData(id, Vector(rand.nextInt(500),rand.nextInt(1000)) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
       players += (id -> Player(playerData, client))
     }
     case DeleteClient(id:String) => players -= id
@@ -26,24 +26,95 @@ class SpatialHost(val position : Vector, val dimension : Vector,val factor:Doubl
     case Tick() => {
       physics
       notifyPlayers
+      changeIsNeeded
     }
 
     case OtherSpatial(other : ActorRef) =>{
       this.other  = other
     }
+
+
   }
 
 
   def isInside(p:Player) : Boolean =
   {
-    val player_pos = p.data.p;
+    val player_pos = p.data.p.head;
 
-    (   (position.x <= player_pos.head.x)
-      &&(position.y <= player_pos.head.y)
-      &&(player_pos.head.x <= position.x + dimension.x)
-      &&(player_pos.head.y <= position.y + dimension.y)
+    (   (position.x < player_pos.x)
+      &&(position.y < player_pos.y)
+      &&(player_pos.x <= position.x + dimension.x)
+      &&(player_pos.y <= position.y + dimension.y)
       )
   }
+
+
+  def players_out() : collection.mutable.LinkedHashMap[String, Player] =
+  {
+    val players_to_update = collection.mutable.LinkedHashMap.empty[String, Player]
+    players.foreach(paire=>
+    {
+      if(!(isInside(paire._2)))
+      {
+        players_to_update.+=(paire)
+      }
+    })
+    players_to_update
+  }
+
+
+  def changeIsNeeded() : Unit =
+  {
+    val playerOut = players_out
+    playerOut.foreach( paire =>
+    {
+      changeArea(paire._2)
+    })
+
+  }
+
+
+  def changeArea(p:Player):Unit =
+  {
+    if (!(this.isInside(p)))
+    {
+      //      actors_next_to_me.foreach( actor =>
+      //      {
+      //          if (actor.isInside(p))
+      //            {
+      //              actor ! AddPlayer(p, actor)
+      //            }
+      //      })
+      //if(true) {
+      //  other ! AddClient(p.data.id, p.actor)
+      //  this.players.remove(p.data.id)
+      //}
+      //else
+      //p.bloc
+      println("dehors**************************")
+      //other ! AddClient(p.data.id, p.actor)
+      //this.players.remove(p.data.id)
+    }
+    if ((this.isInside(p))){
+      println("**************************de retour")
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   def physics() : Unit   = {
     time += 1
@@ -150,3 +221,5 @@ class SpatialHost(val position : Vector, val dimension : Vector,val factor:Doubl
   }
 
 }
+
+

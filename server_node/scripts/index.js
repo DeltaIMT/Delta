@@ -20,8 +20,8 @@ window.onload = function()
     var worldSize = {x: 2000, y: 2000}
     var cam = {x: 0, y: 0}
 
-    var currentSnake = {x: 0, y: 0} // position of the snake's head : the camera has to be centered around it
- 
+    var currentSnake = {x: 0, y: 0} // position of the snake's head : the camera has to be centered around it 
+
     var Snake = require('./Snake')
     var snakes = []
 
@@ -41,34 +41,35 @@ window.onload = function()
               while (!exists && j<snakes.length) {
                 var snake = snakes[j]
                 if (snake.is(data.id)) {
-                  exists = true
-                  snake.l = data.l
-                  snake.r = data.r
-                  snake.rgb = data.rgb
-                  
-                  if (snake.is(id)) {
-                    currentSnake.x = data.x + cam.x
-                    currentSnake.y = data.y + cam.y
-                    snake.add(currentSnake.x, currentSnake.y)
+                  if (data.c) {
+                    snakes.splice(j,1)
                   }
                   else {
-                    snake.add(data.x, data.y)
+                    exists = true
+                    snake.l = data.l
+                    snake.r = data.r
+                    snake.rgb = data.rgb
+                    
+                    if (snake.is(id)) {
+                      currentSnake.x = data.x
+                      currentSnake.y = data.y
+                    }
+                    snake.add(data.x, data.y)  
                   }
                 }
                 j++
               }
-              if (!exists) {
+              if (!exists && !data.c) {
                 snakes.push(new Snake(data.id, data.x, data.y, data.r, data.l, data.rgb))
               }
             }
-            //TODO delete dead snakes  
           }
 
     var mousePosition = {x:0, y:0}
 
     document.addEventListener('mousemove', function(mouseMoveEvent){   
-        mousePosition.x = mouseMoveEvent.pageX
-        mousePosition.y = mouseMoveEvent.pageY
+        mousePosition.x = mouseMoveEvent.pageX + cam.x
+        mousePosition.y = mouseMoveEvent.pageY + cam.y
     }, false)   
     
     var sendCommand = () =>
@@ -90,14 +91,13 @@ window.onload = function()
     }
     setTimeout(countFPS,1000)
     
-    
     var draw = () =>
     {
       // clamp the camera position to the world bounds while centering the camera around the snake                    
       cam.x = clamp(currentSnake.x - canvas.width/2, 0, worldSize.x - canvas.width);
       cam.y = clamp(currentSnake.y - canvas.height/2, 0, worldSize.y - canvas.height);
 
-      context.setTransform(1,0,0,1,0,0);  // because the transform matrix is cumulative // TODO FIND HOW IT WORKS
+      context.setTransform(1,0,0,1,0,0);  // because the transform matrix is cumulative
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.translate(-cam.x, -cam.y); 
 

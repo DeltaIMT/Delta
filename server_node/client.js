@@ -1,14 +1,16 @@
 var uuid = require('node-uuid');
-for(var k = 0; k < 40;k++)
-{
+var k =0
+var id = uuid.v4()
+var createOne= () => {
+k++
 var WebSocketClient = require('websocket').client;
 var client = new WebSocketClient();
  
 
-var id = k
+var id2 = id +"/"+k
  
 client.on('connect', function(connection) {
-    console.log('WebSocket Client '+id +' Connected');
+    console.log('WebSocket Client '+id2 +' Connected');
    
     // connection.on('message', function(message) {
     //     if (message.type === 'utf8') {
@@ -18,8 +20,8 @@ client.on('connect', function(connection) {
 
     var sendCommand = () =>
     {
-    setTimeout(sendCommand,16.667)
-    var mousePosition = { x: Math.random()*800 , y:Math.random()*800}
+    setTimeout(sendCommand,33.33333)
+    var mousePosition = { x: Math.random()*6000 , y:Math.random()*6000}
     var command = { "mouse" : mousePosition }
     connection.send( JSON.stringify(command)  )
     }
@@ -28,6 +30,9 @@ client.on('connect', function(connection) {
     
 });
  
-client.connect('ws://localhost:8080'+"/?id="+id, null);
-
+client.connect('ws://localhost:8080'+"/?id="+id2, null);
+if(k <200) setTimeout(createOne,40)
 }
+
+
+createOne()

@@ -2,14 +2,19 @@ package game
 
 import akka.actor.ActorRef
 import game.GameEvent.{Player, PlayerData, Vector}
+
+import scala.collection.immutable.HashMap.HashMap1
+import scala.collection.mutable
 import scala.util.Random
 
 object GameEvent {
 
+  case class AddPlayerData(playerData : PlayerData)
+
   case class PlayerData(id: String, p: List[Vector], v: Double, angle: Double, l: Double, r: Double, color: Array[Int], lastCommand: String)
 
   object PlayerData {
-    def newOne(id: String, rand: Random): PlayerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, 0, 1000, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
+    def newOne(id: String, rand: Random): PlayerData = PlayerData(id, Vector(0,0) :: List.empty[Vector], 50, 0, 1000, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
   }
 
   case class Player(data: PlayerData, actor: ActorRef)  {
@@ -28,6 +33,8 @@ object GameEvent {
       val newPositions = pos :: data.p.take(data.p.size - remove)
       Player(PlayerData(this.data.id, newPositions, data.v, angle, data.l, data.r, data.color, data.lastCommand), actor)
     }
+
+    def bloc = this//Player(PlayerData(this.data.id, data.p.tail.head ::data.p.tail, data.v, data.angle, data.l, data.r, data.color, data.lastCommand), actor)
 
 
   }
@@ -98,4 +105,9 @@ object GameEvent {
 
   case class PlayerMessage(id: String, x: Double,y:Double, r: Double, l :Double, rgb: Array[Int])
 
+  case class ListPlayers(players: mutable.LinkedHashMap[String, ActorRef])
+  case class NewPlayer(id: String, playerActorRef: ActorRef)
+  case class DeletePlayer(id: String)
+  case object AskJson
+  case class PlayerJson(jsonMessage: String)
 }

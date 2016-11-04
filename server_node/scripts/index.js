@@ -17,7 +17,7 @@ window.onload = function()
     context.canvas.width  = window.innerWidth
     context.canvas.height = window.innerHeight
 
-    var worldSize = {x: 2000, y: 2000}
+    var worldSize = {x: 6000, y: 6000}
     var cam = {x: 0, y: 0}
 
     var currentSnake = {x: 0, y: 0} // position of the snake's head : the camera has to be centered around it 
@@ -36,6 +36,8 @@ window.onload = function()
             jsonData = JSON.parse(event.data) 
             for (var i = 0; i<jsonData.length; i++) {
               var exists = false
+              if (jsonData[i].id!= undefined)
+              { 
               var data = jsonData[i]
               var j = 0
               while (!exists && j<snakes.length) {
@@ -62,6 +64,7 @@ window.onload = function()
               if (!exists && !data.c) {
                 snakes.push(new Snake(data.id, data.x, data.y, data.r, data.l, data.rgb))
               }
+            }
             }
           }
 

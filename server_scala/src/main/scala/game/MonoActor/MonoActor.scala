@@ -15,7 +15,7 @@ class MonoActor extends Actor {
   override def receive: Receive = {
 
     case AddClient(id :String , client : ActorRef) => {
-      val playerData = PlayerData(id, Vector(0, 0) :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
+      val playerData = PlayerData(id, Vector(50+rand.nextInt(4900),50+1*rand.nextInt(4900))  :: List.empty[Vector], 50, rand.nextDouble(), 10, 10, Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), null)
       players += (id -> Player(playerData, client))
     }
     case DeleteClient(id:String) => players -= id
@@ -39,7 +39,7 @@ class MonoActor extends Actor {
       if(c != "0")
         {
 
-          players(x.data.id) = players(x.data.id).newPosAng(Vector(rand.nextInt(800),rand.nextInt(800)),rand.nextDouble())
+          players(x.data.id) = players(x.data.id).newPosAng(Vector(50+rand.nextInt(4900),50+1*rand.nextInt(4900)) ,rand.nextDouble())
 
         }
     })

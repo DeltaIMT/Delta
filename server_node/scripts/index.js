@@ -36,6 +36,8 @@ window.onload = function()
             jsonData = JSON.parse(event.data) 
             for (var i = 0; i<jsonData.length; i++) {
               var exists = false
+              if (jsonData[i].id!= undefined)
+              { 
               var data = jsonData[i]
               var j = 0
               while (!exists && j<snakes.length) {
@@ -62,6 +64,7 @@ window.onload = function()
               if (!exists && !data.c) {
                 snakes.push(new Snake(data.id, data.x, data.y, data.r, data.l, data.rgb))
               }
+            }
             }
           }
 

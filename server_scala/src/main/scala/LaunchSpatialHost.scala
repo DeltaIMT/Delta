@@ -19,7 +19,7 @@ object LaunchSpatialHost extends App {
   var listHost = List[ActorRef]();
   for(i <- 0 until width*height ){
     var j = width*height-1 - i
-    val spatial  = actorSystem.actorOf(Props(new SpatialHost(Vector(1000*x_i(j),1000*y_i(j)),Vector(1000,1000),(i%2)+1 )), "spatial"+i)
+    val spatial  = actorSystem.actorOf(Props(new SpatialHost(Vector(1000*x_i(j),1000*y_i(j)),Vector(1000,1000),1 )), "spatial"+i)
     listHost = spatial ::listHost
   }
 
@@ -52,7 +52,7 @@ object LaunchSpatialHost extends App {
     listHost(i) ! OtherSpatial(listHost(j ),"NW")
   }
 
-  listHost(5) ! SayPosAll()
+//  listHost(5) ! SayPosAll()
 
   val manager  = actorSystem.actorOf(Props(new ManagerSpatialHost(listHost)), "manager")
   val provider  = actorSystem.actorOf(Props(new Provider(manager)), "provider")

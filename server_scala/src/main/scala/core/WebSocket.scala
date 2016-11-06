@@ -7,10 +7,7 @@ import akka.stream.{FlowShape, OverflowStrategy}
 import core.CoreMessage.{AddClient, Command, DeleteClient}
 import game.GameEvent.PlayersUpdate
 
-/**
-  * Created by vannasay on 20/10/16.
-  */
-class WebSocket(provider: ActorRef) {
+class WebSocket(provider: ActorRef)  extends IWebSocket{
   val rand = scala.util.Random
   val playerActorSource= Source.actorRef[Any](60,OverflowStrategy.fail)
   def flow(id: String, regionName: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>

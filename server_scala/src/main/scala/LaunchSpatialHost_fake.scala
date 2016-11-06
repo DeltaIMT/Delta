@@ -1,5 +1,6 @@
-import akka.actor.{ActorRef, ActorSystem, Props}
-import core.CoreMessage.SetProvider
+import akka.actor.Actor.Receive
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import core.CoreMessage.{AddClient, Command, SetProvider}
 import core.{Provider, Server}
 import game.GameEvent.Tick
 import game.spatialHost._
@@ -7,8 +8,22 @@ import game.GameEvent.Vector
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.Random
 
-object LaunchSpatialHost extends App {
+
+class FakeClient(id: String,provider : ActorRef) extends Actor{
+
+  val rand = Random
+  override def receive: Receive = {
+
+    case Tick() => provider ! Command(id," {\"mouse\":{\"x\":"+rand.nextInt(6000)+",\"y\":"+rand.nextInt(6000)+"  }  }")
+
+  }
+}
+
+
+
+object LaunchSpatialHost_fake extends App {
 
 
   def main() = {
@@ -63,9 +78,24 @@ object LaunchSpatialHost extends App {
     listHost.foreach(x => x ! SetProvider(provider))
     listHost.foreach(x => x ! SetReadList(listHost))
     val cancellableI = listHost.map(x => actorSystem.scheduler.schedule(1000 milliseconds, 33.3333 milliseconds, x, Tick()))
-    Server.launch(actorSystem, provider)
-    cancellableI.foreach(x => x.cancel())
-    actorSystem.terminate()
+
+    new Thread(new Runnable {
+      def run() {
+        Server.launch(actorSystem, provider)
+        cancellableI.foreach(x => x.cancel())
+        actorSystem.terminate()
+      }
+    }).start()
+
+    Thread.sleep(1000)
+    val rand = Random
+    val id = 1 to 200
+    val idString = id.map(x=>x.toString)
+    val fakeClient = idString.map( id => id -> actorSystem.actorOf(Props(new FakeClient(id, provider)), "fc"+id)   )
+    Thread.sleep(1000)
+    fakeClient.foreach( x => provider ! AddClient(x._1, x._2))
+    val canc = fakeClient.map( x => actorSystem.scheduler.schedule(1000 milliseconds, 33.3333 milliseconds, x._2, Tick()))
+
   }
   main
 }

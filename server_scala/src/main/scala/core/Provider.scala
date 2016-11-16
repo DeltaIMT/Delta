@@ -8,6 +8,7 @@ object Provider {
   }
 }
 
+
 class Provider(default : ActorRef) extends Actor {
 
   var map_ID_Actor = collection.mutable.HashMap.empty[String,ActorRef]
@@ -15,17 +16,19 @@ class Provider(default : ActorRef) extends Actor {
 
   override def receive: Receive = {
 
+
     case AddClient(id: String, client: ActorRef) => {
       map_ID_Client(id) = client
       map_ID_Actor(id) = default
-
       default ! AddClient(id,map_ID_Client(id))
+      println(id + " CONNECTED")
     }
 
     case DeleteClient(id : String) => {
       map_ID_Actor(id) ! DeleteClient(id)
       map_ID_Actor(id) = null
       map_ID_Client(id) = null
+      println(id + " DISCONNECTED")
     }
 
     case Command(id:  String, txt : String) =>{

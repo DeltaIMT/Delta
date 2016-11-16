@@ -9,10 +9,10 @@ import game.GameEvent.PlayersUpdate
 
 class WebSocket(provider: ActorRef)  extends IWebSocket{
   val rand = scala.util.Random
-  val playerActorSource= Source.actorRef[Any](60,OverflowStrategy.fail)
+  val playerActorSource= Source.actorRef[Any](10000,OverflowStrategy.fail)
   def flow(id: String, regionName: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>
     import GraphDSL.Implicits._
-    println(id + " connected")
+
     val materialization = builder.materializedValue.map(playerActorRef => AddClient(id, playerActorRef))
     val merge = builder.add(Merge[Any](2))
 

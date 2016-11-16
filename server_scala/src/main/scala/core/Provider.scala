@@ -21,12 +21,14 @@ class Provider(default : ActorRef) extends Actor {
       map_ID_Client(id) = client
       map_ID_Actor(id) = default
       default ! AddClient(id,map_ID_Client(id))
+      println(id + " CONNECTED")
     }
 
     case DeleteClient(id : String) => {
       map_ID_Actor(id) ! DeleteClient(id)
       map_ID_Actor(id) = null
       map_ID_Client(id) = null
+      println(id + " DISCONNECTED")
     }
 
     case Command(id:  String, txt : String) =>{

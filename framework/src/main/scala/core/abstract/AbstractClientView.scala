@@ -2,7 +2,7 @@ package core.`abstract`
 
 import akka.pattern._
 import akka.actor.{Actor, ActorRef}
-import core.HostPool
+import core.{HostPool, HyperHost}
 import core.user_import.{Element, Zone}
 
 case class Notify(any: Any)
@@ -18,10 +18,25 @@ abstract class AbstractClientView(hosts: HostPool, client: ActorRef) extends Act
   def onNotify(any: Any): Unit = ???
 
   def fromListToClientMsg(list: List[Any]) = ???
-  
+
   def zonesToList(zones: List[Zone]): List[Any] = {
 
-    var hostInsideZones = zones map { z => hosts.getHyperHost(z.x, z.y) }
+    var hostInsideZones = List[HyperHost]()
+
+    var fake = new Element(0,0)
+    for( x <- 0 until hosts.w*hosts.wn by hosts.w ; y <- 0 until hosts.h*hosts.hn by hosts.h ){
+      fake.x=x
+      fake.y=y
+
+      var bool = false
+      zones foreach { z => bool = bool || z.contains(fake) }
+
+      if (bool)
+      {
+          hostInsideZones =   hosts.getHyperHost(x, y) :: hostInsideZones
+      }
+    }
+
     hostInsideZones = hostInsideZones.distinct
     var res = List[Element]()
     hostInsideZones foreach { h =>

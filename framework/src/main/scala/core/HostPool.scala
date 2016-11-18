@@ -2,10 +2,14 @@ package core
 
 import akka.actor.ActorRef
 
-class HostPool(val w : Double,val h: Double, val wn :Int, val hn : Int, val hosts: IndexedSeq[ActorRef]) {
+class HostPool(val w : Double,val h: Double, val wn :Int, val hn : Int) {
 
   var hyperHostsMap =  collection.mutable.HashMap[ActorRef,HyperHost]()
-  hosts foreach {h =>hyperHostsMap += h -> new HyperHost(h)}
+  var hosts  = IndexedSeq[ActorRef]()
+  def addHost(hosts: IndexedSeq[ActorRef]) = {
+    this.hosts = hosts
+    hosts foreach {h =>hyperHostsMap += h -> new HyperHost(h)}
+  }
 
   def fromXY2I(x : Double, y  :Double) : Int = wn* (y/h).toInt + (x/w).toInt
   def fromXY2I(x : Int, y  :Int) : Int = wn*y + x

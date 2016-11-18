@@ -2,9 +2,6 @@ package core
 
 import akka.actor.ActorRef
 
-/**
-  * Created by thoma on 27/10/2016.
-  */
 object CoreMessage {
   case class DeleteClient(id: String)
   case class AddClient(id: String, playerActorRef: ActorRef)
@@ -13,4 +10,6 @@ object CoreMessage {
   case class SetProvider(actor : ActorRef)
   case class OnConnect(actor: ActorRef)
   case class PlayersUpdate(json: String)
+  case class TransfertTo(id: String, host: ActorRef)
+  case class Transfert(id: String, element: Any)
 }

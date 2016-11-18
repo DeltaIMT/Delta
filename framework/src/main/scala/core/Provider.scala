@@ -5,7 +5,7 @@ import akka.actor.Actor.Receive
 import core.CoreMessage.{AddClient, OnConnect}
 import core.script_filled.UserClientView
 
-class Provider(hosts: IndexedSeq[ActorRef], specialHost: ActorRef) extends Actor{
+class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
   var clientRef : ActorRef = ???
 

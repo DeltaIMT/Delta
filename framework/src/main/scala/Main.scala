@@ -21,9 +21,10 @@ object Main extends App{
 
   val hosts =  0 until hostsGridWidth*hostsGridHeight map {i=> actorSystem.actorOf(Props(new UserHost()),"host"+i)}
   val specialHost = actorSystem.actorOf(Props(new UserSpecialHost()), "specialHost")
-  val providers = 0 until numberOfClient map {i=>actorSystem.actorOf(Props(new Provider(hosts, specialHost)),"provider_"+i)}
-  val websockets = 0 until numberOfClient map {i=>initialPort+i -> new Websocket(providers(i),initialPort+i)}
   val hostPool = new HostPool(hostWidth,hostHeight,hostsGridWidth,hostsGridHeight, hosts)
+  val providers = 0 until numberOfClient map {i=>actorSystem.actorOf(Props(new Provider(hostPool, specialHost)),"provider_"+i)}
+  val websockets = 0 until numberOfClient map {i=>initialPort+i -> new Websocket(providers(i),initialPort+i)}
+
   println("framework working")
 
   val routes = websockets.map(x => {

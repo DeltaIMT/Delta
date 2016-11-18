@@ -2,48 +2,65 @@ package core.`abstract`
 
 import akka.pattern._
 import akka.actor.{Actor, ActorRef}
-import core.HostPool
+import core.{HostPool, HyperHost}
 import core.user_import.{Element, Zone}
 
-case class Notify(any : Any)
+case class Notify(any: Any)
+
 case object UpdateClient
 
 
-abstract class AbstractClientView(hosts: HostPool,client : ActorRef) extends Actor {
+abstract class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
 
   // USER JOB
-  def dataToViewZone() : List[Zone] = ???
-  def onNotify(any: Any) :Unit = ???
-  def fromListToClientMsg(list : List[Any])= ???
+  def dataToViewZone(): List[Zone] = ???
 
-  // TODO HERE CONVERTION FROM ZONE TO LIST OF ELEMENT CONTAINED IN THE ZONES BY ASKING HOSTS
-  def zonesToList(zones : List[Zone]) :  List[Any] = {
+  def onNotify(any: Any): Unit = ???
 
-    var hostInsideZones = zones map {z => hosts.getHyperHost(z.x,z.y)}
+  def fromListToClientMsg(list: List[Any]) = ???
+
+  def zonesToList(zones: List[Zone]): List[Any] = {
+
+    var hostInsideZones = List[HyperHost]()
+
+    var fake = new Element(0,0)
+    for( x <- 0 until hosts.w*hosts.wn by hosts.w ; y <- 0 until hosts.h*hosts.hn by hosts.h ){
+      fake.x=x
+      fake.y=y
+
+      var bool = false
+      zones foreach { z => bool = bool || z.contains(fake) }
+
+      if (bool)
+      {
+          hostInsideZones =   hosts.getHyperHost(x, y) :: hostInsideZones
+      }
+    }
+
     hostInsideZones = hostInsideZones.distinct
     var res = List[Element]()
     hostInsideZones foreach { h =>
-
-      res = res :::  h.getList( (e : Element) =>  {
-                      var bool = false
-                      zones foreach { z => bool = bool || z.contains(e)}
-                      bool
-                    })
+      res = res ::: h.getListFilter(
+        (e: Element) => {
+          var bool = false
+          zones foreach { z => bool = bool || z.contains(e) }
+          bool
+        }
+      )
     }
     res
   }
 
   override def receive: Receive = {
-    case x : Notify => {
+    case x: Notify => {
       onNotify(x.any)
     }
     case UpdateClient => {
-      var list =zonesToList(dataToViewZone())
+      var list = zonesToList(dataToViewZone())
       client ! fromListToClientMsg(list)
     }
 
   }
-
 
 
 }

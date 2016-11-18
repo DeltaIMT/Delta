@@ -1,10 +1,12 @@
 var uuid = require('node-uuid');
 var id = uuid.v4()
 
-var jsonData = []
 var jsonDataPort = []
 var host = window.location.hostname
 var frames = 0
+
+var dataManipulationFunction = (arg) => {}
+var defineCommandToServer = () => {}
 
 var wsPort = new WebSocket('ws://' + host + ':6000')
 wsPort.onmessage = function (event) {
@@ -13,16 +15,26 @@ wsPort.onmessage = function (event) {
 
 var ws = new WebSocket('ws://' + host + jsonDataPort.port +"/?id="+id )
 ws.onmessage = function (event) {
-    frames++
-    jsonData = JSON.parse(event.data) 
-    jsonDataManipulation()
+    frames++ 
+    dataManipulationFunction(event.data)
 }
-    
-var sendCommandToServer = () => {
-    var sendCommand = () =>
+
+var countFpsFunction = () =>
     {
-    setTimeout(sendCommand,16.667)
-    ws.send( JSON.stringify(defineCommandToServer())  )
+      setTimeout(countFPS,1000)
+      console.log("fps : " +frames)
+      frames = 0
+      console.log(JSON.stringify(jsonData,1))
     }
-    setTimeout(sendCommand,1000)
+    setTimeout(countFPS,1000)
+
+var sendCommand = () =>
+{
+    setTimeout(sendCommand,16.667)
+    ws.send( defineCommandToServer() )
 }
+setTimeout(sendCommand,1000)
+
+module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
+module.exports.commandToServer = (f) => { commandToServerFunction = f }
+module.exports.countFps = () => { countFpsFunction() }

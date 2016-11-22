@@ -7,7 +7,7 @@ import core.script_filled.UserClientView
 
 class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
-  var clientRef : ActorRef = ???
+  var clientRef : ActorRef = null
 
   override def receive: Receive = {
 

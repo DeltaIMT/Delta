@@ -1,4 +1,3 @@
-import core.user_import._
 
 class slither(x: Double, y : Double) extends Observable with Element(x,y)
 

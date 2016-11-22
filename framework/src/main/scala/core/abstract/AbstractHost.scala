@@ -19,14 +19,6 @@ abstract class AbstractHost(val hostPool: HostPool) extends Actor {
       elements += id -> element
     }
 
-    case GetListFilter(f) => {
-      sender ! elements.values.filter(f)//??
-    }
-
-    case GetList => {
-      sender ! elements
-    }
-
     case Set(id, element) => {
       elements(id) = element
     }

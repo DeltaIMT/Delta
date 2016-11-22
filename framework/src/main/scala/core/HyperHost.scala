@@ -6,7 +6,7 @@ import akka.pattern._
 import akka.util.Timeout
 
 import scala.concurrent.duration._
-import core.CoreMessage.{GetList, GetListFilter}
+import core.CoreMessage.{Foreach, GetList, GetListFilter}
 import core.user_import.Element
 
 import scala.collection.mutable
@@ -21,10 +21,6 @@ class HyperHost(val host : ActorRef)  {
 
   def foreach(f : (Element) =>  Unit){
     host ! Foreach(f)
-  }
-
-  def foreach(f : (Element) =>  Unit, filter : (Element) => Boolean){
-    host ! Foreach(f,filter)
   }
 
 }

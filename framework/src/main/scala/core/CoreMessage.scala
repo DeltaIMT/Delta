@@ -16,4 +16,5 @@ object CoreMessage {
   case class GetListFilter(f: Element => Boolean)
   case class GetList()
   case class Set(id: String, element: Element)
+  case class Foreach(f : Element => Unit)
 }

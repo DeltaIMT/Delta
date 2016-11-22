@@ -20,7 +20,7 @@ abstract class AbstractHost(val hostPool: HostPool) extends Actor {
     }
 
     case GetListFilter(f) => {
-      sender ! elements.values.filter(f)
+      sender ! elements.values.filter(f)//??
     }
 
     case GetList => {
@@ -30,6 +30,12 @@ abstract class AbstractHost(val hostPool: HostPool) extends Actor {
     case Set(id, element) => {
       elements(id) = element
     }
+
+    case Foreach(f) => {
+      elements.foreach(e => f(e._2))
+
+    }
+
 
     case _ => {}
   }

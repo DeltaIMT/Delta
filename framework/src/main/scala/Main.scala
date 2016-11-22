@@ -14,7 +14,7 @@ object Main extends App{
   println("framework starting")
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val flowMaterializer = ActorMaterializer()
-  val initialPort = 6000
+  val initialPort = 6001
   val numberOfClient = 100
   val hostsGridWidth= 5
   val hostsGridHeight= 5

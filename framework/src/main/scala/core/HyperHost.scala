@@ -1,8 +1,10 @@
 package core
 
 import akka.actor.ActorRef
+import akka.dispatch.Foreach
 import akka.pattern._
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import core.CoreMessage.{GetList, GetListFilter}
 import core.user_import.Element
@@ -17,30 +19,12 @@ class HyperHost(val host : ActorRef)  {
     host ! Set(id,element)
   }
 
-  def getList() : mutable.HashMap[String,Element] = {
-    var list = mutable.HashMap[String,Element]()
-    val futureList = host ? GetList
-    futureList.map(_ => {
-      _ match {
-        case x: mutable.HashMap[String,Element] => {
-          list = x
-      }
-      }
-    })
-    list
+  def foreach(f : (Element) =>  Unit){
+    host ! Foreach(f)
   }
 
-  def getListFilter(f : Element => Boolean ) : mutable.HashMap[String,Element] = {
-    var list = mutable.HashMap[String,Element]()
-    val futureList = host ? GetListFilter(f)
-    futureList.map(_ => {
-      _ match {
-        case x: mutable.HashMap[String,Element] => {
-          list = x
-        }
-      }
-    })
-    list
+  def foreach(f : (Element) =>  Unit, filter : (Element) => Boolean){
+    host ! Foreach(f,filter)
   }
 
 }

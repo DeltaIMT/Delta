@@ -13,8 +13,6 @@ object CoreMessage {
   case class PlayersUpdate(json: String)
   case class TransfertTo(id: String, host: ActorRef)
   case class Transfert(id: String, element: Element)
-  case class GetListFilter(f: Element => Boolean)
-  case class GetList()
   case class Set(id: String, element: Element)
   case class Foreach(f : Element => Unit)
 }

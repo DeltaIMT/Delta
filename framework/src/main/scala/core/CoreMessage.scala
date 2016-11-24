@@ -15,4 +15,5 @@ object CoreMessage {
   case class Transfert(id: String, element: Element)
   case class Set(id: String, element: Element)
   case class Foreach(f : Element => Unit)
+  case class Exec(f : collection.mutable.HashMap[String,Element]=> Unit)
 }

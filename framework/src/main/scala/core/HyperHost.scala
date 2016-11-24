@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 import akka.util.Timeout
 
 import scala.concurrent.duration._
-import core.CoreMessage.{Foreach}
+import core.CoreMessage.{Exec, Foreach}
 import core.user_import.Element
 
 class HyperHost(val host : ActorRef)  {
@@ -16,5 +16,9 @@ class HyperHost(val host : ActorRef)  {
 
   def foreach(f : (Element) =>  Unit){
     host ! Foreach(f)
+  }
+
+  def exec(f : collection.mutable.HashMap[String,Element]=> Unit): Unit = {
+    host ! Exec(f)
   }
 }

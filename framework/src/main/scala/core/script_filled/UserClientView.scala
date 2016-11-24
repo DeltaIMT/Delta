@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import core.HostPool
 import core.`abstract`.AbstractClientView
 import core.user_import.Zone
+import core.user_import.Element
 
 //Placeholder to be replaced by pre-compilation script
 
@@ -13,5 +14,18 @@ class UserClientView(hosts: HostPool, client: ActorRef) extends AbstractClientVi
 
   override def onNotify(any: Any): Unit = println(any)
 
-  override def fromListToClientMsg(list: List[Any]): Unit = println("fromListToClientMsg: "+ list.mkString(","))
+  override def fromListToClientMsg(list: List[Any]) = {
+    val string = "fromListToClientMsg: "+ list.map(  e=> e match{
+
+      case e: Element => {
+        "(" + e.x + "," + e.y + ")"
+      }
+
+      case _ => "NOTELEMENT : " + e
+
+
+    }).mkString(",")
+    println(string)
+    string
+  }
 }

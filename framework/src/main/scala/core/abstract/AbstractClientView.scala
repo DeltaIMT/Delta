@@ -1,7 +1,9 @@
 package core.`abstract`
 
+import akka.actor.FSM.->
 import akka.pattern._
 import akka.actor.{Actor, ActorRef}
+import core.CoreMessage.AnyParts
 import core.{HostPool, HyperHost}
 import core.user_import.{Element, Zone}
 
@@ -12,14 +14,18 @@ case object UpdateClient
 
 abstract class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
 
+
+  var nextbuffer = 0
+  var buffers = collection.mutable.HashMap[Int, (Int, List[Any] ) ]()
+
   // USER JOB
   def dataToViewZone(): List[Zone]
 
   def onNotify(any: Any): Unit
 
-  def fromListToClientMsg(list: List[Any])
+  def fromListToClientMsg(list: List[Any]): String
 
-  def zonesToList(zones: List[Zone]): List[Any] = {
+  def zonesToList(zones: List[Zone]): Unit = {
 
     var hostInsideZones = List[HyperHost]()
 
@@ -39,25 +45,37 @@ abstract class AbstractClientView(hosts: HostPool, client: ActorRef) extends Act
     }
 
     hostInsideZones = hostInsideZones.distinct
-    var res = List[Element]()
-    hostInsideZones foreach { h => {
-      val elementfiltered= h.getListFilter(
-        (e: Element) => {
-          var bool = false
-          zones foreach { z => {
-            bool = bool || z.contains(e)
-            println(e + " is in " + z + " ? " + bool)
-          }
-          }
-          bool
+
+
+    buffers+= nextbuffer -> (hostInsideZones.size, List[Any]())
+
+
+    val isElementInsideZones = (e: Element) => {
+      var bool = false
+      zones foreach { z => {
+        bool = bool || z.contains(e)
+        println(e + " is in " + z + " ? " + bool)
+      }
+      }
+      bool
+    }
+
+
+    println("sending to buffer :" + nextbuffer)
+    val nextbufferCopy = nextbuffer
+
+    hostInsideZones.foreach({ h => {
+      h.exec(
+        l => {
+          val res = l.values.filter(isElementInsideZones).toList
+          println("SIZE: " + res.size + " sending to buffer :" + nextbufferCopy)
+          self ! AnyParts(nextbufferCopy, res)
         }
-      ).values.toList
-      println(elementfiltered.size)
-      res = res ::: elementfiltered
+      )
+
     }
-    }
-    println("SIZE: " + res.size)
-    res
+    })
+
   }
 
   override def receive: Receive = {
@@ -65,9 +83,34 @@ abstract class AbstractClientView(hosts: HostPool, client: ActorRef) extends Act
       onNotify(x.any)
     }
     case UpdateClient => {
-      var list = zonesToList(dataToViewZone())
-      client ! fromListToClientMsg(list)
+     zonesToList(dataToViewZone())
+      nextbuffer = nextbuffer+1
+      buffers -= nextbuffer-3
     }
+
+    case x: AnyParts => {
+
+      println("Any part : destination : "+x.buffer + " content : " + fromListToClientMsg(x.anys))
+      var num = x.buffer
+
+      if(nextbuffer - num <= 2) {
+        buffers(num)  = (buffers(num)._1-1 ,buffers(num)._2:::x.anys)
+
+        if( buffers(num)._1 == 0) {
+          println("Total parts : " + fromListToClientMsg(buffers(num)._2))
+
+          println("Buffer size:"+ buffers.values.size)
+
+        }
+
+
+      }
+      else {
+        println("Message too old from host to ClientView, delay : " + (nextbuffer - num)  )
+
+      }
+    }
+
 
   }
 

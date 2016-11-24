@@ -43,6 +43,7 @@ object Main extends App{
   }
 
 
+  //TEST CLIENT VIEW
   val fakeClient = actorSystem.actorOf(Props(new FakeClient()), "fakeclient")
   val clientViewTest = actorSystem.actorOf(Props(new UserClientView(hostPool,fakeClient)), "clientview")
 
@@ -53,7 +54,7 @@ object Main extends App{
 
     clientViewTest ! UpdateClient
   }
-
+//END TEST CLIENT VIEW
 
 
   println("framework shutdownn")

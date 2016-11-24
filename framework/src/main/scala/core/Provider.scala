@@ -2,8 +2,7 @@ package core
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.actor.Actor.Receive
-import core.CoreMessage.{AddClient, OnConnect}
-import core.script_filled.UserClientView
+import core.CoreMessage.{AddClient, ConnectClient}
 
 class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
@@ -13,8 +12,7 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
     case AddClient(id, playerActorRef) => {
       clientRef = playerActorRef
-      context.system.actorOf(Props[UserClientView])
-      specialHost ! OnConnect(playerActorRef)
+      specialHost ! ConnectClient(playerActorRef)
     }
 
     case _ => {}

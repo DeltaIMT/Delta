@@ -28,6 +28,11 @@ abstract class AbstractHost(val hostPool: HostPool) extends Actor {
 
     }
 
+    case Exec(f) => {
+      f(elements)
+    }
+
+
 
     case _ => {}
   }

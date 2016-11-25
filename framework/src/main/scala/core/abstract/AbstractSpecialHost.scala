@@ -7,12 +7,12 @@ import core.script_filled.UserClientView
 
 class AbstractSpecialHost(val hostPool: HostPool) extends Actor{
 
-  def OnConnect(clientView: UserClientView) = Unit
+ // def OnConnect(clientView: UserClientView) = Unit
 
   override def receive: Receive = {
     case ConnectClient(clientActorRef) => {
       val clientView = new UserClientView(hostPool, clientActorRef)
-      OnConnect(clientView)
+   //   OnConnect(clientView)
     }
 
     case _ => {}

@@ -38,7 +38,7 @@ class AbstractClientViewTest extends FunSuite {
 
   }
 
-  class UserSpecialHost extends AbstractSpecialHost {
+  class UserSpecialHost extends AbstractSpecialHost(null) {
 
   }
 

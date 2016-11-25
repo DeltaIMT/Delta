@@ -11,6 +11,7 @@ var data = []
 var host = window.location.hostname
 var frames = 0
 var fps = 0
+var ping = 10000
 
 var ws
 var wsPort = new WebSocket('ws://' + host + ':9000'+"/?id="+id)
@@ -36,10 +37,11 @@ setTimeout(countFpsFunction,1000)
 var sendCommand = () =>
 {
     setTimeout(sendCommand,16.667)
-    ws.send( defineCommandToServer() )
+    ws.send( commandToServerFunction() )
 }
 setTimeout(sendCommand,1000)
 }
 module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
 module.exports.commandToServer = (f) => { defineCommandToServer = f }
 module.exports.countFps = () => { return fps }
+module.exports.pingMeasurement = () => { return ping }

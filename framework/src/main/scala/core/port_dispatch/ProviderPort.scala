@@ -5,9 +5,9 @@ import akka.actor.{Actor, ActorRef}
 import core.CoreMessage.{AddClient, DeleteClient, PlayersUpdate}
 import core.script_filled.UserClientView
 
-class ProviderPort extends Actor {
+class ProviderPort(numberOfClient : Int) extends Actor {
   var map_ID_Port = collection.mutable.HashMap.empty[String,Int]
-  var availablePorts = (9001 to 9100).toList
+  var availablePorts = (9001 to 9001+numberOfClient).toList
 
   override def receive: Receive = {
     case AddClient(id: String, client: ActorRef) => {

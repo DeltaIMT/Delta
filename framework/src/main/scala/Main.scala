@@ -13,7 +13,7 @@ object Main extends App{
   println("framework starting")
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val flowMaterializer = ActorMaterializer()
-  val initialPort = 6001
+  val initialPort = 9001
   val numberOfClient = 100
   val hostsGridWidth = 5
   val hostsGridHeight = 5
@@ -31,6 +31,11 @@ object Main extends App{
   val providerPort = actorSystem.actorOf(Props(new ProviderPort()),"providerPort")
   val websocketPort = new Websocket(providerPort, initialPort-1)
 
+  Http().bindAndHandle((get & parameter("id") ){
+    id =>  handleWebSocketMessages(websocketPort.flow(id, "region"))
+  }, "0.0.0.0",initialPort-1)
+
+
   println("framework working")
 
   val routes = websockets.map(x => {
@@ -46,6 +51,7 @@ object Main extends App{
     Http().bindAndHandle(route._2, "0.0.0.0", route._1)
   }
 
+  Thread.sleep(1000000)
   println("framework shutdownn")
   actorSystem.terminate()
 

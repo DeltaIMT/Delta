@@ -2,7 +2,7 @@ package core
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.actor.Actor.Receive
-import core.CoreMessage.{AddClient, ConnectClient}
+import core.CoreMessage.{AddClient, Command, ConnectClient}
 
 class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
@@ -14,6 +14,8 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
       clientRef = playerActorRef
       specialHost ! ConnectClient(playerActorRef)
     }
+
+    case x:Command => {  }
 
     case _ => {}
   }

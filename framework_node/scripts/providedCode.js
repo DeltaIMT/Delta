@@ -1,3 +1,9 @@
+
+
+var dataManipulationFunction = (arg) => {}
+var defineCommandToServer = () => {return "default message"}
+
+module.exports.launch = () => {
 var uuid = require('node-uuid');
 var id = uuid.v4()
 
@@ -6,14 +12,13 @@ var host = window.location.hostname
 var frames = 0
 var fps = 0
 
-var dataManipulationFunction = (arg) => {}
-var defineCommandToServer = () => {}
-
-var wsPort = new WebSocket('ws://' + host + ':6000')
+var ws
+var wsPort = new WebSocket('ws://' + host + ':9000'+"/?id="+id)
+console.log("Searching port at 9000")
 wsPort.onmessage = function (event) {
-    jsonDataPort = JSON.parse(event.data)
-
-    var ws = new WebSocket('ws://' + host + jsonDataPort.port +"/?id="+id )
+    jsonDataPort = event.data
+console.log("Connection to : "+'ws://' + host +':'+jsonDataPort +"/?id="+id)
+    ws = new WebSocket('ws://' + host +':'+jsonDataPort +"/?id="+id )
     ws.onmessage = function (event) {
         frames++ 
         dataManipulationFunction(event.data)
@@ -34,7 +39,7 @@ var sendCommand = () =>
     ws.send( defineCommandToServer() )
 }
 setTimeout(sendCommand,1000)
-
+}
 module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
-module.exports.commandToServer = (f) => { commandToServerFunction = f }
+module.exports.commandToServer = (f) => { defineCommandToServer = f }
 module.exports.countFps = () => { return fps }

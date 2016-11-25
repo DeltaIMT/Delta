@@ -1,22 +1,22 @@
 package core.port_dispatch
 
+import akka.actor.FSM.->
 import akka.actor.{Actor, ActorRef}
-import core.CoreMessage.{AddClient, DeleteClient}
+import core.CoreMessage.{AddClient, DeleteClient, PlayersUpdate}
 import core.script_filled.UserClientView
 
-/**
-  * Created by Cannelle on 22/11/2016.
-  */
 class ProviderPort extends Actor {
   var map_ID_Port = collection.mutable.HashMap.empty[String,Int]
-  var availablePorts = (6001 to 6100).toList
+  var availablePorts = (9001 to 9100).toList
 
   override def receive: Receive = {
     case AddClient(id: String, client: ActorRef) => {
-      client ! availablePorts.head
+      client ! PlayersUpdate(""+availablePorts.head)
       println("Add client, new used port : " + availablePorts.head)
+      map_ID_Port += id ->availablePorts.head
       availablePorts = availablePorts.tail
       println("Add client, available ports : " + availablePorts.mkString(","))
+
     }
 
     case DeleteClient (id: String) => {

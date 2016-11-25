@@ -3,9 +3,7 @@ import core.{FakeClient, HostPool, Provider, Websocket}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import core.`abstract`.UpdateClient
 import core.script_filled.{UserClientView, UserHost, UserSpecialHost}
-
 
 
 object Main extends App{
@@ -41,21 +39,6 @@ object Main extends App{
   routes foreach { route =>
     Http().bindAndHandle(route._2, "0.0.0.0", route._1)
   }
-
-
-  //TEST CLIENT VIEW
-  val fakeClient = actorSystem.actorOf(Props(new FakeClient()), "fakeclient")
-  val clientViewTest = actorSystem.actorOf(Props(new UserClientView(hostPool,fakeClient)), "clientview")
-
-
-  for(i <- 0 to 100){
-
-    Thread.sleep(1000)
-
-    clientViewTest ! UpdateClient
-  }
-//END TEST CLIENT VIEW
-
 
   println("framework shutdownn")
   actorSystem.terminate()

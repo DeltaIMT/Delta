@@ -9,6 +9,4 @@ import core.user_import.Element
 
 class UserHost(hostPool: HostPool) extends AbstractHost(hostPool) {
 
-  elements += "1" -> new Element(1,2)
-
 }

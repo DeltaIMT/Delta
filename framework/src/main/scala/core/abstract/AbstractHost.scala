@@ -1,19 +1,16 @@
 package core.`abstract`
 
 import akka.actor.Actor
-import core.CoreMessage._
+import core.CoreMessage.{Tick, _}
 import core.HostPool
 import core.user_import.Element
 
 abstract class AbstractHost(val hostPool: HostPool) extends Actor {
 
   var elements = collection.mutable.HashMap[String,Element]()
+  def tick() = {}
 
   override def receive: Receive = {
-    case TransfertTo(element, host) => {
-      host ! Transfert(element, elements(element))
-      elements -= element
-    }
 
     case Transfert(id, element) => {
       elements += id -> element
@@ -30,6 +27,10 @@ abstract class AbstractHost(val hostPool: HostPool) extends Actor {
 
     case Exec(f) => {
       f(elements)
+    }
+
+    case Tick =>{
+      tick()
     }
 
 

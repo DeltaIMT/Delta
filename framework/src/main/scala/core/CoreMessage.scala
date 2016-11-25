@@ -17,4 +17,5 @@ object CoreMessage {
   case class Foreach(f : Element => Unit)
   case class Exec(f : collection.mutable.HashMap[String,Element]=> Unit)
   case class AnyParts(buffer : Int,anys : List[Any])
+  case object Tick
 }

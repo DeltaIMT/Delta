@@ -3,14 +3,17 @@ import core.{FakeClient, HostPool, Provider, Websocket}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import core.script_filled.{UserClientView, UserHost, UserSpecialHost}
+import core.CoreMessage.AddClient
+import core.port_dispatch.ProviderPort
+import core.script_filled.{UserHost, UserSpecialHost}
+import core.port_dispatch.ProviderPort
 
 
 object Main extends App{
   println("framework starting")
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val flowMaterializer = ActorMaterializer()
-  val initialPort = 5000
+  val initialPort = 6001
   val numberOfClient = 100
   val hostsGridWidth = 5
   val hostsGridHeight = 5
@@ -24,6 +27,9 @@ object Main extends App{
 
   val providers = 0 until numberOfClient map {i=>actorSystem.actorOf(Props(new Provider(hostPool, specialHost)),"provider_"+i)}
   val websockets = 0 until numberOfClient map {i=>initialPort+i -> new Websocket(providers(i),initialPort+i)}
+
+  val providerPort = actorSystem.actorOf(Props(new ProviderPort()),"providerPort")
+  val websocketPort = new Websocket(providerPort, initialPort-1)
 
   println("framework working")
 

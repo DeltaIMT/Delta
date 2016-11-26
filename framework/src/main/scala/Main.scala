@@ -25,18 +25,10 @@ object Main extends App{
   hostPool.addHost(hosts)
   val specialHost = actorSystem.actorOf(Props(new UserSpecialHost(hostPool)), "specialHost")
 
-  val providers = 0 until numberOfClient map {i=>actorSystem.actorOf(Props(new Provider(hostPool, specialHost)),"provider_"+i)}
-  val websockets = 0 until numberOfClient map {i=>initialPort+i -> new Websocket(providers(i),initialPort+i)}
-
-  val providerPort = actorSystem.actorOf(Props(new ProviderPort()),"providerPort")
-  val websocketPort = new Websocket(providerPort, initialPort-1)
-
-  Http().bindAndHandle((get & parameter("id") ){
-    id =>  handleWebSocketMessages(websocketPort.flow(id, "region"))
-  }, "0.0.0.0",initialPort-1)
-
-
-  println("framework working")
+  val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient)),"providerPort")
+  val providerClients = 0 until numberOfClient map {i=>actorSystem.actorOf(Props(new Provider(hostPool, specialHost)),"provider_"+i)}
+  val providers = providerPort :: providerClients.toList
+  val websockets = -1 until numberOfClient map {i=>initialPort+i -> new Websocket(providers(i+1),initialPort+i)}
 
   val routes = websockets.map(x => {
     x._1 ->
@@ -50,6 +42,7 @@ object Main extends App{
   routes foreach { route =>
     Http().bindAndHandle(route._2, "0.0.0.0", route._1)
   }
+  println("framework working")
 
   Thread.sleep(1000000)
   println("framework shutdownn")

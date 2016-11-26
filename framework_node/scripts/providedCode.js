@@ -7,7 +7,7 @@ module.exports.launch = () => {
 var uuid = require('node-uuid');
 var id = uuid.v4()
 
-var jsonDataPort = []
+var data = []
 var host = window.location.hostname
 var frames = 0
 var fps = 0
@@ -16,9 +16,9 @@ var ws
 var wsPort = new WebSocket('ws://' + host + ':9000'+"/?id="+id)
 console.log("Searching port at 9000")
 wsPort.onmessage = function (event) {
-    jsonDataPort = event.data
-console.log("Connection to : "+'ws://' + host +':'+jsonDataPort +"/?id="+id)
-    ws = new WebSocket('ws://' + host +':'+jsonDataPort +"/?id="+id )
+    data = event.data
+console.log("Connection to : "+'ws://' + host +':'+data +"/?id="+id)
+    ws = new WebSocket('ws://' + host +':'+data +"/?id="+id )
     ws.onmessage = function (event) {
         frames++ 
         dataManipulationFunction(event.data)

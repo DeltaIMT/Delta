@@ -72,7 +72,7 @@ var target = 'http://localhost:5000'
 
     //ping.stop()
 }*/
-// using tcp-ping
+// using tcp-ping : net.Socket is not a constructor...
 var pingTest3 = () =>
 {
     var port = 5000 //TODO
@@ -86,7 +86,7 @@ var pingTest3 = () =>
         console.log(data)
     })
 }
-// using jjg-ping
+// using jjg-ping : cannot identify operating system...
 var pingTest4 = () =>
 {
     var ping = require('jjg-ping')
@@ -100,9 +100,22 @@ var pingTest4 = () =>
         }
     })
 }
-//TODO use ping ? hard to code
+// using ping : seems to be an OS problem as well...
+var pingTest5 = () =>
+{
+    var ping = require('ping');
+
+    var hosts = [target];
+
+    hosts.forEach(function (host) {
+        ping.promise.probe(host)
+            .then(function (res) {
+                console.log(res);
+            });
+    });
+}
 
 module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
 module.exports.commandToServer = (f) => { defineCommandToServer = f }
 module.exports.countFps = () => { return fps }
-module.exports.pingMeasurement = () => { return pingTest3() }
+module.exports.pingMeasurement = () => { return pingTest5() }

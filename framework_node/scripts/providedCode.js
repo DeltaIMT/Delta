@@ -1,5 +1,3 @@
-
-
 var dataManipulationFunction = (arg) => {}
 var defineCommandToServer = () => {return "default message"}
 
@@ -12,11 +10,12 @@ var host = window.location.hostname
 var frames = 0
 var fps = 0
 
+var ws
 var wsPort = new WebSocket('ws://' + host + ':9000'+"/?id="+id)
 console.log("Searching port at 9000")
 wsPort.onmessage = function (event) {
     data = event.data
-console.log("Connection to : "+'ws://' + host +':'+data +"/?id="+id)
+    console.log("Connection to : "+'ws://' + host +':'+data +"/?id="+id)
     ws = new WebSocket('ws://' + host +':'+data +"/?id="+id )
     ws.onmessage = function (event) {
         frames++ 
@@ -35,15 +34,15 @@ setTimeout(countFpsFunction,1000)
 var sendCommand = () =>
 {
     setTimeout(sendCommand,16.667)
-    ws.send( commandToServerFunction() )
+    ws.send( defineCommandToServer() )
 }
 setTimeout(sendCommand,1000)
 }
 
-var target = 'TODO' //TODO
+var target = 'http://localhost:5000'
 
-// using net-ping TODO trouble to install package
-var pingTest1 = () =>
+// using net-ping
+/*var pingTest1 = () =>
 {
     var ping = require ("net-ping")
 
@@ -54,9 +53,9 @@ var pingTest1 = () =>
         else
             console.log (target + ": Alive (ms=" + ms + ")")
     })
-}
+}*/
 // using ping-wrapper
-var pingTest2 = () =>
+/*var pingTest2 = () =>
 {
     var Ping = require('ping-wrapper')
     Ping.configure()
@@ -72,11 +71,11 @@ var pingTest2 = () =>
     })
 
     //ping.stop()
-}
+}*/
 // using tcp-ping
 var pingTest3 = () =>
 {
-    var port = TODO //TODO
+    var port = 5000 //TODO
     var tcpp = require('tcp-ping')
 
     tcpp.probe(target, port, function(err, available) {
@@ -106,4 +105,4 @@ var pingTest4 = () =>
 module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
 module.exports.commandToServer = (f) => { defineCommandToServer = f }
 module.exports.countFps = () => { return fps }
-module.exports.pingMeasurement = () => { return pingTest2() }
+module.exports.pingMeasurement = () => { return pingTest3() }

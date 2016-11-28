@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 import akka.util.Timeout
 
 import scala.concurrent.duration._
-import core.CoreMessage.{Exec, Foreach}
+import core.CoreMessage.{Exec, Foreach, Transfert}
 import core.user_import.Element
 
 class HyperHost(val host : ActorRef)  {
@@ -21,4 +21,6 @@ class HyperHost(val host : ActorRef)  {
   def exec(f : collection.mutable.HashMap[String,Element]=> Unit): Unit = {
     host ! Exec(f)
   }
+
+  def transfert(id: String, element: Element) : Unit = { host  ! Transfert(id, element)}
 }

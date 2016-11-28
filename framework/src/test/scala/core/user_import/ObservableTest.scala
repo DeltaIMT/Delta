@@ -6,6 +6,9 @@ import core.script_filled.UserClientView
 import org.scalatest.FunSuite
 class ObservableTest extends FunSuite {
 
+
+  class ObsClass extends Observable{}
+
   object testObservable extends App{
 
 
@@ -15,7 +18,7 @@ class ObservableTest extends FunSuite {
       val initialPort = 5000
 
 
-    var observable = new Observable()
+    var observable = new ObsClass()
 
     var u1 = actorSystem.actorOf(Props(new UserClientView(null,null)), "clientView1")
     var u2 = actorSystem.actorOf(Props(new UserClientView(null,null)), "clientView2")

@@ -3,12 +3,12 @@ package core.user_import
 import akka.actor.ActorRef
 import core.`abstract`.Notify
 
-class Observable {
+trait Observable {
 
 
   def notifyClientViews: Unit ={
     clientViews.foreach(cv => {
-      cv ! Notify
+      cv ! Notify(this)
     }
     )
   }

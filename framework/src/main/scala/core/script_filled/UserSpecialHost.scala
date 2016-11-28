@@ -9,5 +9,5 @@ import core.`abstract`.AbstractSpecialHost
 class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost(hostPool){
 
   //USER
-  override def OnConnect(clientId: Int): Unit = {}
+  override def OnConnect(clientId: ActorRef): Unit = {}
 }

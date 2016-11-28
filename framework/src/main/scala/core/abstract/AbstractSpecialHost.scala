@@ -1,17 +1,21 @@
 package core.`abstract`
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Cancellable, Props}
 import core.CoreMessage.{AddClient, DeleteClient, PlayersUpdate}
 import core.HostPool
+
 import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
 import ru._
 import scala.reflect.ClassTag
+import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostPool: HostPool) extends Actor{
 
-  var clients = collection.mutable.HashMap[String,ActorRef]()
+  var clients = collection.mutable.HashMap[String,(ActorRef,Cancellable)]()
   var idClient = 0
 
   def OnConnect(client: ActorRef) : Unit = {}
@@ -34,12 +38,14 @@ class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostP
   override def receive: Receive = {
     case AddClient(id, clientActorRef) => {
       val clientView = context.actorOf(Props(createInstance[T](clientActorRef).asInstanceOf[T]  ))
-      clients += (id -> clientView)
+      val cancellable = context.system.scheduler.schedule(1000 milliseconds,33 milliseconds,clientView,UpdateClient)
+      clients += (id -> (clientView,cancellable))
       OnConnect(clientView)
       clientActorRef ! PlayersUpdate("you are connected")
     }
 
     case DeleteClient(id) => {
+      clients(id)._2.cancel()
       clients-= id
     }
 

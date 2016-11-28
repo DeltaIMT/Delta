@@ -20,11 +20,11 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 
-class UserClientView(hostPool: HostPool, client : ActorRef) extends AbstractClientView(hostPool,client) {
+class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
   var x = 0.0
   var y = 0.0
 
-  override def dataToViewZone(): List[Zone] = List(new Zone(x - 200, y - 200, x + 200, y + 200))
+  override def dataToViewZone(): List[Zone] = List(new Zone(x - 1000, y - 1000, x + 1000, y + 1000))
 
   override def onNotify(any: Any): Unit = {
 
@@ -43,19 +43,21 @@ class UserClientView(hostPool: HostPool, client : ActorRef) extends AbstractClie
   }
 
   override def fromListToClientMsg(list: List[Any]) = {
-    val string = list.map(e => e match {
+    val listString = list.map(e => e match {
       case e: Element => {
-        "(" + e.x + "," + e.y + ")"
+        s"""{"x":"${e.x}","y":"${e.y}"}"""
       }
       case _ => "NOT ELEMENT : " + e
-    }).mkString(",")
+    }) ++ List(s"""{"cam":{"x":"${x}","y":"${y}"}}""")
+    val string = listString.mkString("[",",","]")
+    println(string)
     string
   }
 
 }
 
 
-class UserHost(hostPool: HostPool,val zone :Zone) extends AbstractHost(hostPool) {
+class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool) {
 
   override def tick(): Unit = {
 
@@ -63,14 +65,13 @@ class UserHost(hostPool: HostPool,val zone :Zone) extends AbstractHost(hostPool)
       elem._2 match {
         case e: Ball => {
 
-          e.x += 50
-          println("Ball moved : " + e.x + " " + e.y)
+          e.x += 1
           e.notifyClientViews
 
-          if (!zone.contains(e)){
+          if (!zone.contains(e)) {
 
             println("Il faut sortir de " + zone.x + " " + zone.y)
-            hostPool.getHyperHost(e.x,e.y).transfert(elem._1, e)
+            hostPool.getHyperHost(e.x, e.y).transfert(elem._1, e)
             elements -= elem._1
           }
 
@@ -87,7 +88,7 @@ class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClient
 
   override def OnConnect(client: ActorRef) = {
 
-    val b = new Ball(rand.nextInt(500), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
+    val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
     val hyper = hostPool.getHyperHost(b.x, b.y)
     hyper.exec(hm => hm += rand.nextString(20) -> b)
     b.sub(client)
@@ -103,13 +104,7 @@ class Ball(x: Double, y: Double, var color: Array[Int]) extends Element(x, y) wi
 
 class Simple extends FunSuite {
 
-  //defining some user classes needed to compile
-
-
-
-
   test("SimpleApp") {
-
 
     println("framework starting")
     implicit val actorSystem = ActorSystem("akka-system")
@@ -118,11 +113,11 @@ class Simple extends FunSuite {
     val numberOfClient = 100
     val hostsGridWidth = 5
     val hostsGridHeight = 5
-    val hostWidth = 200
-    val hostHeight = 200
+    val hostWidth = 600
+    val hostHeight = 600
 
     val hostPool = new HostPool(hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
-    val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new UserHost(hostPool,new Zone(hostPool.fromI2X(i)*hostWidth , hostPool.fromI2Y(i)*hostHeight, hostWidth,hostHeight) )), "host_" + i) }
+    val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new UserHost(hostPool, new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight))), "host_" + i) }
     hostPool.addHost(hosts)
     val specialHost = actorSystem.actorOf(Props(new UserSpecialHost(hostPool)), "specialHost")
 
@@ -144,8 +139,7 @@ class Simple extends FunSuite {
       Http().bindAndHandle(route._2, "0.0.0.0", route._1)
     }
 
-    var cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 1000 milliseconds, h, Tick) }
-
+    var cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 33 milliseconds, h, Tick) }
 
     println("framework working")
 
@@ -154,8 +148,6 @@ class Simple extends FunSuite {
     cancellable foreach { c => c.cancel() }
     actorSystem.terminate()
 
-
   }
-
 
 }

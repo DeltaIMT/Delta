@@ -6,7 +6,8 @@ import core.user_import.Element
 object CoreMessage {
   case class DeleteClient(id: String)
   case class AddClient(id: String, playerActorRef: ActorRef)
-  case class Command(id : String,command : String )
+  case class ClientInputWithLocation(id : String, command : String )
+  case class ClientInput(id : String, command : String )
   case class ChangeActor(id: String, next : ActorRef)
   case class SetProvider(actor : ActorRef)
   case class ConnectClient(actor: ActorRef)

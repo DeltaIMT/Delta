@@ -2,7 +2,7 @@ package core
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.actor.Actor.Receive
-import core.CoreMessage.{AddClient, Command, ConnectClient, DeleteClient}
+import core.CoreMessage.{AddClient, ClientInputWithLocation, ConnectClient, DeleteClient}
 
 class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
@@ -19,7 +19,7 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
       specialHost ! DeleteClient(id)
     }
 
-    case x:Command => {  }
+    case x:ClientInputWithLocation => {  }
 
     case _ => {}
   }

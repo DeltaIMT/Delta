@@ -17,33 +17,15 @@ case class Notify(any: Any)
 
 case object UpdateClient
 
-class AbstractClientViewWorker{
+class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
+
   // USER JOB
   def dataToViewZone(): List[Zone] = Nil
 
   def onNotify(any: Any): Unit = {}
 
   def fromListToClientMsg(list: List[Any]): String = list.mkString(",")
-}
 
-class AbstractClientView[T <: AbstractClientViewWorker:TypeTag](hosts: HostPool, client: ActorRef) extends Actor {
-
-
-  def createInstance[T:TypeTag]() : Any= {
-    createInstance(typeOf[T])
-  }
-
-  def createInstance(tpe:Type): Any = {
-    val mirror = ru.runtimeMirror(getClass.getClassLoader)
-    val clsSym = tpe.typeSymbol.asClass
-    val clsMirror = mirror.reflectClass(clsSym)
-    val ctorSym = tpe.decl(ru.termNames.CONSTRUCTOR).asMethod
-    val ctorMirror = clsMirror.reflectConstructor(ctorSym)
-    val instance = ctorMirror()
-    return instance
-  }
-
-  var worker : T = createInstance[T]().asInstanceOf[T]
 
   var nextbuffer: Int = 0
   var buffers: mutable.HashMap[Int, (Int, List[Any])] = collection.mutable.HashMap[Int, (Int, List[Any] ) ]()
@@ -105,10 +87,10 @@ class AbstractClientView[T <: AbstractClientViewWorker:TypeTag](hosts: HostPool,
 
   override def receive: Receive = {
     case x: Notify => {
-      worker.onNotify(x.any)
+      onNotify(x.any)
     }
     case UpdateClient => {
-     zonesToMessage(worker.dataToViewZone())
+     zonesToMessage(dataToViewZone())
       nextbuffer = nextbuffer+1
       buffers -= nextbuffer-4
     }
@@ -122,7 +104,7 @@ class AbstractClientView[T <: AbstractClientViewWorker:TypeTag](hosts: HostPool,
         if( buffers(num)._1 == 0) {
           //println("Total parts : " + worker.fromListToClientMsg(buffers(num)._2))
     //      println("Buffer size:"+ buffers.values.size)
-          client ! PlayersUpdate(worker.fromListToClientMsg(buffers(num)._2))
+          client ! PlayersUpdate(fromListToClientMsg(buffers(num)._2))
         }
       }
       else {

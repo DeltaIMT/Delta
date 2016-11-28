@@ -8,7 +8,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{get, handleWebSocketMessages, parameter}
 import akka.stream.ActorMaterializer
 import core.CoreMessage.{Tick, Transfert}
-import core.`abstract`.{AbstractClientView, AbstractClientViewWorker, AbstractHost, AbstractSpecialHost}
+import core.`abstract`.{AbstractClientView, AbstractHost, AbstractSpecialHost}
 import core.port_dispatch.ProviderPort
 import core.script_filled.UserClientView
 import core.user_import.{Element, Observable, Zone}
@@ -20,7 +20,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 
-class UserClientViewWorker extends AbstractClientViewWorker {
+class UserClientView(hostPool: HostPool, client : ActorRef) extends AbstractClientView(hostPool,client) {
   var x = 0.0
   var y = 0.0
 
@@ -81,7 +81,7 @@ class UserHost(hostPool: HostPool,val zone :Zone) extends AbstractHost(hostPool)
 
 }
 
-class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClientViewWorker](hostPool) {
+class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClientView](hostPool) {
 
   var rand = new Random()
 

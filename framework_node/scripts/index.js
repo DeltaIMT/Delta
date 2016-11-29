@@ -74,7 +74,7 @@ function clamp(value, min, max) {
 
 
 client.commandToServer(() => {
-    return JSON.stringify([ {hosts:[] , data:mousePosition}  ])
+    return JSON.stringify([ {hosts:[[currentPos.x,currentPos.y]] , data:mousePosition}  ])
 })
 
 

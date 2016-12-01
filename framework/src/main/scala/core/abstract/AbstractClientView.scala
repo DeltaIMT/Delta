@@ -35,23 +35,42 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
   def zonesToMessage(zones: List[Zone]): Unit = {
 
     var hostInsideZones = List[HyperHost]()
+    var posFound = List[(Double,Double)]()
+
 
     var fake = new Element(0, 0)
-    for (x <- 0.0 until hosts.w * hosts.wn by hosts.w; y <- 0.0 until hosts.h * hosts.hn by hosts.h) {
+    for (x <- 0.0 until (hosts.w * hosts.wn) by hosts.w; y <- 0.0 until (hosts.h * hosts.hn) by hosts.h) {
+      var bool = false
+
+   //  println("x : " + x + " y : " + y)
+
       fake.x = x
       fake.y = y
-   //   println("x: " + x)
-   //   println("y: " + y)
-      var bool = false
-      zones foreach { z => bool = bool || z.contains(fake) }
+      zones foreach { z => bool = bool || z.contains(fake)  }
+
+      fake.x = x+hosts.w
+      fake.y = y
+      zones foreach { z => bool = bool || z.contains(fake)  }
+
+      fake.x = x+hosts.w
+      fake.y = y+hosts.h
+      zones foreach { z => bool = bool || z.contains(fake)  }
+
+      fake.x = x
+      fake.y = y+hosts.h
+      zones foreach { z => bool = bool || z.contains(fake)  }
 
       if (bool) {
     //    println("CONTAINS________")
+
         hostInsideZones = hosts.getHyperHost(x, y) :: hostInsideZones
+        posFound = (x,y) :: posFound
       }
     }
 
     hostInsideZones = hostInsideZones.distinct
+//    println("testing host intersected with " + zones(0) + "\nThere is "+ hostInsideZones.size +" host " + posFound.map(h =>  "["+ h._1 + " " + h._2 +"]" ))
+
 
 
     buffers+= nextbuffer -> (hostInsideZones.size, List[Any]())

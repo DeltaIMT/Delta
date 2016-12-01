@@ -11,7 +11,7 @@ import core.CoreMessage.{Tick, Transfert}
 import core.`abstract`.{AbstractClientView, AbstractHost, AbstractSpecialHost}
 import core.port_dispatch.ProviderPort
 import core.script_filled.UserClientView
-import core.user_import.{Element, Observable, Zone}
+import core.user_import.{Element, Observable, Observer, Zone}
 import org.scalatest.FunSuite
 
 import scala.concurrent.ExecutionContext
@@ -24,7 +24,7 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   var x = 0.0
   var y = 0.0
 
-  override def dataToViewZone(): List[Zone] = List(new Zone(x - 1000, y - 1000, x + 1000, y + 1000))
+  override def dataToViewZone(): List[Zone] = List(new Zone(x - 1000, y - 1000, 2000, 2000))
 
   override def onNotify(any: Any): Unit = {
 
@@ -50,7 +50,7 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
       case _ => "NOT ELEMENT : " + e
     }) ++ List(s"""{"cam":{"x":"${x}","y":"${y}"}}""")
     val string = listString.mkString("[",",","]")
-    println(string)
+   // println(string)
     string
   }
 
@@ -74,10 +74,13 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
             hostPool.getHyperHost(e.x, e.y).transfert(elem._1, e)
             elements -= elem._1
           }
-
         }
       }
     }
+
+    elements foreach { e => {
+      println("Host "+ zone +" got " + e._2 )
+    }}
   }
 
 }
@@ -86,13 +89,16 @@ class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClient
 
   var rand = new Random()
 
-  override def OnConnect(client: ActorRef) = {
+  override def OnConnect(obs: Observer) = {
 
     val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
     val hyper = hostPool.getHyperHost(b.x, b.y)
     hyper.exec(hm => hm += rand.nextString(20) -> b)
-    b.sub(client)
+    b.sub(obs)
   }
+
+
+
 
 }
 

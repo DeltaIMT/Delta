@@ -24,20 +24,17 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
       val jsonObject = Json.parse(x.command).asInstanceOf[JsArray].value
 
-      jsonObject foreach {j =>  {
-
-        val hosts = (j \ "hosts" ).get.asInstanceOf[JsArray].value map {x => x.asInstanceOf[JsArray].value.map(y=> y.as[String].toDouble)    }
-
-
-       println(hosts map {x => x.mkString(",")} mkString(";") )
-
-      //  val data = (j \ "data" ).get.as[String]
-
-     //   println("hosts :" + hosts.map(x => x.mkString(",")).mkString(",")   )
-     //   println("data  :" + data)
-
-      }}
-
+//      jsonObject foreach {j =>  {
+//
+//        val hosts = (j \ "hosts" ).get.asInstanceOf[JsArray].value map {x => x.asInstanceOf[JsArray].value.map(y=> y.as[String].toDouble)    }
+//
+//       println(hosts map {x => x.mkString(",")} mkString(";") )
+//
+//      //  val data = (j \ "data" ).get.as[String]
+//     //   println("hosts :" + hosts.map(x => x.mkString(",")).mkString(",")   )
+//     //   println("data  :" + data)
+//
+//      }}
 
     }
 

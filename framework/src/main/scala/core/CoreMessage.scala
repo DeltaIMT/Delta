@@ -19,4 +19,5 @@ object CoreMessage {
   case class Exec(f : collection.mutable.HashMap[String,Element]=> Unit)
   case class AnyParts(buffer : Int,anys : List[Any])
   case object Tick
+  case object Disconnect
 }

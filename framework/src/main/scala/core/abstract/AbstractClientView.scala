@@ -3,7 +3,7 @@ package core.`abstract`
 import akka.actor.FSM.->
 import akka.pattern._
 import akka.actor.{Actor, ActorRef, Props}
-import core.CoreMessage.{AnyParts, PlayersUpdate}
+import core.CoreMessage.{AnyParts, PlayersUpdate, Disconnect}
 import core.{HostPool, HyperHost}
 import core.user_import.{Element, Zone}
 import scala.reflect.runtime._
@@ -23,6 +23,8 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
   def dataToViewZone(): List[Zone] = Nil
 
   def onNotify(any: Any): Unit = {}
+
+  def onDisconnect(any: Any): Unit = {}
 
   def fromListToClientMsg(list: List[Any]): String = list.mkString(",")
 
@@ -129,6 +131,12 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
       else {
         println("WARNING : Message too old from host to ClientView, delay : " + (nextbuffer - num)  )
       }
+    }
+
+    case Disconnect => {
+
+      onDisconnect()
+
     }
 
 

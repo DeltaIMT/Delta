@@ -10,10 +10,10 @@ import akka.stream.ActorMaterializer
 import core.CoreMessage.{Tick, Transfert}
 import core.`abstract`.{AbstractClientView, AbstractHost, AbstractSpecialHost}
 import core.port_dispatch.ProviderPort
-import core.script_filled.UserClientView
 import core.user_import.{Element, Observable, Observer, Zone}
 import org.scalatest.FunSuite
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -23,23 +23,26 @@ import scala.util.Random
 class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
   var x = 0.0
   var y = 0.0
+  var idBall = ""
 
   override def dataToViewZone(): List[Zone] = List(new Zone(x - 1000, y - 1000, 2000, 2000))
 
   override def onNotify(any: Any): Unit = {
 
     any match {
-
       case x: Ball => {
         this.x = x.x
         this.y = x.y
+        this.idBall = x.id
       }
-
       case _ => {
         println("lol")
       }
-
     }
+  }
+
+  override def onDisconnect(any: Any): Unit = {
+    hostPool.getHyperHost(x, y).exec(l => l -= idBall)
   }
 
   override def fromListToClientMsg(list: List[Any]) = {
@@ -49,11 +52,10 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
       }
       case _ => "NOT ELEMENT : " + e
     }) ++ List(s"""{"cam":{"x":"${x}","y":"${y}"}}""")
-    val string = listString.mkString("[",",","]")
-   // println(string)
+    val string = listString.mkString("[", ",", "]")
+    // println(string)
     string
   }
-
 }
 
 
@@ -64,12 +66,9 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     elements foreach { elem =>
       elem._2 match {
         case e: Ball => {
-
           e.x += 1
           e.notifyClientViews
-
           if (!zone.contains(e)) {
-
             println("Il faut sortir de " + zone.x + " " + zone.y)
             hostPool.getHyperHost(e.x, e.y).transfert(elem._1, e)
             elements -= elem._1
@@ -78,9 +77,6 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
       }
     }
 
-    elements foreach { e => {
-      println("Host "+ zone +" got " + e._2 )
-    }}
   }
 
 }
@@ -91,19 +87,22 @@ class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClient
 
   override def OnConnect(obs: Observer) = {
 
-    val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
+    val randId = rand.nextString(20)
+    println(randId)
+    val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), randId)
     val hyper = hostPool.getHyperHost(b.x, b.y)
-    hyper.exec(hm => hm += rand.nextString(20) -> b)
+    hyper.exec(hm => hm += randId -> b)
     b.sub(obs)
   }
 
-
-
+  override def OnDisconnect(obs: Observer) = {
+    obs.onDisconnect()
+  }
 
 }
 
 
-class Ball(x: Double, y: Double, var color: Array[Int]) extends Element(x, y) with Observable {
+class Ball(x: Double, y: Double, var color: Array[Int], var id: String) extends Element(x, y) with Observable {
 
 }
 

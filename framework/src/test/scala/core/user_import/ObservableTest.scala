@@ -2,7 +2,7 @@ package core.user_import
 
 import akka.actor.{ActorSystem, Props}
 import akka.stream.ActorMaterializer
-import core.script_filled.UserClientView
+import core.UserClientView
 import org.scalatest.FunSuite
 class ObservableTest extends FunSuite {
 

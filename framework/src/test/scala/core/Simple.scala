@@ -1,23 +1,26 @@
-package core
 
-import java.time.ZoneId
 
-import akka.actor.FSM.->
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives.{get, handleWebSocketMessages, parameter}
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.RouteResult
 import akka.stream.ActorMaterializer
-import core.CoreMessage.{Tick, Transfert}
+import core.CoreMessage.Tick
 import core.`abstract`.{AbstractClientView, AbstractHost, AbstractSpecialHost}
 import core.port_dispatch.ProviderPort
 import core.user_import.{Element, Observable, Observer, Zone}
+import core.{HostPool, Provider, Websocket}
 import org.scalatest.FunSuite
+import play.api.libs.json.Json
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.Random
+
+class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element(x, y) with Observable {
+  var vx = 0.0
+  var vy = 0.0
+}
 
 
 class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
@@ -30,7 +33,8 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def onNotify(any: Any): Unit = {
 
     any match {
-      case x: Ball => {
+      case x: Ball
+      => {
         this.x = x.x
         this.y = x.y
         this.idBall = x.id
@@ -61,12 +65,27 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
 
 class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool) {
 
+  var id2ball = mutable.HashMap[String, Ball]()
+
+
+  def addBall( e : Ball) = {
+    id2ball += e.clientId -> e
+    println("adding " + e.clientId + " to id2ball")
+  }
+
+  methods += "addBall" -> ((arg: Any) => {
+    var e = arg.asInstanceOf[Ball]
+    id2ball += e.clientId -> e
+    println("adding " + e.clientId + " to id2ball")
+  })
+
   override def tick(): Unit = {
 
     elements foreach { elem =>
       elem._2 match {
         case e: Ball => {
-          e.x += 1
+          e.x += e.vx
+          e.y += e.vy
           e.notifyClientViews
           if (!zone.contains(e)) {
             println("Il faut sortir de " + zone.x + " " + zone.y)
@@ -76,34 +95,43 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
         }
       }
     }
-
   }
 
+  override def clientInput(id: String, data: String): Unit = {
+    val json = Json.parse(data)
+    val x = (json \ "x").get.as[Double]
+    val y = (json \ "y").get.as[Double]
+    if (id2ball.contains(id)) {
+      val b = id2ball(id)
+      b.vx = (x - b.x) / 100
+      b.vy = (y - b.y) / 100
+    }
+  }
 }
 
 class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClientView](hostPool) {
 
   var rand = new Random()
 
-  override def OnConnect(obs: Observer) = {
+  override def OnConnect(id: String, obs: Observer) = {
 
     val randId = rand.nextString(20)
-    println(randId)
-    val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), randId)
+    //  println(randId)
+    val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), randId, obs.id)
     val hyper = hostPool.getHyperHost(b.x, b.y)
-    hyper.exec(hm => hm += randId -> b)
     b.sub(obs)
+    println("Calling adding ball")
+    hyper.exec(hm => {
+      println("Adding ball");
+      hm += randId -> b
+    })
+    hyper.method("addBall", b)
+
   }
 
-  override def OnDisconnect(obs: Observer) = {
+  override def OnDisconnect(id: String, obs: Observer) = {
     obs.onDisconnect()
   }
-
-}
-
-
-class Ball(x: Double, y: Double, var color: Array[Int], var id: String) extends Element(x, y) with Observable {
-
 }
 
 
@@ -113,6 +141,7 @@ class Simple extends FunSuite {
 
     println("framework starting")
     implicit val actorSystem = ActorSystem("akka-system")
+    implicit val executionContext = actorSystem.dispatcher
     implicit val flowMaterializer = ActorMaterializer()
     val initialPort = 9001
     val numberOfClient = 100
@@ -141,7 +170,7 @@ class Simple extends FunSuite {
     val interface = "localhost"
 
     routes foreach { route =>
-      Http().bindAndHandle(route._2, "0.0.0.0", route._1)
+      Http().bindAndHandle(RouteResult.route2HandlerFlow(route._2), "0.0.0.0", route._1)
     }
 
     var cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 33 milliseconds, h, Tick) }

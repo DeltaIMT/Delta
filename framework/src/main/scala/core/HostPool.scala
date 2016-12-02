@@ -11,8 +11,10 @@ class HostPool(val w : Double,val h: Double, val wn :Int, val hn : Int) {
     hosts foreach {h =>hyperHostsMap += h -> new HyperHost(h)}
   }
 
-  def fromXY2I(x : Double, y  :Double) : Int = wn* (y/h).toInt + (x/w).toInt
-  def fromXY2I(x : Int, y  :Int) : Int = wn*y + x
+  def clamp(i : Int ) = math.min(math.max(i,0), wn*hn-1  )
+
+  def fromXY2I(x : Double, y  :Double) : Int =  clamp( wn* (y/h).toInt + (x/w).toInt)
+  def fromXY2I(x : Int, y  :Int) : Int = clamp (wn*y + x)
   def fromI2X(i : Int): Int  = i % wn
   def fromI2Y(i : Int): Int  = i / wn
 

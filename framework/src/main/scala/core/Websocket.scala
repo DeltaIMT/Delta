@@ -11,7 +11,7 @@ class Websocket(val provider : ActorRef,val port : Int) {
 
   def flow(id: String, regionName: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>
     import GraphDSL.Implicits._
-    println("Websocket flow called " + id + " on port : " + port)
+  //  println("Websocket flow called " + id + " on port : " + port)
     val materialization = builder.materializedValue.map(playerActorRef => AddClient(id, playerActorRef))
     val merge = builder.add(Merge[Any](2))
 

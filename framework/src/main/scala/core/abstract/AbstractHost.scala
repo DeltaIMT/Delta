@@ -8,7 +8,9 @@ import core.user_import.Element
 abstract class AbstractHost(val hostPool: HostPool) extends Actor {
 
   var elements = collection.mutable.HashMap[String,Element]()
+  var methods = collection.mutable.HashMap[String,Any => Unit]()
   def tick() = {}
+  def clientInput(id :String ,data: String) = {}
 
   override def receive: Receive = {
 
@@ -33,7 +35,13 @@ abstract class AbstractHost(val hostPool: HostPool) extends Actor {
       tick()
     }
 
+    case ClientInput(id: String, data: String)=> {
+      clientInput(id,data)
+    }
 
+    case Method(method, args) => {
+      methods(method)(args)
+    }
 
     case _ => {}
   }

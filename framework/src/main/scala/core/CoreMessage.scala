@@ -7,7 +7,7 @@ object CoreMessage {
   case class DeleteClient(id: String)
   case class AddClient(id: String, playerActorRef: ActorRef)
   case class ClientInputWithLocation(id : String, command : String )
-  case class ClientInput(id : String, command : String )
+  case class ClientInput(id : String, data : String )
   case class ChangeActor(id: String, next : ActorRef)
   case class SetProvider(actor : ActorRef)
   case class ConnectClient(actor: ActorRef)
@@ -20,4 +20,5 @@ object CoreMessage {
   case class AnyParts(buffer : Int,anys : List[Any])
   case object Tick
   case object Disconnect
+  case class Method(method : String, args  : Any)
 }

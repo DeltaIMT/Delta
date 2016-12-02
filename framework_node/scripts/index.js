@@ -74,7 +74,13 @@ window.onload = () => {
 
 
     client.commandToServer(() => {
-        return JSON.stringify([{ hosts: [[currentPos.x, currentPos.y]], data: mousePosition }])
+        var toServer
+        if (currentPos.x != undefined)
+        toServer  = JSON.stringify([{ hosts: [[currentPos.x*1.0, currentPos.y*1.0]], data: JSON.stringify(mousePosition) }])
+        else 
+        toServer = JSON.stringify([{ hosts: [[]], data: "" }])
+        console.log("Sending :\n"+toServer)
+        return toServer
     })
 
 
@@ -83,13 +89,14 @@ window.onload = () => {
     client.dataManipulation(data => {
 
         scene.blobs = []
+        console.log("Received :\n"+data)
         var obj = JSON.parse(data)
         obj.forEach(e => {
             if (e.cam != undefined) {
 
                 currentPos.x = e.cam.x
                 currentPos.y = e.cam.y
-                console.log("cam found :" + cam.x + " " + cam.y)
+        //        console.log("cam found :" + cam.x + " " + cam.y)
             }
             else
                 scene.blobs.push(e)

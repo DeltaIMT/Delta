@@ -1,8 +1,7 @@
 package core
 
-import akka.actor.{Actor, ActorRef, Props}
-import akka.actor.Actor.Receive
-import core.CoreMessage.{AddClient, ClientInputWithLocation, ConnectClient, DeleteClient}
+import akka.actor.{Actor, ActorRef}
+import core.CoreMessage._
 import play.api.libs.json.{JsArray, Json}
 
 class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
@@ -23,18 +22,19 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
     case x:ClientInputWithLocation => {
 
       val jsonObject = Json.parse(x.command).asInstanceOf[JsArray].value
+   //   println(x.command)
+      jsonObject foreach {j =>  {
+        val hosts1 = (j \ "hosts" ).get.as[JsArray].value
+        val hosts2 = hosts1 map {x => x.as[JsArray].value}
+        val hosts =  hosts2 map {x => x map {y=> y.as[Double]}}
+      // println(hosts map {x => x.mkString(",")} mkString(";") )
 
-//      jsonObject foreach {j =>  {
-//
-//        val hosts = (j \ "hosts" ).get.asInstanceOf[JsArray].value map {x => x.asInstanceOf[JsArray].value.map(y=> y.as[String].toDouble)    }
-//
-//       println(hosts map {x => x.mkString(",")} mkString(";") )
-//
-//      //  val data = (j \ "data" ).get.as[String]
-//     //   println("hosts :" + hosts.map(x => x.mkString(",")).mkString(",")   )
-//     //   println("data  :" + data)
-//
-//      }}
+        val data = (j \ "data" ).get.as[String]
+     //   println("hosts :" + hosts.map(x => x.mkString(",")).mkString(",")   )
+     //   println("data  :" + data)
+
+        hosts foreach { h =>  this.hosts.getHyperHost(h(0),h(1)).host ! ClientInput(x.id,data)   }
+      }}
 
     }
 

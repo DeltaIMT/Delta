@@ -1,26 +1,24 @@
 package core.`abstract`
 
 import akka.actor.{Actor, ActorRef, Cancellable, Props}
-import core.CoreMessage.{AddClient, DeleteClient, PlayersUpdate}
+import core.CoreMessage.{AddClient, DeleteClient}
 import core.HostPool
 import core.user_import.Observer
 
-import scala.reflect.runtime._
-import scala.reflect.runtime.universe._
-import scala.reflect.runtime.{universe => ru}
-import ru._
-import scala.reflect.ClassTag
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.reflect.ClassTag
+import scala.reflect.runtime.{universe => ru}
+import ru._
+
 
 class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostPool: HostPool) extends Actor{
-
+  import ru._
   var clients = collection.mutable.HashMap[String,(Observer,Cancellable)]()
   var idClient = 0
 
-  def OnConnect(obs : Observer) : Unit = {}
-  def OnDisconnect(obs : Observer) : Unit = {}
+  def OnConnect(id:String ,obs : Observer) : Unit = {}
+  def OnDisconnect(id:String ,obs : Observer) : Unit = {}
 
   def createInstance[T:TypeTag](ar : ActorRef) : Any= {
     createInstance(typeOf[T],ar)
@@ -42,13 +40,13 @@ class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostP
       val clientView = context.actorOf(Props(createInstance[T](clientActorRef).asInstanceOf[T]  ))
       val cancellable = context.system.scheduler.schedule(1000 milliseconds,33 milliseconds,clientView,UpdateClient)
       clients += (id -> (new Observer(id,clientView),cancellable))
-      OnConnect(clients(id)._1)
-      clientActorRef ! PlayersUpdate("you are connected")
+      OnConnect(id, clients(id)._1)
+    //  clientActorRef ! PlayersUpdate("you are connected")
     }
 
     case DeleteClient(id) => {
       clients(id)._2.cancel()
-      OnDisconnect(clients(id)._1)
+      OnDisconnect(id ,clients(id)._1)
       clients-= id
     }
 

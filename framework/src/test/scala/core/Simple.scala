@@ -68,16 +68,23 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
   var id2ball = mutable.HashMap[String, Ball]()
 
 
-  def addBall( e : Ball) = {
-    id2ball += e.clientId -> e
-    println("adding " + e.clientId + " to id2ball")
-  }
-
   methods += "addBall" -> ((arg: Any) => {
     var e = arg.asInstanceOf[Ball]
     id2ball += e.clientId -> e
     println("adding " + e.clientId + " to id2ball")
   })
+
+
+  methods += "transfert" -> ((arg: Any) => {
+    var seq = arg.asInstanceOf[Seq[Any]]
+    var idObject = seq(0).asInstanceOf[String]
+    var e = seq(1).asInstanceOf[Ball]
+    var idClient = seq(2).asInstanceOf[String]
+    hostPool.getHyperHost(e.x, e.y).transfert(idObject, e)
+    id2ball += idClient -> e
+
+  })
+
 
   override def tick(): Unit = {
 
@@ -89,8 +96,10 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
           e.notifyClientViews
           if (!zone.contains(e)) {
             println("Il faut sortir de " + zone.x + " " + zone.y)
-            hostPool.getHyperHost(e.x, e.y).transfert(elem._1, e)
+            hostPool.getHyperHost(e.x, e.y).method("transfert", Seq(elem._1, e, e.clientId))
+            id2ball -= e.clientId
             elements -= elem._1
+
           }
         }
       }

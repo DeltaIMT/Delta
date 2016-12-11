@@ -38,7 +38,7 @@ class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostP
   override def receive: Receive = {
     case AddClient(id, clientActorRef) => {
       val clientView = context.actorOf(Props(createInstance[T](clientActorRef).asInstanceOf[T]  ))
-      val cancellable = context.system.scheduler.schedule(1000 milliseconds,33 milliseconds,clientView,UpdateClient)
+      val cancellable = context.system.scheduler.schedule(1000 milliseconds,33.3 milliseconds,clientView,UpdateClient)
       clients += (id -> (new Observer(id,clientView),cancellable))
       OnConnect(id, clients(id)._1)
     //  clientActorRef ! PlayersUpdate("you are connected")

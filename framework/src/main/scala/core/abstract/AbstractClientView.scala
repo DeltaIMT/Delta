@@ -1,17 +1,12 @@
 package core.`abstract`
 
-import akka.actor.FSM.->
-import akka.pattern._
-import akka.actor.{Actor, ActorRef, Props}
-import core.CoreMessage.{AnyParts, PlayersUpdate, Disconnect}
-import core.{HostPool, HyperHost}
+import akka.actor.{Actor, ActorRef}
+import core.CoreMessage.{AnyParts, Disconnect, PlayersUpdate}
 import core.user_import.{Element, Zone}
-import scala.reflect.runtime._
-import scala.reflect.runtime.universe._
+import core.{HostPool, HyperHost}
+
 import scala.collection.mutable
-import scala.reflect.ClassTag
 import scala.reflect.runtime.{universe => ru}
-import ru._
 
 case class Notify(any: Any)
 
@@ -36,6 +31,7 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
 
   def zonesToMessage(zones: List[Zone]): Unit = {
 
+    //println("Zone to view " + zones )
     var hostInsideZones = List[HyperHost]()
     var posFound = List[(Double,Double)]()
 
@@ -44,23 +40,8 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
     for (x <- 0.0 until (hosts.w * hosts.wn) by hosts.w; y <- 0.0 until (hosts.h * hosts.hn) by hosts.h) {
       var bool = false
 
-   //  println("x : " + x + " y : " + y)
-
-      fake.x = x
-      fake.y = y
-      zones foreach { z => bool = bool || z.contains(fake)  }
-
-      fake.x = x+hosts.w
-      fake.y = y
-      zones foreach { z => bool = bool || z.contains(fake)  }
-
-      fake.x = x+hosts.w
-      fake.y = y+hosts.h
-      zones foreach { z => bool = bool || z.contains(fake)  }
-
-      fake.x = x
-      fake.y = y+hosts.h
-      zones foreach { z => bool = bool || z.contains(fake)  }
+      val hostZone = new Zone(x,y,hosts.w, hosts.h)
+      zones foreach { z => bool = bool || z.intersectRect( hostZone)  }
 
       if (bool) {
     //    println("CONTAINS________")
@@ -74,6 +55,7 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
 //    println("testing host intersected with " + zones(0) + "\nThere is "+ hostInsideZones.size +" host " + posFound.map(h =>  "["+ h._1 + " " + h._2 +"]" ))
 
 
+   // println("Hosts " + hostInsideZones.size )
 
     buffers+= nextbuffer -> (hostInsideZones.size, List[Any]())
 

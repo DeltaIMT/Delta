@@ -21,6 +21,7 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
 
     case x:ClientInputWithLocation => {
 
+     // println(x.command)
       val jsonObject = Json.parse(x.command).asInstanceOf[JsArray].value
    //   println(x.command)
       jsonObject foreach {j =>  {

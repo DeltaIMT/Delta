@@ -22,7 +22,6 @@ class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clie
   var vy = 0.0
 }
 
-
 class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
   var x = 0.0
   var y = 0.0
@@ -67,13 +66,11 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
 
   var id2ball = mutable.HashMap[String, Ball]()
 
-
   methods += "addBall" -> ((arg: Any) => {
     var e = arg.asInstanceOf[Ball]
     id2ball += e.clientId -> e
     println("adding " + e.clientId + " to id2ball")
   })
-
 
   methods += "transfert" -> ((arg: Any) => {
     var seq = arg.asInstanceOf[Seq[Any]]
@@ -82,9 +79,7 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     var idClient = seq(2).asInstanceOf[String]
     hostPool.getHyperHost(e.x, e.y).transfert(idObject, e)
     id2ball += idClient -> e
-
   })
-
 
   override def tick(): Unit = {
 
@@ -95,11 +90,10 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
           e.y += e.vy
           e.notifyClientViews
           if (!zone.contains(e)) {
-            println("Il faut sortir de " + zone.x + " " + zone.y)
+       //     println("Il faut sortir de " + zone.x + " " + zone.y)
             hostPool.getHyperHost(e.x, e.y).method("transfert", Seq(elem._1, e, e.clientId))
             id2ball -= e.clientId
             elements -= elem._1
-
           }
         }
       }
@@ -112,8 +106,14 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     val y = (json \ "y").get.as[Double]
     if (id2ball.contains(id)) {
       val b = id2ball(id)
-      b.vx = (x - b.x) / 100
-      b.vy = (y - b.y) / 100
+      b.vx = (x - b.x)
+      b.vy = (y - b.y)
+      var l  = math.sqrt(b.vx*b.vx + b.vy * b.vy)
+      b.vx /= l
+      b.vy /= l
+
+      b.vx *= 10
+      b.vy *= 10
     }
   }
 }
@@ -126,7 +126,7 @@ class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClient
 
     val randId = rand.nextString(20)
     //  println(randId)
-    val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), randId, obs.id)
+    val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), randId, id)
     val hyper = hostPool.getHyperHost(b.x, b.y)
     b.sub(obs)
     println("Calling adding ball")
@@ -135,7 +135,6 @@ class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClient
       hm += randId -> b
     })
     hyper.method("addBall", b)
-
   }
 
   override def OnDisconnect(id: String, obs: Observer) = {
@@ -182,7 +181,7 @@ class Simple extends FunSuite {
       Http().bindAndHandle(RouteResult.route2HandlerFlow(route._2), "0.0.0.0", route._1)
     }
 
-    var cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 33 milliseconds, h, Tick) }
+    var cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, Tick) }
 
     println("framework working")
 

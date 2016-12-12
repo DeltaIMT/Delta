@@ -3,7 +3,7 @@ var host = '127.0.0.1'
 var uuid = require('node-uuid');
 var id_g = uuid.v4()
 var k = 0
-var N = 98
+var N = 50
 
 var createOne = () => {
 

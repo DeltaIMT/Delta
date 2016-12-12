@@ -50,11 +50,11 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
 
   override def fromListToClientMsg(list: List[Any]) = {
     val listString = list.map(e => e match {
-      case e: Element => {
-        s"""{"x":"${e.x}","y":"${e.y}"}"""
+      case e: Ball => {
+        s"""{"x":"${e.x.toInt}","y":"${e.y.toInt}","c":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
       }
       case _ => "NOT ELEMENT : " + e
-    }) ++ List(s"""{"cam":{"x":"${x}","y":"${y}"}}""")
+    }) ++ List(s"""{"cam":{"x":"${x.toInt}","y":"${y.toInt}"}}""")
     val string = listString.mkString("[", ",", "]")
     // println(string)
     string
@@ -65,11 +65,11 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
 class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool) {
 
   var id2ball = mutable.HashMap[String, Ball]()
+  var rand = new Random()
 
   methods += "addBall" -> ((arg: Any) => {
     var e = arg.asInstanceOf[Ball]
     id2ball += e.clientId -> e
-    println("adding " + e.clientId + " to id2ball")
   })
 
   methods += "transfert" -> ((arg: Any) => {
@@ -82,6 +82,20 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
   })
 
   override def tick(): Unit = {
+
+    var rest = elements.values.filter( x => x.isInstanceOf[Ball] ).asInstanceOf[Iterable[Ball]]
+    while(rest.nonEmpty){
+      var head = rest.head
+      rest = rest.tail
+      rest.foreach( other => {
+        var x2 = head.x-other.x
+        var y2 = head.y-other.y
+        if (  x2*x2 + y2*y2 < 400*4   ){
+          head.color= Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+          other.color= Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+        }
+      })
+    }
 
     elements foreach { elem =>
       elem._2 match {
@@ -109,11 +123,21 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
       b.vx = (x - b.x)
       b.vy = (y - b.y)
       var l  = math.sqrt(b.vx*b.vx + b.vy * b.vy)
-      b.vx /= l
-      b.vy /= l
+
+      if(l  != 0) {
+        b.vx /= l
+        b.vy /= l
+      }
 
       b.vx *= 10
       b.vy *= 10
+
+      if (l < 20 ){
+        b.vx *=l/20
+        b.vy *=l/20
+      }
+
+
     }
   }
 }
@@ -129,9 +153,9 @@ class UserSpecialHost(hostPool: HostPool) extends AbstractSpecialHost[UserClient
     val b = new Ball(rand.nextInt(100), rand.nextInt(1000), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)), randId, id)
     val hyper = hostPool.getHyperHost(b.x, b.y)
     b.sub(obs)
-    println("Calling adding ball")
+ //   println("Calling adding ball")
     hyper.exec(hm => {
-      println("Adding ball");
+ //     println("Adding ball");
       hm += randId -> b
     })
     hyper.method("addBall", b)
@@ -152,7 +176,7 @@ class Simple extends FunSuite {
     implicit val executionContext = actorSystem.dispatcher
     implicit val flowMaterializer = ActorMaterializer()
     val initialPort = 9001
-    val numberOfClient = 100
+    val numberOfClient = 500
     val hostsGridWidth = 5
     val hostsGridHeight = 5
     val hostWidth = 600

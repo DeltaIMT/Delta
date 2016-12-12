@@ -1,6 +1,7 @@
 window.onload = () => {
     var client = require('./providedCode')
     client.launch()
+    var zlib = require('zlib');
 
 
     var currentPos = { x: 0, y: 0 }
@@ -26,8 +27,8 @@ window.onload = () => {
     var mousePosition = { x: 0, y: 0 }
 
     document.addEventListener('mousemove', function (mouseMoveEvent) {
-        mousePosition.x = mouseMoveEvent.pageX + cam.x
-        mousePosition.y = mouseMoveEvent.pageY + cam.y
+        mousePosition.x = mouseMoveEvent.pageX 
+        mousePosition.y = mouseMoveEvent.pageY 
     }, false)
 
 
@@ -56,7 +57,7 @@ window.onload = () => {
             var blob = scene.blobs[i]
             context.beginPath()
             context.arc(blob.x, blob.y, 20, 0, Math.PI * 2)
-            context.fillStyle = "rgb(" + 100 + ", " + 100 + ", " + 100 + ")"
+            context.fillStyle = "rgb(" + blob.c[0] + ", " + blob.c[1] + ", " + blob.c[2] + ")"
             context.fill()
             context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
             context.stroke()
@@ -76,7 +77,7 @@ window.onload = () => {
     client.commandToServer(() => {
         var toServer
         if (currentPos.x != undefined)
-        toServer  = JSON.stringify([{ hosts: [[currentPos.x*1.0, currentPos.y*1.0]], data: JSON.stringify(mousePosition) }])
+        toServer  = JSON.stringify([{ hosts: [[currentPos.x*1.0, currentPos.y*1.0]], data: JSON.stringify({x: mousePosition.x  + cam.x,y:mousePosition.y+cam.y}) }])
         else 
         toServer = JSON.stringify([{ hosts: [[]], data: "" }])
         console.log("Sending :\n"+toServer)
@@ -86,8 +87,9 @@ window.onload = () => {
 
     var scene = { blobs: [] }
 
-    client.dataManipulation(data => {
-
+    client.dataManipulation(dataZiped => {
+        
+        var data = dataZiped//zlib.gunzipSync(dataZiped).toString('utf8');
         scene.blobs = []
         console.log("Received :\n"+data)
         var obj = JSON.parse(data)

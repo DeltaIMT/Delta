@@ -1,5 +1,9 @@
 package core.`abstract`
 
+import java.io.ByteArrayOutputStream
+import java.util.Base64
+import java.util.zip.GZIPOutputStream
+
 import akka.actor.{Actor, ActorRef}
 import core.CoreMessage.{AnyParts, Disconnect, PlayersUpdate}
 import core.user_import.{Element, Zone}
@@ -107,7 +111,16 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
         if( buffers(num)._1 == 0) {
           //println("Total parts : " + worker.fromListToClientMsg(buffers(num)._2))
     //      println("Buffer size:"+ buffers.values.size)
-          client ! PlayersUpdate(fromListToClientMsg(buffers(num)._2))
+          val toDeflate = fromListToClientMsg(buffers(num)._2)
+
+
+          val arrOutputStream = new ByteArrayOutputStream()
+          val zipOutputStream = new GZIPOutputStream(arrOutputStream)
+          zipOutputStream.write(toDeflate.getBytes)
+          zipOutputStream.close()
+          Base64.getEncoder.encodeToString(arrOutputStream.toByteArray)
+
+          client ! PlayersUpdate(toDeflate)
         }
       }
       else {

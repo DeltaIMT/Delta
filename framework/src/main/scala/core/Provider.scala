@@ -13,10 +13,12 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
     case AddClient(id, playerActorRef) => {
       clientRef = playerActorRef
       specialHost ! AddClient(id, playerActorRef)
+      println("Provider Connection    "+id)
     }
 
     case DeleteClient(id)=> {
       specialHost ! DeleteClient(id)
+      println("Provider Disconnection "+id)
     }
 
     case x:ClientInputWithLocation => {

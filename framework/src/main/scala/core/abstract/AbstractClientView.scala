@@ -118,9 +118,9 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
           val zipOutputStream = new GZIPOutputStream(arrOutputStream)
           zipOutputStream.write(toDeflate.getBytes)
           zipOutputStream.close()
-          Base64.getEncoder.encodeToString(arrOutputStream.toByteArray)
 
-          client ! PlayersUpdate(toDeflate)
+
+          client ! PlayersUpdate(Base64.getEncoder.encodeToString(arrOutputStream.toByteArray))
         }
       }
       else {

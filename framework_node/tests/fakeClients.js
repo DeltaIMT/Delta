@@ -3,7 +3,8 @@ var host = '127.0.0.1'
 var uuid = require('node-uuid');
 var id_g = uuid.v4()
 var k = 0
-var N = 50
+var N = 200
+var zlib = require('zlib');
 
 var createOne = () => {
 
@@ -41,8 +42,8 @@ var createOne = () => {
                     connection2.on('message', function (message) {
                         if (message.type === 'utf8') {
                             //    console.log(k2 + " received: '" + message.utf8Data + "'");
-
-                            var obj = JSON.parse(message.utf8Data)
+                            var data = zlib.gunzipSync(new Buffer(message.utf8Data,'base64'))    
+                            var obj = JSON.parse(data)
                             obj.forEach(e => {
                                 if (e.cam != undefined) {
 

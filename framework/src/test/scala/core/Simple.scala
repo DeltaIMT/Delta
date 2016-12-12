@@ -120,24 +120,19 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     val y = (json \ "y").get.as[Double]
     if (id2ball.contains(id)) {
       val b = id2ball(id)
-      b.vx = (x - b.x)
-      b.vy = (y - b.y)
+      b.vx = x - b.x
+      b.vy = y - b.y
       var l  = math.sqrt(b.vx*b.vx + b.vy * b.vy)
-
       if(l  != 0) {
         b.vx /= l
         b.vy /= l
       }
-
       b.vx *= 10
       b.vy *= 10
-
       if (l < 20 ){
         b.vx *=l/20
         b.vy *=l/20
       }
-
-
     }
   }
 }
@@ -209,7 +204,7 @@ class Simple extends FunSuite {
 
     println("framework working")
 
-    Thread.sleep(1000000)
+    Thread.sleep(1000000) 
     println("framework shutdownn")
     cancellable foreach { c => c.cancel() }
     actorSystem.terminate()

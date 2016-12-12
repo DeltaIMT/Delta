@@ -2,11 +2,7 @@ window.onload = () => {
     var client = require('./providedCode')
     client.launch()
     var zlib = require('zlib');
-
-
     var currentPos = { x: 0, y: 0 }
-
-
     var canvas = document.getElementById("canvas")
     if (!canvas) {
         alert("Impossible de récupérer le canvas")
@@ -20,7 +16,6 @@ window.onload = () => {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-
     var worldSize = { x: 3000, y: 3000 }
     var cam = { x: 0, y: 0 }
 
@@ -30,8 +25,6 @@ window.onload = () => {
         mousePosition.x = mouseMoveEvent.pageX
         mousePosition.y = mouseMoveEvent.pageY
     }, false)
-
-
 
     var draw = () => {
         // clamp the camera position to the world bounds while centering the camera around the snake                    
@@ -71,9 +64,6 @@ window.onload = () => {
         return Math.min(Math.max(value, min), max);
     }
 
-
-
-
     client.commandToServer(() => {
         var toServer
         if (currentPos.x != undefined)
@@ -84,11 +74,8 @@ window.onload = () => {
         return toServer
     })
 
-
     var scene = { blobs: [] }
-
     client.dataManipulation(dataZiped => {
-
         console.log("Received Zipped :\n" + dataZiped)
         var data = zlib.gunzipSync(new Buffer(dataZiped,'base64'))
         //   var data = dataZiped
@@ -107,6 +94,4 @@ window.onload = () => {
         })
         //  console.log(data)
     })
-
-
 }

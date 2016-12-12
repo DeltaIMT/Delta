@@ -20,6 +20,8 @@ import scala.util.Random
 class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element(x, y) with Observable {
   var vx = 0.0
   var vy = 0.0
+  var propulx = 0.0
+  var propuly = 0.0
 }
 
 class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
@@ -93,6 +95,11 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
         if (  x2*x2 + y2*y2 < 400*4   ){
           head.color= Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
           other.color= Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+          head.x += ((other.propulx - other.x)/math.sqrt(other.propulx*other.propulx - other.x*other.x))*100
+          head.y += ((other.propuly - other.y)/math.sqrt(other.propuly*other.propuly - other.y*other.y))*100
+          other.x += ((head.propulx - head.x)/math.sqrt(head.propulx*head.propulx - head.x*head.x))*100
+          other.y += ((head.propuly - head.y)/math.sqrt(head.propuly*head.propuly - head.y*head.y))*100
+
         }
       })
     }
@@ -118,6 +125,7 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     val json = Json.parse(data)
     val x = (json \ "x").get.as[Double]
     val y = (json \ "y").get.as[Double]
+    val bool = (json \ "b").get.as[Boolean]
     if (id2ball.contains(id)) {
       val b = id2ball(id)
       b.vx = x - b.x
@@ -132,6 +140,10 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
       if (l < 20 ){
         b.vx *=l/20
         b.vy *=l/20
+      }
+      if(bool){
+        b.propulx = x;
+        b.propuly = y;
       }
     }
   }

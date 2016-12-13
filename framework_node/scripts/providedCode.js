@@ -39,24 +39,20 @@ var sendCommand = () =>
 setTimeout(sendCommand,1000)
 }
 
-var target = 'http://localhost:5000'
+var target = 'http://localhost'
 
-// using ping : seems to be an OS problem as well...
+// using ping : problem...
 var pingTest = () =>
 {
     var ping = require('ping');
 
-    var hosts = [target];
-
-    hosts.forEach(function (host) {
-        ping.promise.probe(host)
+        ping.promise.probe(target)
             .then(function (res) {
-                console.log(res);
+                console.log("ping : " + res);
             });
-    });
 }
 
 module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
 module.exports.commandToServer = (f) => { defineCommandToServer = f }
 module.exports.countFps = () => { return fps }
-module.exports.pingMeasurement = () => { return pingTest() }
+module.exports.pingMeasurement = pingTest

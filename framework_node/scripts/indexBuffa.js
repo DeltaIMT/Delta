@@ -20,11 +20,18 @@ window.onload = () => {
     var cam = { x: 0, y: 0 }
 
     var mousePosition = { x: 0, y: 0 }
+    var clicked = false
 
     document.addEventListener('mousemove', function (mouseMoveEvent) {
         mousePosition.x = mouseMoveEvent.pageX
         mousePosition.y = mouseMoveEvent.pageY
     }, false)
+
+    document.addEventListener("click", function(){
+    clicked = true
+    setTimeout( () => clicked = false, 33)
+    })
+
 
     var draw = () => {
         // clamp the camera position to the world bounds while centering the camera around the snake                    
@@ -78,7 +85,7 @@ window.onload = () => {
     client.commandToServer(() => {
         var toServer
         if (currentPos.x != undefined)
-            toServer = JSON.stringify([{ hosts: [[currentPos.x * 1.0, currentPos.y * 1.0]], data: JSON.stringify({ x: mousePosition.x + cam.x, y: mousePosition.y + cam.y }) }])
+            toServer = JSON.stringify([{ hosts: [[currentPos.x * 1.0, currentPos.y * 1.0]], data: JSON.stringify({ x: mousePosition.x + cam.x, y: mousePosition.y + cam.y,b:clicked }) }])
         else
             toServer = JSON.stringify([{ hosts: [[]], data: "" }])
         console.log("Sending :\n" + toServer)

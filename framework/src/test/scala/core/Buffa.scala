@@ -18,12 +18,16 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 
-class Buffalo(x: Double, y: Double, var color: Array[Int] ) extends Element(x, y) with Observable{
+class Buffalo(x: Double, y: Double, var color: Array[Int]) extends Element(x, y) with Observable {
   var vx = 0.0
   var vy = 0.0
+  var timeout = 200
+  var tx =x
+  var ty= y
 
 
 }
+
 class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element(x, y) with Observable {
   var vx = 0.0
   var vy = 0.0
@@ -79,8 +83,8 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
   var id2ball = mutable.HashMap[String, Ball]()
   var rand = new Random()
 
-  var Buffa = new Buffalo(zone.x +  rand.nextInt(zone.w.toInt),zone.y +  rand.nextInt(zone.h.toInt), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
-elements+= "tralala" -> Buffa
+  var Buffa = new Buffalo(zone.x + rand.nextInt(zone.w.toInt), zone.y + rand.nextInt(zone.h.toInt), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
+  elements += "tralala" -> Buffa
   methods += "addBall" -> ((arg: Any) => {
     var e = arg.asInstanceOf[Ball]
     id2ball += e.clientId -> e
@@ -97,31 +101,35 @@ elements+= "tralala" -> Buffa
 
   override def tick(): Unit = {
 
-    var rest = elements.values.filter( x => x.isInstanceOf[Ball] ).asInstanceOf[Iterable[Ball]]
-    while(rest.nonEmpty){
+    var rest = elements.values.filter(x => x.isInstanceOf[Ball]).asInstanceOf[Iterable[Ball]]
+    while (rest.nonEmpty) {
       var head = rest.head
       rest = rest.tail
-      rest.foreach( other => {
-        var x2 = head.x-other.x
-        var y2 = head.y-other.y
-        if (  x2*x2 + y2*y2 < 400*4   ){
-          head.color= Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
-          other.color= Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
-          head.x += ((other.propulx - other.x)/math.sqrt(other.propulx*other.propulx - other.x*other.x))*100
-          head.y += ((other.propuly - other.y)/math.sqrt(other.propuly*other.propuly - other.y*other.y))*100
-          other.x += ((head.propulx - head.x)/math.sqrt(head.propulx*head.propulx - head.x*head.x))*100
-          other.y += ((head.propuly - head.y)/math.sqrt(head.propuly*head.propuly - head.y*head.y))*100
+      rest.foreach(other => {
+        var x2 = head.x - other.x
+        var y2 = head.y - other.y
+        if (x2 * x2 + y2 * y2 < 400 * 4) {
+          head.color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+          other.color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
 
+          head.vx += other.propulx
+          head.vy += other.propuly
+          other.vx += head.propulx
+          other.vy += head.propuly
         }
       })
     }
 
-
-
-    Buffa.vx =  (zone.x +  rand.nextInt(zone.w.toInt)) - Buffa.x
-    Buffa.vy =  (zone.y +  rand.nextInt(zone.h.toInt)) - Buffa.y
-    Buffa.x += Buffa.vx/10000
-    Buffa.y += Buffa.vy/10000
+    Buffa.timeout -=  1
+    if(Buffa.timeout == 0){
+      Buffa.tx = zone.x + rand.nextInt(zone.w.toInt)
+      Buffa.ty = zone.y + rand.nextInt(zone.h.toInt)
+      Buffa.timeout = 200
+  }
+    Buffa.vx =  Buffa.tx - Buffa.x
+    Buffa.vy =  Buffa.ty - Buffa.y
+    Buffa.x += Buffa.vx / 50
+    Buffa.y += Buffa.vy / 50
 
     elements foreach { elem =>
       elem._2 match {
@@ -135,6 +143,17 @@ elements+= "tralala" -> Buffa
             id2ball -= e.clientId
             elements -= elem._1
           }
+
+
+          var x2 = e.x - Buffa.x
+          var y2 = e.y - Buffa.y
+          if (x2 * x2 + y2 * y2 < math.pow(20+60,2)) {
+
+            e.x = rand.nextInt(3000)
+            e.y = rand.nextInt(3000)
+          }
+
+
         }
         case _ => {}
       }
@@ -148,22 +167,26 @@ elements+= "tralala" -> Buffa
     val bool = (json \ "b").get.as[Boolean]
     if (id2ball.contains(id)) {
       val b = id2ball(id)
-      b.vx = x - b.x
-      b.vy = y - b.y
-      var l  = math.sqrt(b.vx*b.vx + b.vy * b.vy)
-      if(l  != 0) {
-        b.vx /= l
-        b.vy /= l
+      var vx = x - b.x
+      var vy = y - b.y
+      var l = math.sqrt(vx * vx + vy * vy)
+      if (l != 0) {
+        vx /= l
+        vy /= l
       }
-      b.vx *= 10
-      b.vy *= 10
-      if (l < 20 ){
-        b.vx *=l/20
-        b.vy *=l/20
+      vx *= 10
+      vy *= 10
+      if (l < 20) {
+        vx *= l / 20
+        vy *= l / 20
       }
-      if(bool){
-        b.propulx = x;
-        b.propuly = y;
+
+      b.vx = b.vx*0.98+vx*0.02
+      b.vy = b.vy*0.98+vy*0.02
+
+      if (bool) {
+        b.propulx = 1*(x-b.x)/l;
+        b.propuly = 1*(y-b.y)/l;
       }
     }
   }

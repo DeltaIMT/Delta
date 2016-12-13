@@ -1,3 +1,5 @@
+
+
 var dataManipulationFunction = (arg) => {}
 var defineCommandToServer = () => {return "default message"}
 
@@ -15,12 +17,16 @@ var wsPort = new WebSocket('ws://' + host + ':9000'+"/?id="+id)
 console.log("Searching port at 9000")
 wsPort.onmessage = function (event) {
     data = event.data
-    console.log("Connection to : "+'ws://' + host +':'+data +"/?id="+id)
+console.log("Connection to : "+'ws://' + host +':'+data +"/?id="+id)
     ws = new WebSocket('ws://' + host +':'+data +"/?id="+id )
     ws.onmessage = function (event) {
         frames++ 
         dataManipulationFunction(event.data)
     }
+}
+wsPort.send("ping") //enregistrer date1
+wsPort.onmessage = function (event) {
+    //enregistrer date2 et soustraire
 }
 
 var countFpsFunction = () =>
@@ -38,21 +44,6 @@ var sendCommand = () =>
 }
 setTimeout(sendCommand,1000)
 }
-
-var target = 'http://localhost'
-
-// using ping : problem...
-var pingTest = () =>
-{
-    var ping = require('ping');
-
-        ping.promise.probe(target)
-            .then(function (res) {
-                console.log("ping : " + res);
-            });
-}
-
 module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
 module.exports.commandToServer = (f) => { defineCommandToServer = f }
 module.exports.countFps = () => { return fps }
-module.exports.pingMeasurement = pingTest

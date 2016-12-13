@@ -88,18 +88,18 @@ window.onload = () => {
             toServer = JSON.stringify([{ hosts: [[currentPos.x * 1.0, currentPos.y * 1.0]], data: JSON.stringify({ x: mousePosition.x + cam.x, y: mousePosition.y + cam.y,b:clicked }) }])
         else
             toServer = JSON.stringify([{ hosts: [[]], data: "" }])
-        console.log("Sending :\n" + toServer)
+       // console.log("Sending :\n" + toServer)
         return toServer
     })
 
     var scene = { blobs: [],buffa: []  }
     client.dataManipulation(dataZiped => {
-        console.log("Received Zipped :\n" + dataZiped)
+     //   console.log("Received Zipped :\n" + dataZiped)
         var data = zlib.gunzipSync(new Buffer(dataZiped, 'base64'))
         //   var data = dataZiped
         scene.blobs = []
         scene.buffa = []
-        console.log("Received :\n" + data)
+      //  console.log("Received :\n" + data)
         var obj = JSON.parse(data)
         obj.forEach(e => {
             if (e.cam != undefined) {

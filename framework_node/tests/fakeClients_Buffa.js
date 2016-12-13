@@ -3,7 +3,7 @@ var host = '127.0.0.1'
 var uuid = require('node-uuid');
 var id_g = uuid.v4()
 var k = 0
-var N = 200
+var N = 100
 var zlib = require('zlib');
 
 var createOne = () => {
@@ -58,7 +58,7 @@ var createOne = () => {
                     });
 
                     var mouseSpeed = { x: 1.0, y: 0.0 }
-                    var mousePosition = { x: 0, y: 0 }
+                    var mousePosition = { x: 0, y: 0,b:true }
                     var sendCommand = () => {
 
                         mouseSpeed.x = (mouseSpeed.x * 0.9 + (Math.random() - 0.5) * 100)
@@ -79,7 +79,7 @@ var createOne = () => {
                             toServer = JSON.stringify([{ hosts: [[]], data: "" }])
                         //    console.log(k2 + " Sending :\n" + toServer)
 
-                        setTimeout(sendCommand, 16.66)
+                        setTimeout(sendCommand, 33.33)
                         connection2.sendUTF(toServer)
                     }
                     setTimeout(sendCommand, 1000)

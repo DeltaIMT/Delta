@@ -19,13 +19,12 @@ import scala.util.Random
 
 
 class Buffalo(x: Double, y: Double, var color: Array[Int]) extends Element(x, y) with Observable {
+  var rand = new Random()
   var vx = 0.0
   var vy = 0.0
-  var timeout = 200
+  var timeout = 100+ rand.nextInt(200)
   var tx =x
   var ty= y
-
-
 }
 
 class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element(x, y) with Observable {
@@ -40,7 +39,7 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   var y = 0.0
   var idBall = ""
 
-  override def dataToViewZone(): List[Zone] = List(new Zone(x - 1000, y - 1000, 2000, 2000))
+  override def dataToViewZone(): List[Zone] = List(new Zone(x - 1500, y - 1500, 3000, 3000))
 
   override def onNotify(any: Any): Unit = {
 
@@ -79,9 +78,9 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
 
 
 class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool) {
-
-  var id2ball = mutable.HashMap[String, Ball]()
   var rand = new Random()
+  var id2ball = mutable.HashMap[String, Ball]()
+
 
   var Buffa = new Buffalo(zone.x + rand.nextInt(zone.w.toInt), zone.y + rand.nextInt(zone.h.toInt), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
   elements += "tralala" -> Buffa
@@ -124,7 +123,7 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     if(Buffa.timeout == 0){
       Buffa.tx = zone.x + rand.nextInt(zone.w.toInt)
       Buffa.ty = zone.y + rand.nextInt(zone.h.toInt)
-      Buffa.timeout = 200
+      Buffa.timeout = 100+ rand.nextInt(200)
   }
     Buffa.vx =  Buffa.tx - Buffa.x
     Buffa.vy =  Buffa.ty - Buffa.y

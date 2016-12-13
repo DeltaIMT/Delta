@@ -17,6 +17,13 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.Random
 
+
+class Buffalo(x: Double, y: Double, var color: Array[Int] ) extends Element(x, y) with Observable{
+  var vx = 0.0
+  var vy = 0.0
+
+
+}
 class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element(x, y) with Observable {
   var vx = 0.0
   var vy = 0.0
@@ -51,7 +58,10 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def fromListToClientMsg(list: List[Any]) = {
     val listString = list.map(e => e match {
       case e: Ball => {
-        s"""{"x":"${e.x.toInt}","y":"${e.y.toInt}","c":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
+        s"""{"t":"p","x":"${e.x.toInt}","y":"${e.y.toInt}","c":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
+      }
+      case e: Buffalo => {
+        s"""{"t":"b","x":"${e.x.toInt}","y":"${e.y.toInt}","c":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
       }
       case _ => "NOT ELEMENT : " + e
     }) ++ List(s"""{"cam":{"x":"${x.toInt}","y":"${y.toInt}"}}""")
@@ -67,6 +77,8 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
   var id2ball = mutable.HashMap[String, Ball]()
   var rand = new Random()
 
+  var Buffa = new Buffalo(zone.x +  rand.nextInt(zone.w.toInt),zone.y +  rand.nextInt(zone.h.toInt), Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)))
+elements+= "tralala" -> Buffa
   methods += "addBall" -> ((arg: Any) => {
     var e = arg.asInstanceOf[Ball]
     id2ball += e.clientId -> e
@@ -97,6 +109,13 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
       })
     }
 
+
+
+    Buffa.vx =  (zone.x +  rand.nextInt(zone.w.toInt)) - Buffa.x
+    Buffa.vy =  (zone.y +  rand.nextInt(zone.h.toInt)) - Buffa.y
+    Buffa.x += Buffa.vx/10000
+    Buffa.y += Buffa.vy/10000
+
     elements foreach { elem =>
       elem._2 match {
         case e: Ball => {
@@ -110,6 +129,7 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
             elements -= elem._1
           }
         }
+        case _ => {}
       }
     }
   }

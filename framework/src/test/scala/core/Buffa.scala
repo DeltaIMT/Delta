@@ -17,14 +17,56 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.Random
 
+object Vec {
+  def apply(x: Double, y: Double) = new Vec(x, y)
+}
+
+class Vec(var x: Double, var y: Double) {
+
+  def +(v: Vec) = Vec(x + v.x, y + v.y)
+
+  def unary_- = Vec(-x, -y)
+
+  def -(v: Vec) = this + (-v)
+
+  def *(v: Vec) = Vec(x * v.x, y * v.y)
+
+  def *=(v: Vec) = {
+    x *= v.x
+    y *= v.y
+  }
+
+  def *=(n: Double): Unit = {
+    x *= n
+    y *= n
+  }
+
+  def /=(n: Double): Unit = {
+    x /= n
+    y /= n
+  }
+
+  def length2() = x * x + y * y
+
+  def length() = math.sqrt(length2())
+
+  def normalize(): Unit = {
+    val l = length()
+    if (l != 0) {
+      x /= l
+      y /= l
+    }
+  }
+
+}
 
 class Buffalo(x: Double, y: Double, var color: Array[Int]) extends Element(x, y) with Observable {
   var rand = new Random()
   var vx = 0.0
   var vy = 0.0
-  var timeout = 100+ rand.nextInt(200)
-  var tx =x
-  var ty= y
+  var timeout = 100 + rand.nextInt(200)
+  var tx = x
+  var ty = y
 }
 
 class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element(x, y) with Observable {
@@ -32,11 +74,18 @@ class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clie
   var vy = 0.0
   var propulx = 0.0
   var propuly = 0.0
+  var grapx = 0.0
+  var grapy = 0.0
+  var grapTx = 0.0
+  var grapTy = 0.0
+  var grapState = "off"
 }
 
 class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
   var x = 0.0
   var y = 0.0
+  var grapx = 0.0
+  var grapy = 0.0
   var idBall = ""
 
   override def dataToViewZone(): List[Zone] = List(new Zone(x - 1500, y - 1500, 3000, 3000))
@@ -48,6 +97,8 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
       => {
         this.x = x.x
         this.y = x.y
+        this.grapx = x.grapx
+        this.grapy = x.grapy
         this.idBall = x.id
       }
       case _ => {
@@ -63,7 +114,12 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def fromListToClientMsg(list: List[Any]) = {
     val listString = list.map(e => e match {
       case e: Ball => {
-        s"""{"t":"p","x":"${e.x.toInt}","y":"${e.y.toInt}","c":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
+
+        var stringGrap = ""
+        if (grapx != 0 || grapy != 0)
+          stringGrap = s""","grap":{"x":"${grapx.toInt}","y":"${grapy.toInt}"}"""
+
+        s"""{"t":"p","x":"${e.x.toInt}","y":"${e.y.toInt}","c":[${e.color(0)},${e.color(1)},${e.color(2)}]${stringGrap}}"""
       }
       case e: Buffalo => {
         s"""{"t":"b","x":"${e.x.toInt}","y":"${e.y.toInt}","c":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
@@ -119,14 +175,14 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
       })
     }
 
-    Buffa.timeout -=  1
-    if(Buffa.timeout == 0){
+    Buffa.timeout -= 1
+    if (Buffa.timeout == 0) {
       Buffa.tx = zone.x + rand.nextInt(zone.w.toInt)
       Buffa.ty = zone.y + rand.nextInt(zone.h.toInt)
-      Buffa.timeout = 100+ rand.nextInt(200)
-  }
-    Buffa.vx =  Buffa.tx - Buffa.x
-    Buffa.vy =  Buffa.ty - Buffa.y
+      Buffa.timeout = 100 + rand.nextInt(200)
+    }
+    Buffa.vx = Buffa.tx - Buffa.x
+    Buffa.vy = Buffa.ty - Buffa.y
     Buffa.x += Buffa.vx / 50
     Buffa.y += Buffa.vy / 50
 
@@ -143,16 +199,28 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
             elements -= elem._1
           }
 
-
           var x2 = e.x - Buffa.x
           var y2 = e.y - Buffa.y
-          if (x2 * x2 + y2 * y2 < math.pow(20+60,2)) {
+          if (x2 * x2 + y2 * y2 < math.pow(20 + 60, 2)) {
 
             e.x = rand.nextInt(3000)
             e.y = rand.nextInt(3000)
           }
 
+          if (e.grapState == "deploying") {
+            e.grapx += e.grapTx * 8
+            e.grapy += e.grapTy * 8
+            if (e.grapx * e.grapx + e.grapy * e.grapy > 300 * 300)
+              e.grapState = "retracting"
+          }
+          else if (e.grapState == "retracting") {
+            e.grapx *= 0.90
+            e.grapy *= 0.90
+            if (math.abs(e.grapx) < 1) e.grapx = 0
+            if (math.abs(e.grapy) < 1) e.grapy = 0
 
+            if (e.grapx == 0 && e.grapy == 0) e.grapState = "off"
+          }
         }
         case _ => {}
       }
@@ -163,30 +231,46 @@ class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     val json = Json.parse(data)
     val x = (json \ "x").get.as[Double]
     val y = (json \ "y").get.as[Double]
-    val bool = (json \ "b").get.as[Boolean]
+    val bool = (json \ "cl").get.as[Boolean]
+    val rbool = (json \ "cr").get.as[Boolean]
     if (id2ball.contains(id)) {
       val b = id2ball(id)
-      var vx = x - b.x
-      var vy = y - b.y
-      var l = math.sqrt(vx * vx + vy * vy)
+
+      var toMouseX = x - b.x
+      var toMouseY = y - b.y
+
+      var l = math.sqrt(toMouseX * toMouseX + toMouseY * toMouseY)
       if (l != 0) {
-        vx /= l
-        vy /= l
+        toMouseX /= l
+        toMouseY /= l
       }
-      vx *= 10
-      vy *= 10
+      else {
+        toMouseX = 0
+        toMouseY = 0
+      }
+      var vx = toMouseX * 10
+      var vy = toMouseY * 10
       if (l < 20) {
         vx *= l / 20
         vy *= l / 20
       }
 
-      b.vx = b.vx*0.98+vx*0.02
-      b.vy = b.vy*0.98+vy*0.02
+      b.vx = b.vx * 0.98 + vx * 0.02
+      b.vy = b.vy * 0.98 + vy * 0.02
 
       if (bool) {
-        b.propulx = 1*(x-b.x)/l;
-        b.propuly = 1*(y-b.y)/l;
+        b.propulx = 1 * (x - b.x) / l;
+        b.propuly = 1 * (y - b.y) / l;
       }
+
+      if (rbool && b.grapState == "off") {
+        println("Grappin !!!")
+        b.grapState = "deploying"
+        b.grapTx = toMouseX
+        b.grapTy = toMouseY
+      }
+
+
     }
   }
 }

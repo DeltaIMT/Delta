@@ -68,7 +68,7 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
       var bool = false
       zones foreach { z => {
         bool = bool || z.contains(e)
-     //   println(e + " is in " + z + " ? " + bool)
+       // println(e + " is in " + z + " ? " + bool)
       }
       }
       bool

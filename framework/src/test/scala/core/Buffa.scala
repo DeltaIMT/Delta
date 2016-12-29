@@ -17,48 +17,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.Random
 
-object Vec {
-  def apply(x: Double, y: Double) = new Vec(x, y)
-}
 
-class Vec(var x: Double, var y: Double) {
-
-  def +(v: Vec) = Vec(x + v.x, y + v.y)
-
-  def unary_- = Vec(-x, -y)
-
-  def -(v: Vec) = this + (-v)
-
-  def *(v: Vec) = Vec(x * v.x, y * v.y)
-
-  def *=(v: Vec) = {
-    x *= v.x
-    y *= v.y
-  }
-
-  def *=(n: Double): Unit = {
-    x *= n
-    y *= n
-  }
-
-  def /=(n: Double): Unit = {
-    x /= n
-    y /= n
-  }
-
-  def length2() = x * x + y * y
-
-  def length() = math.sqrt(length2())
-
-  def normalize(): Unit = {
-    val l = length()
-    if (l != 0) {
-      x /= l
-      y /= l
-    }
-  }
-
-}
 
 class Buffalo(x: Double, y: Double, var color: Array[Int]) extends Element(x, y) with Observable {
   var rand = new Random()

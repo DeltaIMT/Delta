@@ -6,7 +6,8 @@ import core.user_import.Element
 object CoreMessage {
   case class DeleteClient(id: String)
   case class AddClient(id: String, playerActorRef: ActorRef)
-  case class Command(id : String,command : String )
+  case class ClientInputWithLocation(id : String, command : String )
+  case class ClientInput(id : String, data : String )
   case class ChangeActor(id: String, next : ActorRef)
   case class SetProvider(actor : ActorRef)
   case class ConnectClient(actor: ActorRef)
@@ -18,4 +19,6 @@ object CoreMessage {
   case class Exec(f : collection.mutable.HashMap[String,Element]=> Unit)
   case class AnyParts(buffer : Int,anys : List[Any])
   case object Tick
+  case object Disconnect
+  case class Method(method : String, args  : Any)
 }

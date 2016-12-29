@@ -12,4 +12,6 @@ class Element(var x:Double,var y:Double) {
     h.host ! Set(s, this)
   }
 
+  override def toString: String = "("+x+","+y+")"
+
 }

@@ -24,6 +24,10 @@ window.onload = () => {
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
+    // draw the background
+    var background = new Image()
+    background.src = './texture/background.png'
+
 
     var draw = () => {
         t++
@@ -35,19 +39,16 @@ window.onload = () => {
         context.setTransform(1, 0, 0, 1, 0, 0);  // because the transform matrix is cumulative
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.translate(-cam.x, -cam.y);
-
-        // draw the background
-        var background = new Image()
-        background.src = './texture/background.png'
-        var pattern = context.createPattern(background, 'repeat')
-
+    var pattern = context.createPattern(background, 'repeat')
         context.beginPath()
         context.rect(cam.x, cam.y, canvas.width + cam.x, canvas.height + cam.y);
         context.fillStyle = pattern
         context.fill()
 
+        //console.log("Drawing UNIT ___________ " +bowmen.length )
         //Unit
         for (const bowman of bowmen) {
+            //     console.log("draw  : "+ JSON.stringify(bowman,null,1))
             context.beginPath()
             context.arc(bowman.x, bowman.y, 20, 0, Math.PI * 2)
             context.fillStyle = "rgb(" + bowman.color[0] + ", " + bowman.color[1] + ", " + bowman.color[2] + ")"

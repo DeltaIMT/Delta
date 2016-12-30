@@ -124,7 +124,7 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
         }
       }
       else {
-        println("WARNING : Message too old from host to ClientView, delay : " + (nextbuffer - num)  )
+       // println("WARNING : Message too old from host to ClientView, delay : " + (nextbuffer - num)  )
       }
     }
 

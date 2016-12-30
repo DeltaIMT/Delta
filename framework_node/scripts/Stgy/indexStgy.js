@@ -2,19 +2,20 @@ var Draw = require('./draw')
 var Mous = require('./mouse')
 var Intr = require('./intersection')
 
+var moveOrder = []
+
 Mous.onDragEnd((Mous) => {
     Draw.setSelectionSquare(null)
-    selectedBowmen = bowmen.filter(b => b.h == true)
+    selectedBowmen = bowmenVal.filter(b => b.h == true)
 })
 
 Mous.onDrag((Mous) => {
     Draw.setSelectionSquare(Mous)
-    bowmen = bowmen.map(bowman => {
+    bowmenVal.forEach(bowman => {
         if (bowman.mine && Intr.pointInsideSquare(bowman, Mous))
-            bowman.h = true
+            bowmen[bowman.id].h = true
         else
-            bowman.h = false
-        return bowman
+            bowmen[bowman.id].h = false
     })
 })
 
@@ -40,7 +41,7 @@ var moveSquareCompute = (Mous) => {
 Mous.onDragRightEnd((Mous) => {
     var square = moveSquareCompute(Mous)
 
-    console.log(JSON.stringify(square, null, 1))
+    // console.log(JSON.stringify(square, null, 1))
     if (!square.vx) {
         var sqrt = Math.sqrt(selectedBowmen.length)
         square.numW = sqrt
@@ -52,12 +53,28 @@ Mous.onDragRightEnd((Mous) => {
         square.px = 0
         square.py = 45
     }
-    console.log(JSON.stringify(square, null, 1))
+    //    console.log(JSON.stringify(square, null, 1))
     var offX = 0
     var offY = 0
     selectedBowmen.forEach(b => {
-        b.tx = square.x1 + offX * square.vx + offY * square.px
-        b.ty = square.y1 + offX * square.vy + offY * square.py
+
+        var hosts = []
+        for (var j = -1; j <= 1; j++)
+            for (var i = -1; i <= 1; i++) {
+                hosts.push([b.x * 1.0 + 600 * i, b.y * 1.0 + 600 * j])
+            }
+
+
+        moveOrder.push(
+            {
+                hosts: [[b.x * 1.0, b.y * 1.0]],
+                data: JSON.stringify({
+                    id: b.id,
+                    x: parseInt(square.x1 + offX * square.vx + offY * square.px),
+                    y: parseInt(square.y1 + offX * square.vy + offY * square.py)
+                })
+            }
+        )
         offX += 1
         if (offX >= square.numW) {
             offX = 0
@@ -68,7 +85,6 @@ Mous.onDragRightEnd((Mous) => {
     Draw.setMoveSquare(null)
 })
 
-
 Mous.onDragRight((Mous) => {
     var square = moveSquareCompute(Mous)
     Draw.setMoveSquare(square)
@@ -78,79 +94,46 @@ document.addEventListener("contextmenu", function (e) {
     e.preventDefault()
 });
 
-var makeId = () => { Math.random().toString(36).substring(7) }
+var makeId = () => Math.random().toString(36).substring(7)
 var selectedBowmen = []
-var bowmen = new Array(100).join().split(',').map(() => {
-    var team = parseInt(Math.random() * 8)
-    var color = []
-    if (team == 0)
-        color = [255, 0, 0]
-    else if (team == 1)
-        color = [255, 255, 0]
-    else if (team == 2)
-        color = [0, 255, 0]
-    else if (team == 3)
-        color = [0, 255, 255]
-    else if (team == 4)
-        color = [0, 0, 255]
-    else if (team == 5)
-        color = [255, 0, 255]
-    else if (team == 6)
-        color = [123, 0, 0]
-    else if (team == 7)
-        color = [0, 123, 0]
-    else
-        color = [0, 0, 123]
-    return {
-        id: makeId(),
-        mine: team == 4,
-        color: color,
-        health: Math.random(),
-        x: Math.random() * 1000.0,
-        y: Math.random() * 1000,
-        tx: null,
-        ty: null,
-        h: false
-    }
-})
-
+var bowmen = {}
+var bowmenVal = []
 
 const loop = () => {
     setTimeout(loop, 16.666)
-
-    bowmen.forEach(bowman => {
-        if (bowman.tx != null) {
-            var x = Math.sign(bowman.tx - bowman.x)
-            var y = Math.sign(bowman.ty - bowman.y)
-            bowman.x += x * 1
-            bowman.y += y * 1
-        }
-        else {
-            bowman.x += Math.random() * 6 - 3; bowman.y += Math.random() * 6 - 3
-        }
-    })
-
-
-    Draw.setBowmen(bowmen)
-
+    bowmenVal = Object.keys(bowmen).map(key => bowmen[key]);
+    Draw.setBowmen(bowmenVal)
 }
 setTimeout(loop, 200)
-
 var client = require('../providedCode')
 client.launch()
 var zlib = require('zlib')
-
-
 client.dataManipulation(dataZiped => {
-    //   console.log("Received Zipped :\n" + dataZiped)
-    var data = zlib.gunzipSync(new Buffer(dataZiped, 'base64'))
-    console.log("Received :\n" + data)
-
+    // console.log("Received Zipped :\n" + dataZiped)
+    var data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
+        console.log("Received :\n" + data)
+        data = JSON.parse(data)
+        data.forEach(e => {
+            if (e.type == "bowman") {
+                if (bowmen[e.id] == undefined)
+                    bowmen[e.id] = {}
+                Object.assign(bowmen[e.id], e)
+                if (bowmen[e.id].h == undefined)
+                    bowmen[e.id].h = false
+            }
+            else if (e.type == "camera") {
+            }
+        })
+    })
 })
 
 client.commandToServer(() => {
     var toServer
-    toServer = JSON.stringify([{ hosts: [], data: "" }])
-    // console.log("Sending :\n" + toServer)
+    if (moveOrder.length == 0)
+        toServer = JSON.stringify([{ hosts: [], data: "" }])
+    else
+        toServer = JSON.stringify(moveOrder)
+    moveOrder = []
+    console.log("Sending :\n" + toServer)
     return toServer
 })

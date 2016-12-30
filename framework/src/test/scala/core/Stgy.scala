@@ -9,15 +9,15 @@ import core.port_dispatch.ProviderPort
 import core.user_import.{Element, Observable, Observer, Zone}
 import core.{HostPool, Provider, Websocket}
 import org.scalatest.FunSuite
+import play.api.libs.json.Json
 
 import scala.concurrent.duration._
 import scala.util.Random
 
 
-
-
 object Vec {
   def apply(x: Double, y: Double) = new Vec(x, y)
+
   def apply() = new Vec(0, 0)
 }
 
@@ -66,7 +66,7 @@ abstract class Unity(x: Double, y: Double, var id: String, var clientId: String,
 trait Movable {
   var move = false
   var target = Vec()
-  var speed = Vec()
+  var speed = 5
 }
 
 trait Damagable {
@@ -83,7 +83,7 @@ class Flag(x: Double, y: Double, id: String, clientId: String, color: Array[Int]
 
 
 class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
-  var pos = Vec(0, 0)
+  var pos = Vec(1500, 1500)
   var id = ""
 
   override def dataToViewZone(): List[Zone] = List(new Zone(pos.x - 1500, pos.y - 1500, 3000, 3000))
@@ -91,8 +91,8 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def onNotify(any: Any): Unit = {
 
     any match {
-      case e:IdGiver => id = e.id
-      case bowman:Bowman => {
+      case e: IdGiver => id = e.id
+      case bowman: Bowman => {
         //println("notify not matched")
       }
       case _ => {
@@ -109,10 +109,10 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
     val listString = list.map(e => e match {
 
       case e: Bowman => {
-        s"""{"type":"bowman","mine":"${id==e.clientId}","x":"${e.x.toInt}","y":"${e.y.toInt}","color":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
+        s"""{"type":"bowman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health}","x":"${e.x.toInt}","y":"${e.y.toInt}","color":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
       }
       case _ => "NOT ELEMENT : " + e
-    }) ++ List(s"""{"cam":{"x":"${pos.x.toInt}","y":"${pos.y.toInt}"}}""")
+    }) ++ List( s"""{"type":"camera","x":"${pos.x.toInt}","y":"${pos.y.toInt}"}""")
     val string = listString.mkString("[", ",", "]")
     // println(string)
     string
@@ -126,21 +126,43 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
   methods += "addBowman" -> ((arg: Any) => {
     var e = arg.asInstanceOf[Bowman]
     elements += e.id -> e
-    println(zone + " is adding one " + e.id)
   })
 
-
-
   override def tick(): Unit = {
+
+
+    var rest = elements.values.filter(x => x.isInstanceOf[Bowman]).asInstanceOf[Iterable[Bowman]]
+    while (rest.nonEmpty) {
+      var head = rest.head
+      rest = rest.tail
+      rest.foreach(other => {
+        var x2 = head.x - other.x
+        var y2 = head.y - other.y
+        if (head.clientId!= other.clientId &&  x2 * x2 + y2 * y2 < 400 * 4) {
+//          head.color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+//          other.color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+          head.health = math.max(head.health - 0.01,0)
+          other.health = math.max(other.health - 0.01,0)
+        }
+      })
+    }
+
+
+
+
+
     elements foreach { elem =>
       elem._2 match {
         case e: Bowman => {
-
+          if ((Vec(e.x, e.y) - e.target).length() < 1)
+            e.move = false
           if (e.move) {
-            e.x += e.speed.x
-            e.y += e.speed.y
+            var toTarget = e.target - Vec(e.x, e.y)
+            var length = toTarget.length()
+            toTarget /= length
+            e.x += toTarget.x * e.speed * math.min(length / 5, 1)
+            e.y += toTarget.y * e.speed * math.min(length / 5, 1)
           }
-
           e.notifyClientViews
           if (!zone.contains(e)) {
             //     println("Il faut sortir de " + zone.x + " " + zone.y)
@@ -154,11 +176,21 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
   }
 
   override def clientInput(id: String, data: String): Unit = {
-//    val json = Json.parse(data)
-//    val x = (json \ "x").get.as[Double]
-//    val y = (json \ "y").get.as[Double]
-//    val bool = (json \ "cl").get.as[Boolean]
-//    val rbool = (json \ "cr").get.as[Boolean]
+
+    println("DATA RECEIVED : " + data)
+    val json = Json.parse(data)
+    val id = (json \ "id").get.as[String]
+    val x = (json \ "x").get.as[Double]
+    val y = (json \ "y").get.as[Double]
+
+    if(elements.contains(id)){
+      val bm = elements(id).asInstanceOf[Bowman]
+      bm.move = true
+      bm.target = Vec(x, y)
+    }
+
+
+
   }
 }
 
@@ -169,10 +201,14 @@ class StgySpecialHost(hostPool: HostPool) extends AbstractSpecialHost[StgyClient
   var rand = new Random()
 
   override def OnConnect(id: String, obs: Observer) = {
-    var color =Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
-    val bowmen = 0 until 10 map { i => new Bowman(rand.nextInt(500), rand.nextInt(500),  rand.nextString(20), id, color) }
-    bowmen foreach { b => hostPool.getHyperHost(b.x, b.y) method("addBowman", b) }
-    bowmen foreach { b => b.sub(obs) }
+    var color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+    val bowmen = 0 until 10 map { i => new Bowman(rand.nextInt(800), rand.nextInt(800), Random.alphanumeric.take(10).mkString, id, color) }
+    bowmen foreach {
+      b =>
+        hostPool.getHyperHost(b.x, b.y) method("addBowman", b)
+        b.sub(obs)
+    }
+
 
     //tell the client view what is the client id, this is a hack
 

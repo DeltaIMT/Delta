@@ -97,12 +97,21 @@ document.addEventListener("contextmenu", function (e) {
 var makeId = () => Math.random().toString(36).substring(7)
 var selectedBowmen = []
 var bowmen = {}
+var arrows = {}
+var arrowsVal = []
 var bowmenVal = []
 
 const loop = () => {
     setTimeout(loop, 16.666)
     bowmenVal = Object.keys(bowmen).map(key => bowmen[key]);
+    arrowsVal = Object.keys(arrows).map(key => arrows[key]);
+
+
+
+
+
     Draw.setBowmen(bowmenVal)
+    Draw.setArrows(arrowsVal)
 }
 setTimeout(loop, 200)
 var client = require('../providedCode')
@@ -111,7 +120,7 @@ var zlib = require('zlib')
 client.dataManipulation(dataZiped => {
     // console.log("Received Zipped :\n" + dataZiped)
     var data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
-        console.log("Received :\n" + data)
+        //    console.log("Received :\n" + data)
         data = JSON.parse(data)
         data.forEach(e => {
             if (e.type == "bowman") {
@@ -120,10 +129,33 @@ client.dataManipulation(dataZiped => {
                 Object.assign(bowmen[e.id], e)
                 if (bowmen[e.id].h == undefined)
                     bowmen[e.id].h = false
+                bowmen[e.id].counter = 5
+            }
+            else if (e.type == "arrow") {
+                if (arrows[e.id] == undefined)
+                    arrows[e.id] = {}
+                Object.assign(arrows[e.id], e)
+                arrows[e.id].counter = 5
             }
             else if (e.type == "camera") {
             }
         })
+
+        arrowsVal.forEach(a => {
+            a.counter--
+            if (a.counter == 0)
+                delete arrows[a.id]
+        })
+
+        bowmenVal.forEach(a => {
+            a.counter--
+            if (a.counter == 0) {
+                console.log("DELETING BOW")
+                delete bowmen[a.id]
+            }
+
+        })
+
     })
 })
 
@@ -134,6 +166,6 @@ client.commandToServer(() => {
     else
         toServer = JSON.stringify(moveOrder)
     moveOrder = []
-    console.log("Sending :\n" + toServer)
+    //  console.log("Sending :\n" + toServer)
     return toServer
 })

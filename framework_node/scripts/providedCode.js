@@ -35,7 +35,7 @@ setTimeout(countFpsFunction,1000)
 
 var sendCommand = () =>
 {
-    setTimeout(sendCommand,16.667)
+    setTimeout(sendCommand,33.3)
     ws.send( defineCommandToServer() )
 }
 setTimeout(sendCommand,1000)

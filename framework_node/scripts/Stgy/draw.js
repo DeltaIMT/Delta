@@ -2,10 +2,12 @@ var selectionSquare = null
 var moveSquare = null
 var swordmen = []
 var bowmen = []
+var arrows = []
 var flags = []
 var t = 0
 module.exports.setSelectionSquare = (drag) => selectionSquare = drag
 module.exports.setBowmen = (newBowmen) => bowmen = newBowmen
+module.exports.setArrows = (newArrows) => arrows = newArrows
 module.exports.setMoveSquare = (drag) => moveSquare = drag
 window.onload = () => {
 
@@ -39,7 +41,7 @@ window.onload = () => {
         context.setTransform(1, 0, 0, 1, 0, 0);  // because the transform matrix is cumulative
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.translate(-cam.x, -cam.y);
-    var pattern = context.createPattern(background, 'repeat')
+        var pattern = context.createPattern(background, 'repeat')
         context.beginPath()
         context.rect(cam.x, cam.y, canvas.width + cam.x, canvas.height + cam.y);
         context.fillStyle = pattern
@@ -56,6 +58,15 @@ window.onload = () => {
             context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
             context.fill()
         }
+
+        for (const arrow of arrows) {
+            //     console.log("draw  : "+ JSON.stringify(bowman,null,1))
+            context.beginPath()
+            context.arc(arrow.x, arrow.y, 5, 0, Math.PI * 2)
+            context.fillStyle = "rgb(" + arrow.color[0] + ", " + arrow.color[1] + ", " + arrow.color[2] + ")"
+            context.fill()
+        }
+
         //Selection Circle
         for (const bowman of bowmen) {
             if (bowman.h == true) {

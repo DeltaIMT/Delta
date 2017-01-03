@@ -3,57 +3,73 @@ var Mous = require('./mouse')
 var Intr = require('./intersection')
 
 var moveOrder = []
+var getTranslatedMouse = (mouse) => {
+    var cam = Draw.getCamera()
+    var trans = {}
+    trans.p1 = { x: mouse.p1.x * 1 + cam.x * 1, y: mouse.p1.y * 1 + cam.y * 1 }
+    trans.p2 = { x: mouse.p2.x * 1 + cam.x * 1, y: mouse.p2.y * 1 + cam.y * 1 }
+    return trans
+}
 
-Mous.onDragEnd((Mous) => {
+Mous.onDragEnd((mouse) => {
     Draw.setSelectionSquare(null)
     selectedBowmen = bowmenVal.filter(b => b.h == true)
 })
 
-Mous.onDrag((Mous) => {
-    Draw.setSelectionSquare(Mous)
+Mous.onDrag((mouse) => {
+    //  console.log("BEFORE : " + JSON.stringify(mouse, null, 1))
+    mouse = getTranslatedMouse(mouse)
+    //  console.log("AFTER : " + JSON.stringify(mouse, null, 1))
+    Draw.setSelectionSquare(mouse)
     bowmenVal.forEach(bowman => {
-        if (bowman.mine && Intr.pointInsideSquare(bowman, Mous))
+        if (bowman.mine && Intr.pointInsideSquare(bowman, mouse))
             bowmen[bowman.id].h = true
         else
             bowmen[bowman.id].h = false
     })
 })
 
-var moveSquareCompute = (Mous) => {
+var moveSquareCompute = (mouse) => {
     var num = selectedBowmen.length
-    var x1 = Mous.p1.x
-    var y1 = Mous.p1.y
-    var x2 = Mous.p2.x
-    var y2 = Mous.p2.y
+    var x1 = mouse.p1.x
+    var y1 = mouse.p1.y
+    var x2 = mouse.p2.x
+    var y2 = mouse.p2.y
     var vx = x2 - x1
     var vy = y2 - y1
-    var vl = Math.sqrt(vx * vx + vy * vy)
-    var numInWidth = (vl / 45)
-    var numInLength = num / numInWidth
-    vx /= vl; vy /= vl;
-    var px = -vy
-    var py = vx
-    px *= 45
-    py *= 45
-    return { x1: x1, y1: y1, x2: x2, y2: y2, vx: vx * 45, vy: vy * 45, px: px, py: py, numW: numInWidth, numL: numInLength }
-}
+    if (Math.abs(vx) > 30) {
+        var vl = Math.sqrt(vx * vx + vy * vy)
+        var numInWidth = (vl / 45)
+        var numInLength = num / numInWidth
+        vx /= vl; vy /= vl;
+        var px = -vy
+        var py = vx
+        px *= 45
+        py *= 45
+        return { x1: x1, y1: y1, x2: x2, y2: y2, vx: vx * 45, vy: vy * 45, px: px, py: py, numW: numInWidth, numL: numInLength }
+    }
 
-Mous.onDragRightEnd((Mous) => {
-    var square = moveSquareCompute(Mous)
-
-    // console.log(JSON.stringify(square, null, 1))
-    if (!square.vx) {
-        var sqrt = Math.sqrt(selectedBowmen.length)
+    else {
+        var square = {}
+        var sqrt = Math.sqrt(num)
         square.numW = sqrt
         square.numL = sqrt
-        square.x1 -= square.numW * 45 / 2
-        square.y1 -= square.numL * 45 / 2
+        square.x1 = x1 - square.numW * 45 / 2
+        square.y1 = y1 - square.numL * 45 / 2
+        square.x2 = x1 + square.numW * 45 / 2
+        square.y2 = square.y1 
         square.vx = 45
         square.vy = 0
         square.px = 0
         square.py = 45
+        return square
     }
-    //    console.log(JSON.stringify(square, null, 1))
+
+}
+
+Mous.onDragRightEnd((mouse) => {
+    var square = moveSquareCompute(getTranslatedMouse(mouse))
+
     var offX = 0
     var offY = 0
     selectedBowmen.forEach(b => {
@@ -85,8 +101,8 @@ Mous.onDragRightEnd((Mous) => {
     Draw.setMoveSquare(null)
 })
 
-Mous.onDragRight((Mous) => {
-    var square = moveSquareCompute(Mous)
+Mous.onDragRight((mouse) => {
+    var square = moveSquareCompute(getTranslatedMouse(mouse))
     Draw.setMoveSquare(square)
 })
 
@@ -100,18 +116,17 @@ var bowmen = {}
 var arrows = {}
 var arrowsVal = []
 var bowmenVal = []
+var flags = {}
+var flagsVal = []
 
 const loop = () => {
     setTimeout(loop, 16.666)
-    bowmenVal = Object.keys(bowmen).map(key => bowmen[key]);
-    arrowsVal = Object.keys(arrows).map(key => arrows[key]);
-
-
-
-
-
+    bowmenVal = Object.keys(bowmen).map(key => bowmen[key])
+    arrowsVal = Object.keys(arrows).map(key => arrows[key])
+    flagsVal = Object.keys(flags).map(key => flags[key])
     Draw.setBowmen(bowmenVal)
     Draw.setArrows(arrowsVal)
+    Draw.setFlags(flagsVal)
 }
 setTimeout(loop, 200)
 var client = require('../providedCode')
@@ -137,7 +152,17 @@ client.dataManipulation(dataZiped => {
                 Object.assign(arrows[e.id], e)
                 arrows[e.id].counter = 5
             }
+            else if (e.type == "flag") {
+                if (flags[e.id] == undefined)
+                    flags[e.id] = {}
+                Object.assign(flags[e.id], e)
+                flags[e.id].counter = 5
+            }
             else if (e.type == "camera") {
+                Draw.setCamera(e)
+            }
+            else if (e.type == "other") {
+                Draw.setOther(e)
             }
         })
 
@@ -150,10 +175,15 @@ client.dataManipulation(dataZiped => {
         bowmenVal.forEach(a => {
             a.counter--
             if (a.counter == 0) {
-                console.log("DELETING BOW")
                 delete bowmen[a.id]
             }
+        })
 
+        flagsVal.forEach(a => {
+            a.counter--
+            if (a.counter == 0) {
+                delete flags[a.id]
+            }
         })
 
     })
@@ -163,9 +193,18 @@ client.commandToServer(() => {
     var toServer
     if (moveOrder.length == 0)
         toServer = JSON.stringify([{ hosts: [], data: "" }])
-    else
-        toServer = JSON.stringify(moveOrder)
-    moveOrder = []
+    else {
+
+        if (moveOrder.length > 30) {
+            toServer = JSON.stringify(moveOrder.slice(0, 30))
+            moveOrder = moveOrder.slice(30);
+        }
+        else {
+            toServer = JSON.stringify(moveOrder)
+            moveOrder = []
+        }
+    }
+
     //  console.log("Sending :\n" + toServer)
     return toServer
 })

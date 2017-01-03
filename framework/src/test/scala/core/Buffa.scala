@@ -19,7 +19,7 @@ import scala.util.Random
 
 
 
-class Buffalo(x: Double, y: Double, var color: Array[Int]) extends Element(x, y) with Observable {
+class Buffalo(var x: Double,var y: Double, var color: Array[Int]) extends Element with Observable {
   var rand = new Random()
   var vx = 0.0
   var vy = 0.0
@@ -28,7 +28,7 @@ class Buffalo(x: Double, y: Double, var color: Array[Int]) extends Element(x, y)
   var ty = y
 }
 
-class Ball(x: Double, y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element(x, y) with Observable {
+class Ball(var x: Double,var y: Double, var color: Array[Int], var id: String, var clientId: String) extends Element with Observable {
   var vx = 0.0
   var vy = 0.0
   var propulx = 0.0

@@ -39,8 +39,8 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
     var hostInsideZones = List[HyperHost]()
     var posFound = List[(Double,Double)]()
 
-
-    var fake = new Element(0, 0)
+    class ElementImpl(var x : Double, var y:Double) extends Element{}
+    var fake = new  ElementImpl(0, 0)
     for (x <- 0.0 until (hosts.w * hosts.wn) by hosts.w; y <- 0.0 until (hosts.h * hosts.hn) by hosts.h) {
       var bool = false
 

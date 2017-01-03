@@ -14,7 +14,7 @@ var activeRight = false
 var position = { x: 0, y: 0 }
 var drag = { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } }
 var dragRight = { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } }
-const getPosition = () => { return { x: position.x, y: position.y } }
+const getPosition = () => { return { x: parseInt(position.x), y: parseInt(position.y) } }
 
 document.addEventListener('mousemove', function (mouseMoveEvent) {
     position.x = mouseMoveEvent.pageX

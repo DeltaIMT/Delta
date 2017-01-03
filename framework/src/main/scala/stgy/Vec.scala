@@ -1,4 +1,4 @@
-package game.stgy
+package stgy
 
 object Vec {
   def apply(x: Double, y: Double) = new Vec(x, y)
@@ -15,6 +15,8 @@ class Vec(var x: Double, var y: Double) {
   def -(v: Vec) = this + (-v)
 
   def *(v: Vec) = Vec(x * v.x, y * v.y)
+
+  def *(mul: Double) = Vec(x * mul, y * mul)
 
   def *=(v: Vec) = {
     x *= v.x

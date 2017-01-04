@@ -7,7 +7,7 @@ import core.user_import.{Observable, Observer}
 import scala.util.Random
 
 
-class IdGiver(val id: String) extends Observable {}
+class IdGiver(val id: String,val x: Double, val y :Double) extends Observable {}
 class StgySpecialHost(hostPool: HostPool) extends AbstractSpecialHost[StgyClientView](hostPool) {
 
 
@@ -15,8 +15,12 @@ class StgySpecialHost(hostPool: HostPool) extends AbstractSpecialHost[StgyClient
 
   override def OnConnect(id: String, obs: Observer) = {
     var color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
-    val bowmen = 0 until 100 map { i => new Bowman(100+rand.nextInt(800), 100+rand.nextInt(800), Random.alphanumeric.take(10).mkString, id, color) }
-    val flag = new Flag( 100+rand.nextInt(800), 100+rand.nextInt(800), Random.alphanumeric.take(10).mkString, id, color)
+    val randx = 200+rand.nextInt(2600)
+    val randy = 200+rand.nextInt(2600)
+    val numberOfStartUnit = 20
+    val sqrt = math.sqrt(numberOfStartUnit).toInt
+    val bowmen = 0 until 20 map { i => new Bowman(randx + 40*(i%sqrt) , randy + 40*(i/sqrt), Random.alphanumeric.take(10).mkString, id, color) }
+    val flag = new Flag( randx, randy, Random.alphanumeric.take(10).mkString, id, color)
 
     flag::bowmen.toList foreach {
       b =>
@@ -27,7 +31,7 @@ class StgySpecialHost(hostPool: HostPool) extends AbstractSpecialHost[StgyClient
 
     //tell the client view what is the client id, this is a hack
 
-    var idGiver = new IdGiver(id)
+    var idGiver = new IdGiver(id,randx,randy)
     idGiver.sub(obs)
     idGiver.notifyClientViews
 

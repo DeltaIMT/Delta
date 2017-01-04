@@ -12,7 +12,7 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   var numberOfUnit = 1.0
 
   var min = Vec(0,0)
-  var max = Vec(1920,1080)
+  var max = Vec(3000,3000)
 
 
   override def dataToViewZone(): List[Zone] = List(new Zone(pos.x - 1500, pos.y - 1500, 3000, 3000))
@@ -20,7 +20,7 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def onNotify(any: Any): Unit = {
 
     any match {
-      case e: IdGiver => id = e.id
+      case e: IdGiver => id = e.id; pos= Vec(e.x,e.y)
       case bowman: Bowman => {
 
         min.x = math.min( min.x , bowman.x)
@@ -47,8 +47,8 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def fromListToClientMsg(list: List[Any]) = {
 
     pos = (max *0.5) +( min *0.5)
-    min += Vec(10,10)
-    max -= Vec(10,10)
+    min += Vec(20,20)
+    max -= Vec(20,20)
     hash.keys.foreach( k =>  hash(k) = hash(k)-1 )
     hash= hash.filter( (pair) => pair._2>0)
     numberOfUnit = hash.size.toDouble

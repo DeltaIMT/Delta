@@ -41,8 +41,8 @@ trait Damagable {
 
 class Flag(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Unity {
 
-  var numberOfUnitToConvertInOneFrame = 250.0
-  var frameToSpawn = 1000
+  var numberOfUnitToConvertInOneFrame = 500.0
+  var frameToSpawn = 1300
 
   var isPossessed = true
   var possessing = 1.0
@@ -51,10 +51,13 @@ class Flag(var x : Double,var y : Double,var id : String,var clientId : String,v
 
   def computePossessing(units: Iterable[Unity]) = {
 
-    val unitsInRange = units.filter(u => (Vec(u.x, u.y) - Vec(x, y)).length() < 350)
+    val unitsInRange = units.filter(u => (Vec(u.x, u.y) - Vec(x, y)).length() < 200)
 
     val unitsAllyCount = unitsInRange.count(u => u.clientId == clientId)
     val unitsEnemyCount = unitsInRange.count(u => u.clientId != clientId)
+
+    if( unitsAllyCount == 0)
+      possessing  = math.max(0.0, possessing - (10) / numberOfUnitToConvertInOneFrame)
 
     if (unitsAllyCount < unitsEnemyCount)
       possessing = math.max(0.0, possessing - (unitsEnemyCount - unitsAllyCount) / numberOfUnitToConvertInOneFrame)
@@ -63,8 +66,10 @@ class Flag(var x : Double,var y : Double,var id : String,var clientId : String,v
 
     if (possessing > 0.5)
       isPossessed = true
+    else
+      isPossessed = false
 
-    if (possessing == 0) {
+    if (possessing == 0 && unitsEnemyCount>0) {
       isPossessed = false
       clientViews = List[Observer]()
       //We need to find the team with the most unit

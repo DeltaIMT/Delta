@@ -109,7 +109,7 @@ window.onload = () => {
         contextArrow.shadowColor = "white";
         contextArrow.fill()
         for (const arrow of arrows) {
-             context.drawImage(canvasArrowCache, arrow.x - 20, arrow.y -20)
+            context.drawImage(canvasArrowCache, arrow.x - 20, arrow.y - 20)
             // context.beginPath()
             // context.arc(arrow.x, arrow.y, 5, 0, Math.PI * 2)
             // context.fillStyle = "rgb(" + arrow.color[0] + ", " + arrow.color[1] + ", " + arrow.color[2] + ")"
@@ -125,6 +125,11 @@ window.onload = () => {
             context.lineTo(x - 20, y);
             context.closePath()
             context.fillStyle = "rgb(" + flag.color[0] + ", " + flag.color[1] + ", " + flag.color[2] + ")"
+            context.fill()
+
+            context.beginPath()
+            context.arc(flag.x, flag.y, 200, 0, Math.PI * 2)
+            context.fillStyle = "rgba(" + flag.color[0] + ", " + flag.color[1] + ", " + flag.color[2] +"," + 0.1 + ")"
             context.fill()
         }
 

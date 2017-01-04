@@ -63,10 +63,11 @@ object Stgy extends App {
       println("Done")
     }
     contents = new BoxPanel(Orientation.Vertical) {
-      contents += new Label("Look at me!")
+      contents += new Label("Server")
       contents += Swing.VStrut(10)
       contents += Swing.Glue
       contents += Button("Shutdown") {shutdown}
+      contents += Button("Flush") { hostPool.hyperHostsMap.values foreach( _ method "flush" ) }
       contents += Button("Close") { shutdown;sys.exit(0) }
       border = Swing.EmptyBorder(10, 10, 10, 10)
     }

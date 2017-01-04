@@ -15,7 +15,7 @@ class StgySpecialHost(hostPool: HostPool) extends AbstractSpecialHost[StgyClient
 
   override def OnConnect(id: String, obs: Observer) = {
     var color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
-    val bowmen = 0 until 10 map { i => new Bowman(100+rand.nextInt(800), 100+rand.nextInt(800), Random.alphanumeric.take(10).mkString, id, color) }
+    val bowmen = 0 until 100 map { i => new Bowman(100+rand.nextInt(800), 100+rand.nextInt(800), Random.alphanumeric.take(10).mkString, id, color) }
     val flag = new Flag( 100+rand.nextInt(800), 100+rand.nextInt(800), Random.alphanumeric.take(10).mkString, id, color)
 
     flag::bowmen.toList foreach {

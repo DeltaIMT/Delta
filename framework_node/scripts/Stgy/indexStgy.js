@@ -37,7 +37,7 @@ var moveSquareCompute = (mouse) => {
     var y2 = mouse.p2.y
     var vx = x2 - x1
     var vy = y2 - y1
-    if (Math.abs(vx) > 30) {
+    if (Math.abs(vx) > 30 || Math.abs(vy)>30 ) {
         var vl = Math.sqrt(vx * vx + vy * vy)
         var numInWidth = (vl / 45)
         var numInLength = num / numInWidth
@@ -57,7 +57,7 @@ var moveSquareCompute = (mouse) => {
         square.x1 = x1 - square.numW * 45 / 2
         square.y1 = y1 - square.numL * 45 / 2
         square.x2 = x1 + square.numW * 45 / 2
-        square.y2 = square.y1 
+        square.y2 = square.y1
         square.vx = 45
         square.vy = 0
         square.px = 0
@@ -83,7 +83,7 @@ Mous.onDragRightEnd((mouse) => {
 
         moveOrder.push(
             {
-                hosts: [[b.x * 1.0, b.y * 1.0]],
+                hosts: hosts,
                 data: JSON.stringify({
                     id: b.id,
                     x: parseInt(square.x1 + offX * square.vx + offY * square.px),
@@ -105,6 +105,45 @@ Mous.onDragRight((mouse) => {
     var square = moveSquareCompute(getTranslatedMouse(mouse))
     Draw.setMoveSquare(square)
 })
+
+Mous.onTrail((trail) => {
+    Draw.setTrail(trail)
+})
+
+
+var linearInterp = (path, float_i) => {
+    var first = path[Math.floor(float_i)]
+    var last = path[Math.ceil(float_i)]
+    var t = float_i - Math.floor(float_i)
+    return { x: first.x * (1 - t) + last.x * t, y: first.y * (1 - t) + last.y * t }
+}
+
+Mous.onTrailEnd((trail) => {
+    Draw.setTrail([])
+
+    var trailSize = trail.length
+    var selectedSize = selectedBowmen.length
+    var cam = Draw.getCamera()
+    for (var i = 0; i < selectedSize; i++) {
+        const b = selectedBowmen[i]
+        const pos = linearInterp(trail, parseFloat(i * trailSize) / parseFloat(selectedSize))
+        pos.x += cam.x
+        pos.y += cam.y
+        moveOrder.push(
+            {
+                hosts: [[b.x * 1.0, b.y * 1.0]],
+                data: JSON.stringify({
+                    id: b.id,
+                    x: parseInt(pos.x),
+                    y: parseInt(pos.y)
+                })
+            }
+        )
+    }
+
+
+})
+
 
 document.addEventListener("contextmenu", function (e) {
     e.preventDefault()
@@ -140,10 +179,8 @@ client.dataManipulation(dataZiped => {
         data.forEach(e => {
             if (e.type == "bowman") {
                 if (bowmen[e.id] == undefined)
-                    bowmen[e.id] = {}
+                    bowmen[e.id] = {h:false}
                 Object.assign(bowmen[e.id], e)
-                if (bowmen[e.id].h == undefined)
-                    bowmen[e.id].h = false
                 bowmen[e.id].counter = 5
             }
             else if (e.type == "arrow") {
@@ -203,8 +240,9 @@ client.commandToServer(() => {
             toServer = JSON.stringify(moveOrder)
             moveOrder = []
         }
+        //console.log("Sending :\n" + toServer)
     }
 
-    //  console.log("Sending :\n" + toServer)
+      //console.log("Sending :\n" + toServer)
     return toServer
 })

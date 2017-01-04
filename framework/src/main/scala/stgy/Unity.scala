@@ -42,7 +42,7 @@ trait Damagable {
 class Flag(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Unity {
 
   var numberOfUnitToConvertInOneFrame = 250.0
-  var frameToSpawn = 500
+  var frameToSpawn = 1000
 
   var isPossessed = true
   var possessing = 1.0

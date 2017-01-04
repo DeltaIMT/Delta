@@ -3,7 +3,7 @@ package stgy
 import akka.actor.ActorRef
 import core.{HostPool, HyperHost}
 import core.`abstract`.AbstractHost
-import core.user_import.Zone
+import core.user_import.{Element, Zone}
 import play.api.libs.json.Json
 
 import scala.util.Random
@@ -11,6 +11,10 @@ import scala.util.Random
 class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool) {
   var rand = new Random()
   var targetFromOtherHost = collection.mutable.HashMap[ ActorRef,collection.mutable.HashMap[String, Bowman]]()
+
+  methods += "flush" -> ((arg: Any) => {
+    elements = collection.mutable.HashMap[String,Element]()
+  })
 
   methods += "addUnity" -> ((arg: Any) => {
     var e = arg.asInstanceOf[Unity]

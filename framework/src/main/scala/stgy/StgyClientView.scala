@@ -20,7 +20,7 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def onNotify(any: Any): Unit = {
 
     any match {
-      case e: IdGiver => id = e.id; pos= Vec(e.x,e.y)
+      case e: IdGiver => {id = e.id; min= Vec(e.x-100,e.y-100) ; max= Vec(e.x+100,e.y+100)}
       case bowman: Bowman => {
 
         min.x = math.min( min.x , bowman.x)
@@ -47,8 +47,8 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
   override def fromListToClientMsg(list: List[Any]) = {
 
     pos = (max *0.5) +( min *0.5)
-    min += Vec(20,20)
-    max -= Vec(20,20)
+    min += Vec(10,10)
+    max -= Vec(10,10)
     hash.keys.foreach( k =>  hash(k) = hash(k)-1 )
     hash= hash.filter( (pair) => pair._2>0)
     numberOfUnit = hash.size.toDouble
@@ -65,8 +65,8 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
       }
       case e => "NOT ELEMENT : " + e
     } ++ List(
-      s"""{"type":"camera","x":"${pos.x.toInt}","y":"${pos.y.toInt}"}""",
-      s"""{"type":"other","n":"${numberOfUnit}"}""")
+      s"""{"type":"camera","id":"0","x":"${pos.x.toInt}","y":"${pos.y.toInt}"}""",
+      s"""{"type":"other","id":"1","n":"${numberOfUnit}"}""")
     val string = listString.mkString("[", ",", "]")
     // println(string)
     string

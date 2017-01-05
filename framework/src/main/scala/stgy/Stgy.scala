@@ -18,7 +18,7 @@ object Stgy extends App {
   implicit val executionContext = actorSystem.dispatcher
   implicit val flowMaterializer = ActorMaterializer()
   val initialPort = 9001
-  val numberOfClient = 20
+  val numberOfClient = 300
   val hostsGridWidth = 5
   val hostsGridHeight = 5
   val hostWidth = 600

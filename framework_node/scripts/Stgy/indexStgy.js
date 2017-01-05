@@ -37,7 +37,7 @@ var moveSquareCompute = (mouse) => {
     var y2 = mouse.p2.y
     var vx = x2 - x1
     var vy = y2 - y1
-    if (Math.abs(vx) > 30 || Math.abs(vy)>30 ) {
+    if (Math.abs(vx) > 30 || Math.abs(vy) > 30) {
         var vl = Math.sqrt(vx * vx + vy * vy)
         var numInWidth = (vl / 45)
         var numInLength = num / numInWidth
@@ -149,27 +149,24 @@ document.addEventListener("contextmenu", function (e) {
     e.preventDefault()
 });
 
-var makeId = () => Math.random().toString(36).substring(7)
+
 var selectedBowmen = []
 var bowmen = {}
-var arrows = {}
-var arrowsVal = []
 var bowmenVal = []
-var flags = {}
-var flagsVal = []
 
 const loop = () => {
     setTimeout(loop, 16.666)
     bowmenVal = Object.keys(bowmen).map(key => bowmen[key])
-    arrowsVal = Object.keys(arrows).map(key => arrows[key])
-    flagsVal = Object.keys(flags).map(key => flags[key])
-    Draw.setBowmen(bowmenVal)
-    Draw.setArrows(arrowsVal)
-    Draw.setFlags(flagsVal)
+    Draw.setSelectedId(bowmenVal.filter(b => b.h).map(b => b.id))
 }
+
 setTimeout(loop, 200)
 var client = require('../providedCode')
 client.launch()
+
+const frameInterp = require('./frameInterp')
+Draw.setFrameGetter(frameInterp)
+
 var zlib = require('zlib')
 client.dataManipulation(dataZiped => {
     // console.log("Received Zipped :\n" + dataZiped)
@@ -179,52 +176,29 @@ client.dataManipulation(dataZiped => {
         data.forEach(e => {
             if (e.type == "bowman") {
                 if (bowmen[e.id] == undefined)
-                    bowmen[e.id] = {h:false}
+                    bowmen[e.id] = { h: false }
                 Object.assign(bowmen[e.id], e)
                 bowmen[e.id].counter = 5
             }
-            else if (e.type == "arrow") {
-                if (arrows[e.id] == undefined)
-                    arrows[e.id] = {}
-                Object.assign(arrows[e.id], e)
-                arrows[e.id].counter = 5
-            }
-            else if (e.type == "flag") {
-                if (flags[e.id] == undefined)
-                    flags[e.id] = {}
-                Object.assign(flags[e.id], e)
-                flags[e.id].counter = 5
-            }
-            else if (e.type == "camera") {
-                Draw.setCamera(e)
-            }
-            else if (e.type == "other") {
-                Draw.setOther(e)
+        })
+        const newFrame = {}
+        data.forEach(o => {
+            if (typeof (o.id) !== undefined) {
+                newFrame[o.id] = o
             }
         })
-
-        arrowsVal.forEach(a => {
-            a.counter--
-            if (a.counter == 0)
-                delete arrows[a.id]
-        })
-
+        frameInterp.addFrame(newFrame)
         bowmenVal.forEach(a => {
             a.counter--
             if (a.counter == 0) {
                 delete bowmen[a.id]
             }
         })
-
-        flagsVal.forEach(a => {
-            a.counter--
-            if (a.counter == 0) {
-                delete flags[a.id]
-            }
-        })
-
     })
 })
+
+
+
 
 client.commandToServer(() => {
     var toServer
@@ -240,9 +214,6 @@ client.commandToServer(() => {
             toServer = JSON.stringify(moveOrder)
             moveOrder = []
         }
-        //console.log("Sending :\n" + toServer)
     }
-
-      //console.log("Sending :\n" + toServer)
     return toServer
 })

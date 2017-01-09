@@ -22,25 +22,26 @@ module.exports.launch = () => {
 
     wsPort.onmessage = function (event) {
         data = event.data
+        console.log("Connection to : " + 'ws://' + host + ':' + data + "/?id=" + id)
+        ws = new WebSocket('ws://' + host + ':' + data + "/?id=" + id)
+        ws.onmessage = function (event) {
+            var data = event.data
 
-        if (data == "ping") {
-            var now2 = new Date()
-            ping = now2 - now1 // corresponds to the amount of milliseconds between now1 and now2
-            pingCallback(ping)
-            pingCallback = () => {}
-        }
-        else {
-            console.log("Connection to : " + 'ws://' + host + ':' + data + "/?id=" + id)
-            ws = new WebSocket('ws://' + host + ':' + data + "/?id=" + id)
-            ws.onmessage = function (event) {
+            if (data == "ping") {
+                var now2 = new Date()
+                ping = now2 - now1 // corresponds to the amount of milliseconds between now1 and now2
+                pingCallback(ping)
+                pingCallback = () => { }
+            }
+            else {
                 frames++
-                dataManipulationFunction(event.data)
+                dataManipulationFunction(data)
             }
         }
     }
 
     var getPing = (callback) => {
-        wsPort.send("ping")
+        ws.send("ping")
         now1 = new Date()
         pingCallback = callback
     }

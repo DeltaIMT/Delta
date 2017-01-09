@@ -37,12 +37,13 @@ class Vec(var x: Double, var y: Double) {
 
   def length() = math.sqrt(length2())
 
-  def normalize(): Unit = {
+  def normalize(): Vec = {
     val l = length()
     if (l != 0) {
       x /= l
       y /= l
     }
+    this
   }
 
 }

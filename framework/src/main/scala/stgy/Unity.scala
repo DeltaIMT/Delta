@@ -29,14 +29,45 @@ trait Movable extends Unity {
   }
 }
 
-trait Damagable {
+trait Damagable extends Unity {
   var health = 1.0
+  var radius : Int
 
   def damage(amount: Double) = {
     health = math.max(0, health - amount)
   }
 
   def isDead: Boolean = health == 0
+}
+
+trait Shooter {
+  var canShootIn = 0
+  def canShoot = {
+    canShootIn == 0
+  }
+
+  def shooterStep = {
+    if (canShootIn > 0)
+      canShootIn -= 1
+  }
+}
+
+trait Spawner extends Unity{
+  var frameToSpawn = 500
+  var canSpawnIn = 0
+  def spawnerStep = {
+    if (canSpawnIn>0)
+      canSpawnIn -= 1
+  }
+
+  def canSpawn: Boolean = {
+    canSpawnIn == 0
+  }
+
+  def spawn: Unity = {
+    canSpawnIn = frameToSpawn
+    new Bowman(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
+  }
 }
 
 class Flag(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Unity {
@@ -104,32 +135,53 @@ class Flag(var x : Double,var y : Double,var id : String,var clientId : String,v
 
 }
 
-class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable {
-  var canShootIn = 0
-  def canShoot = {
-    canShootIn == 0
+class Commander(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Spawner{
+  health = 5
+  override var radius: Int =  25
+  def shoot(targets: List[Vec]): List[Arrow] = {
+    canShootIn = 60
+    val arrows =targets.map( t => {
+     val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
+      arrow.move=true
+      val direction= (t-Vec(x,y)).normalize()
+      arrow.target = Vec(x,y)+ (direction*1000.0)
+      arrow.speed = arrow.speed - 5 + Random.nextInt(10)
+      arrow
+    })
+    arrows
   }
 
+  def step() = {
+    doMove
+    shooterStep
+  }
+
+
+}
+
+class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter {
+
+  override var radius: Int =  20
   def shoot(target: Vec): Arrow = {
     canShootIn = 60
     val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
     arrow.move = true
-    arrow.target = target
+    val direction= (target-Vec(x,y)).normalize()
+    arrow.target = Vec(x,y)+ (direction*1000.0)
     arrow
   }
 
   def step() = {
     doMove
-    if (canShootIn > 0)
-      canShootIn -= 1
+    shooterStep
   }
 }
 
 class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable {
   speed = 10
+  var frame = 0
   def shouldDie: Boolean = {
-    var toTarget = target - Vec(x, y)
-    var length = toTarget.length()
-    length < 3
+    frame+=1
+    frame==60
   }
 }

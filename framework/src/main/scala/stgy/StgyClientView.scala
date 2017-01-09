@@ -21,18 +21,18 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
 
     any match {
       case e: IdGiver => {id = e.id; min= Vec(e.x-100,e.y-100) ; max= Vec(e.x+100,e.y+100)}
-      case bowman: Bowman => {
+      case unit: Unity => {
 
-        min.x = math.min( min.x , bowman.x)
-        min.y = math.min( min.y , bowman.y)
-        max.x = math.max( max.x , bowman.x)
-        max.y = math.max( max.y , bowman.y)
+        min.x = math.min( min.x , unit.x)
+        min.y = math.min( min.y , unit.y)
+        max.x = math.max( max.x , unit.x)
+        max.y = math.max( max.y , unit.y)
 
 
-        if(hash.contains(bowman.id))
-          hash(bowman.id) = 5
+        if(hash.contains(unit.id))
+          hash(unit.id) = 5
         else
-          hash += bowman.id -> 5
+          hash += unit.id -> 5
       }
       case _ => {
         println("notify not matched")
@@ -54,6 +54,9 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
     numberOfUnit = hash.size.toDouble
     val listString = list.map {
 
+      case e : Commander => {
+        s"""{"type":"com","id":"${e.id}","spawning":"${1.0 - e.canSpawnIn/e.frameToSpawn.toFloat}","mine":${id == e.clientId},"health":"${e.health}","x":"${e.x.toInt}","y":"${e.y.toInt}","color":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
+      }
       case e: Bowman => {
         s"""{"type":"bowman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health}","x":"${e.x.toInt}","y":"${e.y.toInt}","color":[${e.color(0)},${e.color(1)},${e.color(2)}]}"""
       }

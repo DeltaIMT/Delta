@@ -16,7 +16,7 @@ class FrameInterp {
         this.frame1 = {}
         this.frame2 = {}
         this.time = 0
-        this.keyToInterp = ['x', 'y', 'health']
+        this.keyToInterp = ['x', 'y', 'health' , 'spawning', 'possessing']
     }
 
     addFrame(frame) {

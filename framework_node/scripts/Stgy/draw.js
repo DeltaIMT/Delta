@@ -2,6 +2,7 @@ var selectionSquare = null
 var moveSquare = null
 var swordmen = []
 var bowmen = []
+var coms = []
 var arrows = []
 var flags = []
 var other = null
@@ -46,7 +47,7 @@ window.onload = () => {
 
     var draw = () => {
         endTime = performance.now()
-        msElapsed = msElapsed * 0.90 + (endTime - startTime) * 0.1
+        msElapsed = msElapsed * 1.00 + (endTime - startTime) * 0.0
         startTime = endTime
         t++
         drawer(context)
@@ -62,6 +63,28 @@ var background = new Image()
 background.src = './texture/background.png'
 
 
+function roundRect(ctx, x, y, width, height, radius) {
+    if (typeof radius === 'number') {
+        radius = { tl: radius, tr: radius, br: radius, bl: radius };
+    } else {
+        var defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
+        for (var side in defaultRadius) {
+            radius[side] = radius[side] || defaultRadius[side];
+        }
+    }
+    ctx.beginPath();
+    ctx.moveTo(x + radius.tl, y);
+    ctx.lineTo(x + width - radius.tr, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+    ctx.lineTo(x + width, y + height - radius.br);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+    ctx.lineTo(x + radius.bl, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+    ctx.lineTo(x, y + radius.tl);
+    ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+    ctx.closePath();
+
+}
 const drawer = (context) => {
 
     let frame = {}
@@ -71,6 +94,10 @@ const drawer = (context) => {
 
             bowmen = Object.keys(frame).filter(k => {
                 return typeof (frame[k].type) !== undefined && frame[k].type == 'bowman'
+            }).map(k => frame[k])
+
+            coms = Object.keys(frame).filter(k => {
+                return typeof (frame[k].type) !== undefined && frame[k].type == 'com'
             }).map(k => frame[k])
 
             arrows = Object.keys(frame).filter(k => {
@@ -89,8 +116,8 @@ const drawer = (context) => {
     if (frame['0'] !== undefined)
         currentPos = frame['0']
     // clamp the camera position to the world bounds while centering the camera around the snake                    
-    cam.x = clamp(currentPos.x - canvas.width / 2, 0, worldSize.x - canvas.width);
-    cam.y = clamp(currentPos.y - canvas.height / 2, 0, worldSize.y - canvas.height);
+    cam.x = parseInt(clamp(currentPos.x - canvas.width / 2, 0, worldSize.x - canvas.width))
+    cam.y = parseInt(clamp(currentPos.y - canvas.height / 2, 0, worldSize.y - canvas.height))
     context.setTransform(1, 0, 0, 1, 0, 0);  // because the transform matrix is cumulative
     //  context.clearRect(0, 0, canvas.width, canvas.height);
     context.translate(-cam.x, -cam.y);
@@ -118,28 +145,60 @@ const drawer = (context) => {
     }
 
     if (!low) {
-        var canvasCache = document.createElement('canvas')
-        canvasCache.setAttribute('width', 80)
-        canvasCache.setAttribute('height', 80)
-        var cacheCtx = canvasCache.getContext('2d')
-        cacheCtx.beginPath()
-        cacheCtx.arc(40, 40, 20, 0, Math.PI * 2)
-        cacheCtx.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
-        cacheCtx.shadowBlur = 30;
-        cacheCtx.shadowColor = "black";
-        cacheCtx.fill()
+        var canvasCacheBowman = document.createElement('canvas')
+        canvasCacheBowman.setAttribute('width', 80)
+        canvasCacheBowman.setAttribute('height', 80)
+        var contextBowman = canvasCacheBowman.getContext('2d')
+        contextBowman.beginPath()
+        contextBowman.arc(40, 40, 20, 0, Math.PI * 2)
+        contextBowman.fillStyle = "rgba(" + 0 + ", " + 0 + ", " + 0 + ",0.5)"
+        contextBowman.shadowBlur = 30;
+        contextBowman.shadowColor = "black";
+        contextBowman.fill()
+        contextBowman.shadowBlur = 20;
+        contextBowman.fill()
+        contextBowman.shadowBlur = 5;
+        contextBowman.fill()
+        contextBowman.shadowBlur = 3;
+        contextBowman.fill()
+        contextBowman.shadowBlur = 2;
+        contextBowman.fill()
+
+        var canvasCacheCom = document.createElement('canvas')
+        canvasCacheCom.setAttribute('width', 80)
+        canvasCacheCom.setAttribute('height', 80)
+        var contextCom = canvasCacheCom.getContext('2d')
+        contextCom.beginPath()
+        contextCom.arc(40, 40, 25, 0, Math.PI * 2)
+        contextCom.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+        contextCom.shadowBlur = 30;
+        contextCom.shadowColor = "black";
+        contextCom.fill()
+
     }
     //Unit
 
 
     for (const bowman of bowmen) {
         if (!low)
-            context.drawImage(canvasCache, bowman.x - 40, bowman.y - 40)
+            context.drawImage(canvasCacheBowman, bowman.x - 40, bowman.y - 40)
         context.beginPath()
         context.arc(bowman.x, bowman.y, 20, 0, Math.PI * 2)
         context.fillStyle = "rgb(" + bowman.color[0] + ", " + bowman.color[1] + ", " + bowman.color[2] + ")"
         context.fill()
     }
+
+    for (const com of coms) {
+        if (!low)
+            context.drawImage(canvasCacheCom, com.x - 40, com.y - 40)
+        context.beginPath()
+        roundRect(context, com.x - 22, com.y - 22, 44, 44, 7)
+        //context.rect(com.x - 25, com.y - 25, 50, 50)
+        //  context.arc(com.x, com.y, 25, 0, Math.PI * 2)
+        context.fillStyle = "rgb(" + com.color[0] + ", " + com.color[1] + ", " + com.color[2] + ")"
+        context.fill()
+    }
+
 
 
     if (!low) {
@@ -194,8 +253,6 @@ const drawer = (context) => {
 
     //Heath Bar
     for (const bowman of bowmen) {
-
-
         context.beginPath()
         context.arc(bowman.x, bowman.y, 7, 0, Math.PI * 2)
         context.lineWidth = 5
@@ -207,16 +264,36 @@ const drawer = (context) => {
         context.lineWidth = 5
         context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
         context.stroke()
+    }
 
-        // context.beginPath()
-        // context.rect(bowman.x - 10, bowman.y - 0, 20, 5)
-        // context.fillStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
-        // context.fill()
+    //Heath Bar
+    for (const com of coms) {
 
-        // context.beginPath()
-        // context.rect(bowman.x - 10, bowman.y - 0, 20 * bowman.health, 5)
-        // context.fillStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
-        // context.fill()
+        context.beginPath()
+        context.arc(com.x, com.y, 9, 0, Math.PI * 2)
+        context.lineWidth = 6
+        context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+        context.stroke()
+
+        context.beginPath()
+        context.arc(com.x, com.y, 9, 0, Math.PI * 2 * com.health / 5.0)
+        context.lineWidth = 6
+        context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
+        context.stroke()
+
+        context.beginPath()
+        context.arc(com.x, com.y, 15, 0, Math.PI * 2)
+        context.lineWidth = 6
+        context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+        context.stroke()
+
+        context.beginPath()
+        context.arc(com.x, com.y, 15, 0, Math.PI * 2 * com.spawning)
+        context.lineWidth = 6
+        context.strokeStyle = "rgb(" + 50 + ", " + 130 + ", " + 255 + ")"
+        context.stroke()
+
+
     }
 
     //Possessing and spawning Bar

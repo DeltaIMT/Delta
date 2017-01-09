@@ -13,7 +13,7 @@ var getTranslatedMouse = (mouse) => {
 
 Mous.onDragEnd((mouse) => {
     Draw.setSelectionSquare(null)
-    selectedBowmen = bowmenVal.filter(b => b.h == true)
+    selectedselectable = selectableVal.filter(b => b.h == true)
 })
 
 Mous.onDrag((mouse) => {
@@ -21,16 +21,16 @@ Mous.onDrag((mouse) => {
     mouse = getTranslatedMouse(mouse)
     //  console.log("AFTER : " + JSON.stringify(mouse, null, 1))
     Draw.setSelectionSquare(mouse)
-    bowmenVal.forEach(bowman => {
+    selectableVal.forEach(bowman => {
         if (bowman.mine && Intr.pointInsideSquare(bowman, mouse))
-            bowmen[bowman.id].h = true
+            selectable[bowman.id].h = true
         else
-            bowmen[bowman.id].h = false
+            selectable[bowman.id].h = false
     })
 })
 
 var moveSquareCompute = (mouse) => {
-    var num = selectedBowmen.length
+    var num = selectedselectable.length
     var x1 = mouse.p1.x
     var y1 = mouse.p1.y
     var x2 = mouse.p2.x
@@ -72,7 +72,7 @@ Mous.onDragRightEnd((mouse) => {
 
     var offX = 0
     var offY = 0
-    selectedBowmen.forEach(b => {
+    selectedselectable.forEach(b => {
 
         var hosts = []
         for (var j = -1; j <= 1; j++)
@@ -97,7 +97,7 @@ Mous.onDragRightEnd((mouse) => {
             offY += 1
         }
     })
-    //selectedBowmen go to position 
+    //selectedselectable go to position 
     Draw.setMoveSquare(null)
 })
 
@@ -122,10 +122,10 @@ Mous.onTrailEnd((trail) => {
     Draw.setTrail([])
 
     var trailSize = trail.length
-    var selectedSize = selectedBowmen.length
+    var selectedSize = selectedselectable.length
     var cam = Draw.getCamera()
     for (var i = 0; i < selectedSize; i++) {
-        const b = selectedBowmen[i]
+        const b = selectedselectable[i]
         const pos = linearInterp(trail, parseFloat(i * trailSize) / parseFloat(selectedSize))
         pos.x += cam.x
         pos.y += cam.y
@@ -150,14 +150,34 @@ document.addEventListener("contextmenu", function (e) {
 });
 
 
-var selectedBowmen = []
-var bowmen = {}
-var bowmenVal = []
+var selectedselectable = []
+var selectable = {}
+var selectableVal = []
 
 const loop = () => {
     setTimeout(loop, 16.666)
-    bowmenVal = Object.keys(bowmen).map(key => bowmen[key])
-    Draw.setSelectedId(bowmenVal.filter(b => b.h).map(b => b.id))
+    selectableVal = Object.keys(selectable).map(key => selectable[key])
+    Draw.setSelectedId(selectableVal.filter(b => b.h).map(b => b.id))
+
+
+    // if (moveOrder.length == 0)
+    //     toServer = JSON.stringify([{ hosts: [], data: "" }])
+    if (moveOrder.length > 0) {
+        var toServer
+        var numToSend = 20
+        if (moveOrder.length > numToSend) {
+            toServer = JSON.stringify(moveOrder.slice(0, numToSend))
+            moveOrder = moveOrder.slice(numToSend);
+        }
+        else {
+            toServer = JSON.stringify(moveOrder)
+            moveOrder = []
+        }
+        client.send(toServer)
+    }
+
+
+
 }
 
 setTimeout(loop, 200)
@@ -174,11 +194,11 @@ client.dataManipulation(dataZiped => {
         //    console.log("Received :\n" + data)
         data = JSON.parse(data)
         data.forEach(e => {
-            if (e.type == "bowman") {
-                if (bowmen[e.id] == undefined)
-                    bowmen[e.id] = { h: false }
-                Object.assign(bowmen[e.id], e)
-                bowmen[e.id].counter = 5
+            if (e.type == "bowman" || e.type == "com") {
+                if (selectable[e.id] == undefined)
+                    selectable[e.id] = { h: false }
+                Object.assign(selectable[e.id], e)
+                selectable[e.id].counter = 5
             }
         })
         const newFrame = {}
@@ -188,32 +208,12 @@ client.dataManipulation(dataZiped => {
             }
         })
         frameInterp.addFrame(newFrame)
-        bowmenVal.forEach(a => {
+        selectableVal.forEach(a => {
             a.counter--
             if (a.counter == 0) {
-                delete bowmen[a.id]
+                delete selectable[a.id]
             }
         })
     })
 })
 
-
-
-
-client.commandToServer(() => {
-    var toServer
-    if (moveOrder.length == 0)
-        toServer = JSON.stringify([{ hosts: [], data: "" }])
-    else {
-
-        if (moveOrder.length > 30) {
-            toServer = JSON.stringify(moveOrder.slice(0, 30))
-            moveOrder = moveOrder.slice(30);
-        }
-        else {
-            toServer = JSON.stringify(moveOrder)
-            moveOrder = []
-        }
-    }
-    return toServer
-})

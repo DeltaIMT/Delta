@@ -44,6 +44,7 @@ class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostP
     //  clientActorRef ! PlayersUpdate("you are connected")
     }
 
+
     case DeleteClient(id) => {
       clients(id)._2.cancel()
       OnDisconnect(id ,clients(id)._1)

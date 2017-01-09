@@ -5,27 +5,6 @@ import core.user_import.{Element, Observable, Observer}
 import scala.util.Random
 
 
-class Sendable[T](var _DONOTUSE :T) {
-  var changed =false
-  def reset = {changed = false}
-
-  def apply()= _DONOTUSE
-
-  def value = _DONOTUSE
-  def value_=(b : T) = {
-    if(_DONOTUSE != b){
-      changed= true
-      _DONOTUSE = b
-    }
-  }
-
-  def print = {
-    println("Value : "+value+" Changed :" + changed)
-  }
-
-}
-
-
 
 trait Unity extends Element with Observable {
   var id: String
@@ -199,7 +178,7 @@ class Bowman(var x : Double,var y : Double,var id : String,var clientId : String
   }
 }
 
-class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable {
+class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color :Array[Int]) extends Movable {
   speed = 10
   var frame = 0
   def shouldDie: Boolean = {

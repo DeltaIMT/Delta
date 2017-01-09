@@ -2,11 +2,11 @@ const initialTime = Date.now()
 const getTime = () => { return Date.now() - initialTime }
 const timeBetweenFrame = 100
 
-var noInterp  = false
-document.addEventListener('keydown', function(event) {
-    if(event.keyCode == 73) {
+var noInterp = false
+document.addEventListener('keydown', function (event) {
+    if (event.keyCode == 73) {
         noInterp = !noInterp
-        console.log("noInterp : "  + noInterp)
+        console.log("noInterp : " + noInterp)
     }
 });
 
@@ -16,16 +16,29 @@ class FrameInterp {
         this.frame1 = {}
         this.frame2 = {}
         this.time = 0
-        this.keyToInterp = ['x', 'y', 'health' , 'spawning', 'possessing']
+        this.keyToInterp = ['x', 'y', 'health', 'spawning', 'possessing']
     }
 
     addFrame(frame) {
         this.time = getTime()
-    //   console.log("Adding frame at " + this.time)
-        this.frame0 = this.frame1
-        this.frame1 = this.frame2
+        //   console.log("Adding frame at " + this.time)
+
+        function fusion(frame0, frame1) {
+            const frame = Object.assign({}, frame1)
+            // Object.keys(frame0).forEach(id0 => {
+            //     if (undefined !== typeof (frame[id0])) {
+            //         frame[id0] = Object.assign({}, frame0, frame1)
+            //     }
+            // })
+            return frame
+        }
+
+        this.frame0 = fusion(this.frame0, this.frame1)
+        this.frame1 = fusion(this.frame1, this.frame2)
         this.frame2 = frame
     }
+
+
 
     getInterp() {
 
@@ -33,7 +46,7 @@ class FrameInterp {
         let lambda = (t - this.time) / timeBetweenFrame
         //   console.log("   Getting interpolation at " + t)
         //   console.log("   Last added frame at      " + this.time)
-     //   console.log("   Interpolation at " + lambda * 100 + " %")
+        //   console.log("   Interpolation at " + lambda * 100 + " %")
 
         let a = this.frame0
         let b = this.frame1
@@ -47,47 +60,48 @@ class FrameInterp {
             lambda = lambda - 1
         }
 
-       if(noInterp)
-        {
+        if (noInterp) {
             a = this.frame1
             b = this.frame2
-            lambda=1
+            lambda = 1
         }
 
         let ax = 1 - lambda
         let bx = lambda
-        
- 
+
+
         //Now we interpolate between a and b with ax and bx proportion
 
         const keys = Object.keys(b)
         let interp = {}
         // Object.assign(interp, b)
         keys.forEach(k => {
+
             if ("undefined" !== typeof (a[k])) {
                 interp[k] = {}
                 const keysInObject = Object.keys(b[k])
                 keysInObject.forEach(k2 => {
                     if (this.keyToInterp.includes(k2)) {
                         interp[k][k2] = a[k][k2] * ax + b[k][k2] * bx
-    //                    console.log("       interp for " + k2)
+                        //                    console.log("       interp for " + k2)
                     }
                     else {
                         interp[k][k2] = b[k][k2]
-    //                    console.log("       no interp for " + k2)
+                        //                    console.log("       no interp for " + k2)
                     }
                 })
-
             }
             else {
                 const keysInObject = Object.keys(b[k])
                 interp[k] = {}
                 keysInObject.forEach(k2 => {
                     interp[k][k2] = b[k][k2]
-    //                console.log("       no past for " + k +" " + k2)
+                    //                console.log("       no past for " + k +" " + k2)
                 })
             }
         })
+
+
 
         return interp
     }
@@ -95,7 +109,7 @@ class FrameInterp {
 }
 
 //const frameInterp = new FrameInterp
-module.exports= new FrameInterp
+module.exports = new FrameInterp
 // let t = 0
 
 // const frameLoader = () => {

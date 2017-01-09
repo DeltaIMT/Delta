@@ -191,7 +191,7 @@ var zlib = require('zlib')
 client.dataManipulation(dataZiped => {
     // console.log("Received Zipped :\n" + dataZiped)
     var data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
-        //    console.log("Received :\n" + data)
+         //   console.log("Received :\n" + data)
         data = JSON.parse(data)
         data.forEach(e => {
             if (e.type == "bowman" || e.type == "com") {

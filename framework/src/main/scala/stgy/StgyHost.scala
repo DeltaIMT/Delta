@@ -63,6 +63,8 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
 
     getNeighbours
 
+    val unitys =  elements.filter(e => e._2.isInstanceOf[Unity]).values.asInstanceOf[Iterable[Unity]]
+
     val damagable =  elements.filter(e => e._2.isInstanceOf[Damagable]).values.asInstanceOf[Iterable[Damagable]]
     val bowmen= damagable.filter( x => x.isInstanceOf[Bowman]).asInstanceOf[Iterable[Bowman]]
     val coms = damagable.filter( x => x.isInstanceOf[Commander]).asInstanceOf[Iterable[Commander]]

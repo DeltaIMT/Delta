@@ -47,7 +47,7 @@ window.onload = () => {
 
     var draw = () => {
         endTime = performance.now()
-        msElapsed = msElapsed * 1.00 + (endTime - startTime) * 0.0
+        msElapsed = msElapsed * 0.90 + (endTime - startTime) * 0.1
         startTime = endTime
         t++
         drawer(context)
@@ -110,11 +110,13 @@ const drawer = (context) => {
 
             if (frame['1'] != undefined)
                 other = frame['1']
+
+            if (frame['0'] !== undefined)
+                currentPos = frame['0']
         }
     }
 
-    if (frame['0'] !== undefined)
-        currentPos = frame['0']
+
     // clamp the camera position to the world bounds while centering the camera around the snake                    
     cam.x = parseInt(clamp(currentPos.x - canvas.width / 2, 0, worldSize.x - canvas.width))
     cam.y = parseInt(clamp(currentPos.y - canvas.height / 2, 0, worldSize.y - canvas.height))

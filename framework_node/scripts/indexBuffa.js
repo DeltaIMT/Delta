@@ -20,11 +20,25 @@ window.onload = () => {
     var cam = { x: 0, y: 0 }
 
     var mousePosition = { x: 0, y: 0 }
+    var clicked = false
+    var rclicked = false
 
     document.addEventListener('mousemove', function (mouseMoveEvent) {
         mousePosition.x = mouseMoveEvent.pageX
         mousePosition.y = mouseMoveEvent.pageY
     }, false)
+
+    document.addEventListener("click", function () {
+        clicked = true
+        setTimeout(() => clicked = false, 33)
+    })
+
+    document.addEventListener("contextmenu", function (e) {
+        e.preventDefault()
+        rclicked = true
+        setTimeout(() => rclicked = false, 33)
+    })
+
 
     var draw = () => {
         // clamp the camera position to the world bounds while centering the camera around the snake                    
@@ -54,13 +68,41 @@ window.onload = () => {
             context.fill()
             context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
             context.stroke()
+            if (blob.grap != undefined) {
+                var dx = parseInt(blob.grap.x)
+                var dy = parseInt(blob.grap.y)
+                var ox = parseInt(blob.x)
+                var oy = parseInt(blob.y)
+                context.beginPath()
+                context.moveTo(ox, oy);
+                context.lineTo(ox + dx, oy + dy);
+                context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+                context.stroke()
+            }
         }
-        window.requestAnimationFrame(draw)
 
-        client.pingMeasurement()
+        for (var i = 0; i < scene.buffa.length; i++) {
+            var buffa = scene.buffa[i]
+            context.beginPath()
+            context.arc(buffa.x, buffa.y, 60, 0, Math.PI * 2)
+            context.fillStyle = "rgb(" + buffa.c[0] + ", " + buffa.c[1] + ", " + buffa.c[2] + ")"
+            context.fill()
+            context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+            context.stroke()
+        }
+
+        window.requestAnimationFrame(draw)
     }
 
     window.requestAnimationFrame(draw)
+
+
+    var showFps = () => 
+    {
+        setTimeout(showFps,1000)
+        console.log(client.countFps()) 
+    }
+    showFps()
 
     function clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
@@ -69,30 +111,36 @@ window.onload = () => {
     client.commandToServer(() => {
         var toServer
         if (currentPos.x != undefined)
-            toServer = JSON.stringify([{ hosts: [[currentPos.x * 1.0, currentPos.y * 1.0]], data: JSON.stringify({ x: mousePosition.x + cam.x, y: mousePosition.y + cam.y }) }])
+            toServer = JSON.stringify([{ hosts: [[currentPos.x * 1.0, currentPos.y * 1.0]], data: JSON.stringify({ x: mousePosition.x + cam.x, y: mousePosition.y + cam.y, cl: clicked, cr: rclicked }) }])
         else
             toServer = JSON.stringify([{ hosts: [[]], data: "" }])
-        console.log("Sending :\n" + toServer)
+        // console.log("Sending :\n" + toServer)
         return toServer
     })
 
-    var scene = { blobs: [] }
+    var scene = { blobs: [], buffa: [], grap: [] }
     client.dataManipulation(dataZiped => {
-        console.log("Received Zipped :\n" + dataZiped)
-        var data = zlib.gunzipSync(new Buffer(dataZiped,'base64'))
+        //   console.log("Received Zipped :\n" + dataZiped)
+        var data = zlib.gunzipSync(new Buffer(dataZiped, 'base64'))
         //   var data = dataZiped
         scene.blobs = []
-        console.log("Received :\n" + data)
+        scene.buffa = []
+        //  console.log("Received :\n" + data)
         var obj = JSON.parse(data)
         obj.forEach(e => {
             if (e.cam != undefined) {
 
-                currentPos.x = e.cam.x
-                currentPos.y = e.cam.y
+                currentPos.x =  currentPos.x*0.95 + 0.05*e.cam.x
+                currentPos.y =currentPos.y*0.95 + 0.05*e.cam.y
                 //        console.log("cam found :" + cam.x + " " + cam.y)
             }
-            else
-                scene.blobs.push(e)
+            else {
+                if (e.t == 'p')
+                    scene.blobs.push(e)
+                else if (e.t == 'b')
+                    scene.buffa.push(e)
+            }
+
         })
         //  console.log(data)
     })

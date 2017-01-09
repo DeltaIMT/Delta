@@ -41,9 +41,10 @@
 /* eslint-disable no-var */
 var webpack = require('webpack');
 var path = require('path');
+var index = "Stgy/indexStgy"
 
 module.exports = {
-  entry: './scripts/index',
+  entry: './scripts/'+index,
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'bundle.js',

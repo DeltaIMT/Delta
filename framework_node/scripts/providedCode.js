@@ -4,6 +4,7 @@ var dataManipulationFunction = (arg) => { }
 var defineCommandToServer = () => { return "default message" }
 var fps = 0
 var ws
+var getPing = () =>{}
 module.exports.launch = () => {
     var uuid = require('node-uuid');
     var id = uuid.v4()
@@ -40,7 +41,7 @@ module.exports.launch = () => {
         }
     }
 
-    var getPing = (callback) => {
+    getPing = (callback) => {
         ws.send("ping")
         now1 = new Date()
         pingCallback = callback
@@ -66,4 +67,4 @@ module.exports.send = (str) => {
     ws.send(str)
 }
 module.exports.countFps = () => { return fps }
-module.exports.getPing = getPing
+module.exports.getPing = (f) => getPing(f)

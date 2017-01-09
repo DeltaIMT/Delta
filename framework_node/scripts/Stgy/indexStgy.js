@@ -164,7 +164,7 @@ const loop = () => {
     //     toServer = JSON.stringify([{ hosts: [], data: "" }])
     if (moveOrder.length > 0) {
         var toServer
-        var numToSend = 20
+        var numToSend = 5
         if (moveOrder.length > numToSend) {
             toServer = JSON.stringify(moveOrder.slice(0, numToSend))
             moveOrder = moveOrder.slice(numToSend);

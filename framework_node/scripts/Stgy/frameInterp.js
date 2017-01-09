@@ -1,6 +1,6 @@
 const initialTime = Date.now()
 const getTime = () => { return Date.now() - initialTime }
-const timeBetweenFrame = 33.33
+const timeBetweenFrame = 100
 
 var noInterp  = false
 document.addEventListener('keydown', function(event) {

@@ -12,6 +12,9 @@ module.exports.launch = () => {
     var host = window.location.hostname
     var frames = 0
 
+    var pingCallback
+    var now1
+    var ping
 
 
     var wsPort = new WebSocket('ws://' + host + ':9000' + "/?id=" + id)
@@ -23,6 +26,8 @@ module.exports.launch = () => {
         if (data == "ping") {
             var now2 = new Date()
             ping = now2 - now1 // corresponds to the amount of milliseconds between now1 and now2
+            pingCallback(ping)
+            pingCallback = () => {}
         }
         else {
             console.log("Connection to : " + 'ws://' + host + ':' + data + "/?id=" + id)
@@ -36,9 +41,8 @@ module.exports.launch = () => {
 
     var getPing = (callback) => {
         wsPort.send("ping")
-        var now1 = new Date()
-        var ping
-        callback(ping)
+        now1 = new Date()
+        pingCallback = callback
     }
 
     var countFpsFunction = () => {

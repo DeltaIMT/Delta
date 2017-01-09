@@ -33,9 +33,8 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor{
       // println(hosts map {x => x.mkString(",")} mkString(";") )
 
         val data = (j \ "data" ).get.as[String]
-     //   println("hosts :" + hosts.map(x => x.mkString(",")).mkString(",")   )
+      //  println("hosts :" + hosts.map(x => x.mkString(",")).mkString(",")   )
      //   println("data  :" + data)
-
         hosts foreach { h =>  this.hosts.getHyperHost(h(0),h(1)).host ! ClientInput(x.id,data)   }
       }}
 

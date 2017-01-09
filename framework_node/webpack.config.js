@@ -43,7 +43,7 @@
 /* eslint-disable no-var */
 var webpack = require('webpack');
 var path = require('path');
-var index = "indexBuffa"
+var index = "Stgy/indexStgy"
 
 module.exports = {
   entry: [

@@ -8,7 +8,8 @@ class Zone(var x :Double,var y: Double,var w : Double,var h : Double){
   def intersectRect(z2: Zone) : Boolean ={
 
     var bool = false
-    var fake = new Element(x,y)
+    class ElementImpl(var x : Double, var y:Double) extends Element{}
+    var fake = new ElementImpl(x,y)
 
     fake.x = x
     fake.y = y

@@ -39,8 +39,8 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
     var hostInsideZones = List[HyperHost]()
     var posFound = List[(Double,Double)]()
 
-
-    var fake = new Element(0, 0)
+    class ElementImpl(var x : Double, var y:Double) extends Element{}
+    var fake = new  ElementImpl(0, 0)
     for (x <- 0.0 until (hosts.w * hosts.wn) by hosts.w; y <- 0.0 until (hosts.h * hosts.hn) by hosts.h) {
       var bool = false
 
@@ -68,7 +68,7 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
       var bool = false
       zones foreach { z => {
         bool = bool || z.contains(e)
-     //   println(e + " is in " + z + " ? " + bool)
+       // println(e + " is in " + z + " ? " + bool)
       }
       }
       bool
@@ -124,7 +124,7 @@ class AbstractClientView(hosts: HostPool, client: ActorRef) extends Actor {
         }
       }
       else {
-        println("WARNING : Message too old from host to ClientView, delay : " + (nextbuffer - num)  )
+       // println("WARNING : Message too old from host to ClientView, delay : " + (nextbuffer - num)  )
       }
     }
 

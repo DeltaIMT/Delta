@@ -30,5 +30,9 @@ class HyperHost(val host : ActorRef)  {
     host ! Method(method, args)
   }
 
+  def method(method : String)={
+    host ! Method(method, null)
+  }
+
 
 }

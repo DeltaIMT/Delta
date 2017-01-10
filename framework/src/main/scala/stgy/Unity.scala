@@ -32,10 +32,15 @@ trait Movable extends Unity {
 
 trait Damagable extends Unity {
   var health = 1.0
+  var maxHealth = 1.0
   var radius : Int
 
   def damage(amount: Double) = {
     health = math.max(0, health - amount)
+  }
+
+  def damagableStep = {
+    health = math.min(maxHealth, health + 0.0008)
   }
 
   def isDead: Boolean = health == 0
@@ -51,6 +56,12 @@ trait Shooter {
     if (canShootIn > 0)
       canShootIn -= 1
   }
+}
+
+trait Evolving{
+  var xp =0.0
+  var gainPerKill = 1.0
+  def gainKillXp = {xp += gainPerKill}
 }
 
 trait Spawner extends Unity{
@@ -136,13 +147,14 @@ class Flag(var x : Double,var y : Double,var id : String,var clientId : String,v
 
 }
 
-class Commander(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Spawner{
+class Commander(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Spawner with Evolving{
   health = 5
+  maxHealth = 5
   override var radius: Int =  25
   def shoot(targets: List[Vec]): List[Arrow] = {
-    canShootIn = 60
+    canShootIn = 60 / (xp.toInt+1) + 20
     val arrows =targets.map( t => {
-     val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
+     val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color, id)
       arrow.move=true
       val direction= (t-Vec(x,y)).normalize()
       arrow.target = Vec(x,y)+ (direction*1000.0)
@@ -155,17 +167,18 @@ class Commander(var x : Double,var y : Double,var id : String,var clientId : Str
   def step() = {
     doMove
     shooterStep
+    damagableStep
   }
 
 
 }
 
-class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter {
+class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
 
   override var radius: Int =  20
   def shoot(target: Vec): Arrow = {
-    canShootIn = 60
-    val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
+    canShootIn = 60 /(xp.toInt+1) +20
+    val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color , id)
     arrow.move = true
     val direction= (target-Vec(x,y)).normalize()
     arrow.target = Vec(x,y)+ (direction*1000.0)
@@ -175,10 +188,11 @@ class Bowman(var x : Double,var y : Double,var id : String,var clientId : String
   def step() = {
     doMove
     shooterStep
+    damagableStep
   }
 }
 
-class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color :Array[Int]) extends Movable {
+class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color :Array[Int], var shooterId : String) extends Movable {
   speed = 10
   var frame = 0
   def shouldDie: Boolean = {

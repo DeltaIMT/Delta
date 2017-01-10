@@ -159,9 +159,7 @@ const loop = () => {
     selectableVal = Object.keys(selectable).map(key => selectable[key])
     Draw.setSelectedId(selectableVal.filter(b => b.h).map(b => b.id))
 
-    if (client !== undefined) {
-        client.getPing((ping) => console.log("ping : " + ping + " ms"))
-    }
+
 
     // if (moveOrder.length == 0)
     //     toServer = JSON.stringify([{ hosts: [], data: "" }])
@@ -182,6 +180,15 @@ const loop = () => {
 
 
 }
+
+var pinger = () => {
+    if (client !== undefined) {
+        setTimeout(pinger, 1000)
+        client.getPing((ping) => Draw.setPing(ping))
+    }
+}
+setTimeout(pinger, 1000)
+
 
 setTimeout(loop, 200)
 var client = require('../providedCode')

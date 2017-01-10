@@ -153,8 +153,7 @@ document.addEventListener("contextmenu", function (e) {
 let selectedselectable = []
 
 const getSelected = () => {
-    selectedselectable = selectedselectable.filter(id => selectable[id] != undefined)
-    return selectedselectable
+    return selectedselectable.filter(id =>    selectable[id] != undefined)
 }
 
 let toBeSelected = []

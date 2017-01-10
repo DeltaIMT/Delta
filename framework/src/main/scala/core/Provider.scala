@@ -26,7 +26,6 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor {
       // println(x.command)
 
       if (x.command == "ping") {
-        println("ping incoming from "+ x.id)
         clientRef ! PlayersUpdate("ping")
       }
 

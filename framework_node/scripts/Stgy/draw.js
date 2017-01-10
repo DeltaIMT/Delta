@@ -11,7 +11,7 @@ var selectedIds = []
 var t = 0
 var currentPos = { x: 0, y: 0 }
 var cam = {}
-
+var ping = 0
 
 var low = false
 document.addEventListener('keydown', function (event) {
@@ -28,7 +28,7 @@ module.exports.setMoveSquare = (drag) => moveSquare = drag
 module.exports.setTrail = (newTrail) => trail = newTrail
 var frameGetter = null
 module.exports.setFrameGetter = (f) => frameGetter = f
-
+module.exports.setPing = (newPing) => { ping = newPing }
 var startTime = performance.now()
 var endTime
 var msElapsed = 16.6
@@ -266,33 +266,57 @@ const drawer = (context) => {
         context.lineWidth = 5
         context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
         context.stroke()
+
+        context.beginPath()
+        context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2)
+        context.lineWidth = 5
+        context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
+        context.stroke()
+
+        context.beginPath()
+        context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(bowman.xp))))
+        context.lineWidth = 5
+        context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
+        context.stroke()
     }
 
     //Heath Bar
     for (const com of coms) {
 
         context.beginPath()
-        context.arc(com.x, com.y, 9, 0, Math.PI * 2)
-        context.lineWidth = 6
+        context.arc(com.x, com.y, 7, 0, Math.PI * 2)
+        context.lineWidth = 5
         context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
         context.stroke()
 
         context.beginPath()
-        context.arc(com.x, com.y, 9, 0, Math.PI * 2 * com.health / 5.0)
-        context.lineWidth = 6
+        context.arc(com.x, com.y, 7, 0, Math.PI * 2 * com.health / 5.0)
+        context.lineWidth = 5
         context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
         context.stroke()
 
         context.beginPath()
-        context.arc(com.x, com.y, 15, 0, Math.PI * 2)
-        context.lineWidth = 6
+        context.arc(com.x, com.y, 12, 0, Math.PI * 2)
+        context.lineWidth = 5
         context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
         context.stroke()
 
         context.beginPath()
-        context.arc(com.x, com.y, 15, 0, Math.PI * 2 * com.spawning)
-        context.lineWidth = 6
+        context.arc(com.x, com.y, 12, 0, Math.PI * 2 * com.spawning)
+        context.lineWidth = 5
         context.strokeStyle = "rgb(" + 50 + ", " + 130 + ", " + 255 + ")"
+        context.stroke()
+
+        context.beginPath()
+        context.arc(com.x, com.y, 17, 0, Math.PI * 2)
+        context.lineWidth = 5
+        context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
+        context.stroke()
+
+        context.beginPath()
+        context.arc(com.x, com.y, 17, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(com.xp))))
+        context.lineWidth = 5
+        context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
         context.stroke()
 
 
@@ -377,7 +401,7 @@ const drawer = (context) => {
         context.fillText("Own units       : " + other.n, 10, 30);
     if (bowmen != undefined && flags != undefined)
         context.fillText("Total displayed : " + (bowmen.length + flags.length), 10, 55);
-    context.fillText("Draw ms elapsed : " + parseInt(msElapsed * 10) / 10.0, 10, 80);
+    context.fillText("Ping : " + parseInt(ping * 10) / 10.0, 10, 80);
     context.fillText("Draw fps        : " + parseInt(10000.0 / msElapsed) / 10.0, 10, 105);
 }
 

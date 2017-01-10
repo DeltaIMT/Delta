@@ -21,6 +21,12 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
     elements += e.id -> e
   })
 
+  methods += "gainxp" -> ((arg: Any) => {
+    var e = arg.asInstanceOf[String]
+    if(elements.contains(e))
+      elements(e).asInstanceOf[Evolving].gainKillXp
+  })
+
   methods += "receiveTarget" -> ((arg: Any) => {
     var seq = arg.asInstanceOf[Seq[Any]]
     var who = seq(0).asInstanceOf[ActorRef]
@@ -100,6 +106,13 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
           if ((Vec(e.x, e.y) - Vec(a.x, a.y)).length < e.radius) {
             e.damage(0.201)
             elements -= a.id
+
+            if(elements.contains(a.shooterId))
+              elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
+            else{
+              neighbours.foreach(  h => h .method("gainxp" , a.shooterId))
+            }
+
           }
         })
       }

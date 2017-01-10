@@ -51,8 +51,8 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
 
 
     pos = (max *0.5) +( min *0.5)
-    min += Vec(10,10)
-    max -= Vec(10,10)
+    min += Vec(100,100)
+    max -= Vec(100,100)
     hash.keys.foreach( k =>  hash(k) = hash(k)-1 )
     hash= hash.filter( (pair) => pair._2>0)
     numberOfUnit = hash.size.toDouble
@@ -69,10 +69,10 @@ class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
         val colorString = if (!hashIdColor(u.id) || true) s""","color":[${u.color(0)},${u.color(1)},${u.color(2)}]""" else ""
         u match {
           case e: Commander => {
-            s"""{"type":"com","id":"${e.id}","spawning":"${1.0 - e.canSpawnIn / e.frameToSpawn.toFloat}","mine":${id == e.clientId},"health":"${e.health}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
+            s"""{"type":"com","id":"${e.id}","spawning":"${1.0 - e.canSpawnIn / e.frameToSpawn.toFloat}","xp":"${e.xp}","mine":${id == e.clientId},"health":"${e.health}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
           }
           case e: Bowman => {
-            s"""{"type":"bowman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
+            s"""{"type":"bowman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health}","xp":"${e.xp}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
           }
           case e: Arrow => {
             s"""{"type":"arrow","id":"${e.id}","x":"${e.x.toInt}","y":"${e.y.toInt}"}"""

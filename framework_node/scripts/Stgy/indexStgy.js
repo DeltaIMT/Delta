@@ -13,24 +13,23 @@ var getTranslatedMouse = (mouse) => {
 
 Mous.onDragEnd((mouse) => {
     Draw.setSelectionSquare(null)
-    selectedselectable = selectableVal.filter(b => b.h == true)
+    selectedselectable = toBeSelected
 })
 
 Mous.onDrag((mouse) => {
     //  console.log("BEFORE : " + JSON.stringify(mouse, null, 1))
+    toBeSelected = []
     mouse = getTranslatedMouse(mouse)
     //  console.log("AFTER : " + JSON.stringify(mouse, null, 1))
     Draw.setSelectionSquare(mouse)
     selectableVal.forEach(bowman => {
         if (bowman.mine && Intr.pointInsideSquare(bowman, mouse))
-            selectable[bowman.id].h = true
-        else
-            selectable[bowman.id].h = false
+            toBeSelected.push(bowman.id)
     })
 })
 
 var moveSquareCompute = (mouse) => {
-    var num = selectedselectable.length
+    var num = getSelected().length
     var x1 = mouse.p1.x
     var y1 = mouse.p1.y
     var x2 = mouse.p2.x
@@ -68,15 +67,15 @@ var moveSquareCompute = (mouse) => {
 }
 
 Mous.onDragRightEnd((mouse) => {
-    var square = moveSquareCompute(getTranslatedMouse(mouse))
+    const square = moveSquareCompute(getTranslatedMouse(mouse))
 
-    var offX = 0
-    var offY = 0
-    selectedselectable.forEach(b => {
-
-        var hosts = []
-        for (var j = -1; j <= 1; j++)
-            for (var i = -1; i <= 1; i++) {
+    let offX = 0
+    let offY = 0
+    getSelected().forEach(k => {
+        const b = selectable[k]
+        const hosts = []
+        for (let j = -1; j <= 1; j++)
+            for (let i = -1; i <= 1; i++) {
                 hosts.push([b.x * 1.0 + 600 * i, b.y * 1.0 + 600 * j])
             }
 
@@ -102,7 +101,7 @@ Mous.onDragRightEnd((mouse) => {
 })
 
 Mous.onDragRight((mouse) => {
-    var square = moveSquareCompute(getTranslatedMouse(mouse))
+    const square = moveSquareCompute(getTranslatedMouse(mouse))
     Draw.setMoveSquare(square)
 })
 
@@ -111,21 +110,22 @@ Mous.onTrail((trail) => {
 })
 
 
-var linearInterp = (path, float_i) => {
-    var first = path[Math.floor(float_i)]
-    var last = path[Math.ceil(float_i)]
-    var t = float_i - Math.floor(float_i)
+const linearInterp = (path, float_i) => {
+    const first = path[Math.floor(float_i)]
+    const last = path[Math.ceil(float_i)]
+    const t = float_i - Math.floor(float_i)
     return { x: first.x * (1 - t) + last.x * t, y: first.y * (1 - t) + last.y * t }
 }
 
 Mous.onTrailEnd((trail) => {
     Draw.setTrail([])
-
-    var trailSize = trail.length
-    var selectedSize = selectedselectable.length
+    
+    const trailSize = trail.length
+    const selectedSize = getSelected().length
+    console.log(selectedSize)
     var cam = Draw.getCamera()
     for (var i = 0; i < selectedSize; i++) {
-        const b = selectedselectable[i]
+        const b = selectable[getSelected()[i]]
         const pos = linearInterp(trail, parseFloat(i * trailSize) / parseFloat(selectedSize))
         pos.x += cam.x
         pos.y += cam.y
@@ -150,18 +150,26 @@ document.addEventListener("contextmenu", function (e) {
 });
 
 
-var selectedselectable = []
-var selectable = {}
-var selectableVal = []
+let selectedselectable = []
+
+const getSelected = () => {
+    return selectedselectable.filter(id =>    selectable[id] != undefined)
+}
+
+let toBeSelected = []
+let selectable = {}
+let selectableVal = []
 
 const loop = () => {
     setTimeout(loop, 16.666)
-    selectableVal = Object.keys(selectable).map(key => selectable[key])
-    Draw.setSelectedId(selectableVal.filter(b => b.h).map(b => b.id))
 
-    if (client !== undefined) {
-        client.getPing((ping) => console.log("ping : " + ping + " ms"))
-    }
+    const frame = frameInterp.getInterp()
+    selectable = {}
+    const selectableIds = Object.keys(frame).filter(k => { return frame[k].type == "bowman" || frame[k].type == "com" })
+    selectableIds.forEach(k => { selectable[k] = frame[k] })
+    selectableVal = Object.keys(selectable).map(key => selectable[key])
+    Draw.setSelectedId(getSelected())
+
 
     // if (moveOrder.length == 0)
     //     toServer = JSON.stringify([{ hosts: [], data: "" }])
@@ -179,13 +187,13 @@ const loop = () => {
         client.send(toServer)
     }
 
-
-
 }
 
 setTimeout(loop, 200)
 var client = require('../providedCode')
 client.launch()
+
+setInterval(() => { client.getPing((ping) => Draw.setPing(ping)) }, 1000)
 
 const frameInterp = require('./frameInterp')
 Draw.setFrameGetter(frameInterp)
@@ -196,14 +204,6 @@ client.dataManipulation(dataZiped => {
     var data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
         //   console.log("Received :\n" + data)
         data = JSON.parse(data)
-        data.forEach(e => {
-            if (e.type == "bowman" || e.type == "com") {
-                if (selectable[e.id] == undefined)
-                    selectable[e.id] = { h: false }
-                Object.assign(selectable[e.id], e)
-                selectable[e.id].counter = 5
-            }
-        })
         const newFrame = {}
         data.forEach(o => {
             if (typeof (o.id) !== undefined) {
@@ -211,12 +211,7 @@ client.dataManipulation(dataZiped => {
             }
         })
         frameInterp.addFrame(newFrame)
-        selectableVal.forEach(a => {
-            a.counter--
-            if (a.counter == 0) {
-                delete selectable[a.id]
-            }
-        })
+
     })
 })
 

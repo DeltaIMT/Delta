@@ -17,7 +17,7 @@ class StgySpecialHost(hostPool: HostPool) extends AbstractSpecialHost[StgyClient
     var color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
     val randx = 200+rand.nextInt(2600)
     val randy = 200+rand.nextInt(2600)
-    val numberOfStartUnit = 20
+    val numberOfStartUnit = 5
     val sqrt = math.sqrt(numberOfStartUnit).toInt
     val bowmen = 0 until 20 map { i => new Bowman(randx + 40*(i%sqrt) , randy + 40*(i/sqrt), Random.alphanumeric.take(10).mkString, id, color) }
     val flag = new Flag( randx, randy, Random.alphanumeric.take(10).mkString, id, color)

@@ -9,10 +9,12 @@ import core.CoreMessage.Tick
 import core.port_dispatch.ProviderPort
 import core.user_import.Zone
 import core.{HostPool, Provider, Websocket}
+import kamon.Kamon
+
 import scala.concurrent.duration._
 
 object Stgy extends App {
-
+  Kamon.start()
   println("framework starting")
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val executionContext = actorSystem.dispatcher
@@ -23,6 +25,13 @@ object Stgy extends App {
   val hostsGridHeight = 5
   val hostWidth = 600
   val hostHeight = 600
+
+  val someHistogram = Kamon.metrics.histogram("some-histogram")
+  val someCounter = Kamon.metrics.counter("some-counter")
+
+  someHistogram.record(42)
+  someHistogram.record(50)
+  someCounter.increment()
 
   val hostPool = new HostPool(hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
   val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new StgyHost(hostPool, new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight))), "host_" + i) }
@@ -75,4 +84,6 @@ object Stgy extends App {
 
   val ui = new UI
   ui.visible = true
+
+  Kamon.shutdown()
 }

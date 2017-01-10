@@ -1,6 +1,5 @@
 package core.port_dispatch
 
-import akka.actor.FSM.->
 import akka.actor.{Actor, ActorRef}
 import core.CoreMessage.{AddClient, DeleteClient, PlayersUpdate}
 
@@ -27,3 +26,4 @@ class ProviderPort(numberOfClient : Int) extends Actor {
     }
   }
 }
+

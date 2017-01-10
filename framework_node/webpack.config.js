@@ -72,5 +72,9 @@ module.exports = {
         include: path.join(__dirname, 'scripts')
       }
     ]
+  },
+  node:
+  {
+    "child_process": "empty"
   }
 };

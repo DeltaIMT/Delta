@@ -159,6 +159,9 @@ const loop = () => {
     selectableVal = Object.keys(selectable).map(key => selectable[key])
     Draw.setSelectedId(selectableVal.filter(b => b.h).map(b => b.id))
 
+    if (client !== undefined) {
+        client.getPing((ping) => console.log("ping : " + ping + " ms"))
+    }
 
     // if (moveOrder.length == 0)
     //     toServer = JSON.stringify([{ hosts: [], data: "" }])
@@ -191,7 +194,7 @@ var zlib = require('zlib')
 client.dataManipulation(dataZiped => {
     // console.log("Received Zipped :\n" + dataZiped)
     var data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
-         //   console.log("Received :\n" + data)
+        //   console.log("Received :\n" + data)
         data = JSON.parse(data)
         data.forEach(e => {
             if (e.type == "bowman" || e.type == "com") {

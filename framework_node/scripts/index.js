@@ -56,6 +56,8 @@ window.onload = () => {
             context.stroke()
         }
         window.requestAnimationFrame(draw)
+
+        client.pingMeasurement()
     }
 
     window.requestAnimationFrame(draw)

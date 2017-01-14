@@ -1,6 +1,6 @@
 package stgy
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{Actor, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.RouteResult
@@ -10,8 +10,23 @@ import core.port_dispatch.ProviderPort
 import core.user_import.Zone
 import core.{HostPool, Provider, Websocket}
 import kamon.Kamon
+import kamon.metric.instrument.Histogram
+import kamon.trace.TraceInfo
 
 import scala.concurrent.duration._
+
+class Suber extends Actor {
+
+  val hash = collection.mutable.HashMap[String, Histogram]()
+  val tickTime = (0 to 5).foreach( i => (0 to 5).foreach( j =>  hash += (i +"-" + j) ->  Kamon.metrics.histogram("host-trace" + i +"-" + j  )    ))
+
+
+  override def receive: Receive = {
+    case t: TraceInfo => {
+      hash(t.name).record(t.elapsedTime.nanos)
+    }
+  }
+}
 
 object Stgy extends App {
   Kamon.start()
@@ -26,12 +41,17 @@ object Stgy extends App {
   val hostWidth = 600
   val hostHeight = 600
 
-  val someHistogram = Kamon.metrics.histogram("some-histogram")
-  val someCounter = Kamon.metrics.counter("some-counter")
 
-  someHistogram.record(42)
-  someHistogram.record(50)
-  someCounter.increment()
+  val actorRefOfSubscriber = actorSystem.actorOf(Props[Suber], "suber")
+
+  Kamon.tracer.subscribe(actorRefOfSubscriber)
+
+//  Tracer.withNewContext("testTrace" , autoFinish = true) {
+//    Tracer.currentContext.withNewSegment("tralala","tsoin","tsoin"){
+//      Thread.sleep(300)
+//      println("j'aime les chips")
+//    }
+//  }
 
   val hostPool = new HostPool(hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
   val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new StgyHost(hostPool, new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight))), "host_" + i) }
@@ -42,6 +62,9 @@ object Stgy extends App {
   val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(new Provider(hostPool, specialHost)), "provider_" + i) }
   val providers = providerPort :: providerClients.toList
   val websockets = -1 until numberOfClient map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
+
+
+  println(providerPort.path)
 
   val routes = websockets.map(x => {
     x._1 ->
@@ -60,7 +83,6 @@ object Stgy extends App {
 
   println("framework working")
 
-
   import scala.swing._
 
   class UI extends MainFrame {
@@ -69,6 +91,7 @@ object Stgy extends App {
       println("framework shutdown")
       cancellable foreach { c => c.cancel() }
       actorSystem.terminate()
+      Kamon.shutdown()
       println("Done")
     }
     contents = new BoxPanel(Orientation.Vertical) {
@@ -85,5 +108,6 @@ object Stgy extends App {
   val ui = new UI
   ui.visible = true
 
-  Kamon.shutdown()
+
+
 }

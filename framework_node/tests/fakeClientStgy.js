@@ -3,7 +3,7 @@ var host = '127.0.0.1'
 var uuid = require('node-uuid');
 var id_g = uuid.v4()
 var k = 0
-var N = 2000
+var N = 20000
 var zlib = require('zlib');
 
 var createOne = () => {
@@ -11,7 +11,7 @@ var createOne = () => {
     k++
     if (k < N) {
 
-        setTimeout(createOne, 200)
+        setTimeout(createOne, 20)
     }
     var id = id_g + k
     var address1 = 'ws://' + host + ':9000' + "/?id=" + id

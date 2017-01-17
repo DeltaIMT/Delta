@@ -31,7 +31,7 @@ class Provider(hosts: HostPool, specialHost: ActorRef) extends Actor {
 
       else {
         val jsonObject = Json.parse(x.command).asInstanceOf[JsArray].value
-        //   println(x.command)
+        //  println(x.command)
         jsonObject foreach { j => {
           val hosts1 = (j \ "hosts").get.as[JsArray].value
           val hosts2 = hosts1 map { x => x.as[JsArray].value }

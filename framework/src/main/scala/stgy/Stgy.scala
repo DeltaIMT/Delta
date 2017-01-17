@@ -62,10 +62,10 @@ object Stgy extends App {
   val hostPool = new HostPool(hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
   val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new StgyHost(hostPool, new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight))), "host_" + i) }
   hostPool.addHost(hosts)
-  val specialHost = actorSystem.actorOf(Props(new StgySpecialHost(hostPool)), "specialHost")
+  //val specialHost = actorSystem.actorOf(Props(new StgySpecialHost(hostPool)), "specialHost")
 
   val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient)), "providerPort")
-  val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(new Provider(hostPool, specialHost)), "provider_" + i) }
+  val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(new StgySpecialHost(hostPool)), "provider_" + i) }
   val providers = providerPort :: providerClients.toList
   val websockets = -1 until numberOfClient map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
 

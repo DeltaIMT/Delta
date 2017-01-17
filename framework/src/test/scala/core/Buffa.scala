@@ -92,7 +92,7 @@ class UserClientView(hostPool: HostPool, client: ActorRef) extends AbstractClien
 }
 
 
-class UserHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool) {
+class UserHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zone) {
   var rand = new Random()
   var id2ball = mutable.HashMap[String, Ball]()
 

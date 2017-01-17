@@ -5,20 +5,19 @@ import core.`abstract`.AbstractHost
 import core.user_import.{Element, Zone}
 import core.{HostPool, HyperHost}
 import kamon.Kamon
-import kamon.trace.Tracer
 import play.api.libs.json.Json
 
 import scala.util.Random
 
 
-class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool) {
+class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zone) {
   val counter = Kamon.metrics.counter(getName("counter"))
   var rand = new Random()
 
   var targetFromOtherHost = collection.mutable.HashMap[ActorRef, collection.mutable.HashMap[String, Unity]]()
   var neighbours = List[HyperHost]()
 
-  def getNum = (zone.x.toInt/zone.w).toInt + "-" + (zone.y.toInt/zone.w).toInt
+
   def getName(name: String) = "host-" + name + getNum
 
   methods += "flush" -> ((arg: Any) => {
@@ -53,7 +52,7 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
   override def tick(): Unit = {
 
 
-    Tracer.withNewContext(getNum , true) {
+
 
         getNeighbours
         counter.increment()
@@ -167,7 +166,7 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
         }
 
 
-    }
+
 
   }
 
@@ -196,7 +195,6 @@ class StgyHost(hostPool: HostPool, val zone: Zone) extends AbstractHost(hostPool
 
   override def clientInput(id: String, data: String): Unit = {
 
-    //  println("DATA RECEIVED : " + data)
     val json = Json.parse(data)
     val id = (json \ "id").get.as[String]
     val x = (json \ "x").get.as[Double]

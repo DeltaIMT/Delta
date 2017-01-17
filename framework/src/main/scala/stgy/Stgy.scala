@@ -18,24 +18,30 @@ import scala.concurrent.duration._
 class Suber extends Actor {
 
   val hash = collection.mutable.HashMap[String, Histogram]()
-  val tickTime = (0 to 5).foreach( i => (0 to 5).foreach( j =>  hash += (i +"-" + j) ->  Kamon.metrics.histogram("host-trace" + i +"-" + j  )    ))
-
-
+  //(0 to 5).foreach( i => (0 to 5).foreach( j =>  hash += ("hostTick_" + i +"-" + j) ->  Kamon.metrics.histogram("host-trace" + i +"-" + j  )    ))
   override def receive: Receive = {
     case t: TraceInfo => {
+      if(hash.contains(t.name))
       hash(t.name).record(t.elapsedTime.nanos)
+      else{
+        hash += t.name ->  Kamon.metrics.histogram(t.name)
+      }
     }
   }
 }
 
 object Stgy extends App {
   Kamon.start()
+
+
+
+
   println("framework starting")
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val executionContext = actorSystem.dispatcher
   implicit val flowMaterializer = ActorMaterializer()
   val initialPort = 9001
-  val numberOfClient = 300
+  val numberOfClient = 30
   val hostsGridWidth = 5
   val hostsGridHeight = 5
   val hostWidth = 600
@@ -63,8 +69,6 @@ object Stgy extends App {
   val providers = providerPort :: providerClients.toList
   val websockets = -1 until numberOfClient map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
 
-
-  println(providerPort.path)
 
   val routes = websockets.map(x => {
     x._1 ->

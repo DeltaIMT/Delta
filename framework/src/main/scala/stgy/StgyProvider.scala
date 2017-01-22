@@ -16,9 +16,9 @@ class StgyProvider(hostPool: HostPool[StgyHost]) extends Provider[StgyClientView
     var color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
     val randx = 200+rand.nextInt(2600)
     val randy = 200+rand.nextInt(2600)
-    val numberOfStartUnit = 5
+    val numberOfStartUnit = 0
     val sqrt = math.sqrt(numberOfStartUnit).toInt
-    val bowmen = 0 until 20 map { i => new Bowman(randx + 40*(i%sqrt) , randy + 40*(i/sqrt), Random.alphanumeric.take(10).mkString, id, color) }
+    val bowmen = 0 until numberOfStartUnit map { i => new Bowman(randx + 40*(i%sqrt) , randy + 40*(i/sqrt), Random.alphanumeric.take(10).mkString, id, color) }
     val flag = new Flag( randx, randy, Random.alphanumeric.take(10).mkString, id, color)
     val com = new Commander(randx, randy, Random.alphanumeric.take(10).mkString, id, color)
     val spawned : List[Unity] = com::bowmen.toList //flag::

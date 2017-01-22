@@ -12,7 +12,7 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: HostPool) extends Actor {
+abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: HostPool[_]) extends Actor {
 
   var clients = collection.mutable.HashMap[String, (Observer, Cancellable)]()
   var clientRef: ActorRef = null

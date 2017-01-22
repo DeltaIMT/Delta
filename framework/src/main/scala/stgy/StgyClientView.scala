@@ -5,7 +5,7 @@ import core.HostPool
 import core.`abstract`.AbstractClientView
 import core.user_import.Zone
 
-class StgyClientView(hostPool: HostPool, client: ActorRef) extends AbstractClientView(hostPool, client) {
+class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends AbstractClientView(hostPool, client) {
   var pos = Vec(1500, 1500)
   var id = ""
   var hash  = collection.mutable.HashMap[String,Int]()

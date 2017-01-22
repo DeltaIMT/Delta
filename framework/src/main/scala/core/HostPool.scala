@@ -2,13 +2,13 @@ package core
 
 import akka.actor.ActorRef
 
-class HostPool(val w : Double,val h: Double, val wn :Int, val hn : Int) {
+class HostPool[T <: Host](val w : Double,val h: Double, val wn :Int, val hn : Int) {
 
-  var hyperHostsMap =  collection.mutable.HashMap[ActorRef,HyperHost]()
+  var hyperHostsMap =  collection.mutable.HashMap[ActorRef,HyperHost[T]]()
   var hosts  = IndexedSeq[ActorRef]()
   def addHost(hosts: IndexedSeq[ActorRef]) = {
     this.hosts = hosts
-    hosts foreach {h =>hyperHostsMap += h -> new HyperHost(h)}
+    hosts foreach {h =>hyperHostsMap += h -> new HyperHost[T](h)}
   }
 
   def clamp(i : Int ) = math.min(math.max(i,0), wn*hn-1  )
@@ -19,7 +19,7 @@ class HostPool(val w : Double,val h: Double, val wn :Int, val hn : Int) {
   def fromI2Y(i : Int): Int  = i / wn
 
   def getHyperHost(i : Int) = hyperHostsMap(hosts(i))
-  def getHyperHost(x : Int, y : Int ): HyperHost =  getHyperHost( fromXY2I(x,y))
-  def getHyperHost(x : Double, y : Double ): HyperHost =  getHyperHost( fromXY2I(x,y))
+  def getHyperHost(x : Int, y : Int ): HyperHost[T] =  getHyperHost( fromXY2I(x,y))
+  def getHyperHost(x : Double, y : Double ): HyperHost[T] =  getHyperHost( fromXY2I(x,y))
 
 }

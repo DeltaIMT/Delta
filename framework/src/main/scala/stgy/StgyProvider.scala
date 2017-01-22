@@ -7,7 +7,7 @@ import scala.util.Random
 
 
 class IdGiver(val id: String,val x: Double, val y :Double) extends Observable {}
-class StgyProvider(hostPool: HostPool) extends Provider[StgyClientView](hostPool) {
+class StgyProvider(hostPool: HostPool[StgyHost]) extends Provider[StgyClientView](hostPool) {
 
 
   var rand = new Random()
@@ -25,7 +25,7 @@ class StgyProvider(hostPool: HostPool) extends Provider[StgyClientView](hostPool
 
     spawned foreach {
       b =>
-        hostPool.getHyperHost(b.x, b.y) method("addUnity", b)
+        hostPool.getHyperHost(b.x, b.y).call( i => i.addUnity(b)  )
         b.sub(obs)
     }
 

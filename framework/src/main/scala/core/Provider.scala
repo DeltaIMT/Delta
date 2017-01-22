@@ -1,10 +1,11 @@
 package core
 
 import akka.actor.{Actor, ActorRef, Cancellable, Props}
-import core.CoreMessage._
+import core.CoreMessage.{FromProviderPort, _}
 import core.`abstract`.{AbstractClientView, UpdateClient}
 import core.user_import.Observer
 import play.api.libs.json.{JsArray, Json}
+
 import scala.reflect.ClassTag
 import scala.reflect.runtime.{universe => ru}
 import ru._
@@ -16,6 +17,8 @@ abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: Hos
 
   var clients = collection.mutable.HashMap[String, (Observer, Cancellable)]()
   var clientRef: ActorRef = null
+  var providerPort:ActorRef = null
+  var portUsed:Int = 0
 
   override def receive: Receive = {
 
@@ -25,14 +28,15 @@ abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: Hos
       val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientView, UpdateClient)
       clients += (id -> (new Observer(id, clientView), cancellable))
       OnConnect(id, clients(id)._1)
-      println("Provider Connection    " + id)
+//      println("Provider Connection    " + id)
     }
 
     case DeleteClient(id) => {
       clients(id)._2.cancel()
       OnDisconnect(id, clients(id)._1)
       clients -= id
-      println("Provider Disconnection " + id)
+//      println("Provider Disconnection " + id)
+      providerPort ! ClientDisconnection(portUsed)
     }
 
     case x: ClientInputWithLocation => {
@@ -53,6 +57,13 @@ abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: Hos
       }
 
     }
+    case FromProviderPort(provPort, port) => {
+      providerPort = provPort
+      portUsed = port
+    }
+
+
+
     case _ => {}
   }
 

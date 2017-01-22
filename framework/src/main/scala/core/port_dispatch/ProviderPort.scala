@@ -1,28 +1,39 @@
 package core.port_dispatch
 
+import java.time.Clock
+
 import akka.actor.{Actor, ActorRef}
-import core.CoreMessage.{AddClient, DeleteClient, PlayersUpdate}
+import core.CoreMessage._
 
 
-class ProviderPort(numberOfClient : Int) extends Actor {
-  var map_ID_Port = collection.mutable.HashMap.empty[String,Int]
-  var availablePorts = (9001 to 9001+numberOfClient).toList
+class ProviderPort(numberOfClient : Int, providers : Seq[ActorRef]) extends Actor {
+  var availablePorts = (9001 to 9001+numberOfClient-1).toList
+
 
   override def receive: Receive = {
     case AddClient(id: String, client: ActorRef) => {
-      client ! PlayersUpdate(""+availablePorts.head)
-//      println("Add client, new used port : " + availablePorts.head)
-      map_ID_Port += id ->availablePorts.head
-      availablePorts = availablePorts.tail
-//      println("Add client, available ports : " + availablePorts.mkString(","))
+      if (availablePorts.isEmpty){
+        println ( "a pu de place")
+      }else {
+        client ! PlayersUpdate("" + availablePorts.head)
 
+        providers.seq(availablePorts.head - 9001) ! FromProviderPort(self, availablePorts.head)
+
+        availablePorts = availablePorts.tail
+        println(availablePorts.toString() + " on connection")
+      }
     }
 
-    case DeleteClient (id: String) => {
-      availablePorts = map_ID_Port(id)::availablePorts
-//      println("Delete client, new available port : " + map_ID_Port(id))
-      map_ID_Port -= id
-//      println("Delete port, available ports : " + availablePorts.mkString(","))
+    case DeleteClient(id) => {
+//      println("providerPort disconnected   " + id )
+      println(availablePorts.toString() + " when ws0 is out")
+    }
+
+    case ClientDisconnection(port:Int) => {
+      availablePorts = port::availablePorts
+//      println("Client disconnected from port :" + port)
+      println(availablePorts.toString() + " on disconnection")
+
     }
   }
 }

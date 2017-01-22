@@ -18,9 +18,6 @@ class ContainerHost[T <: Host](val hostPool: HostPool[T], val zone: Zone, val in
           call.func(insideHost)
     }
 
-    case Tick => {
-      insideHost.tick()
-    }
 
     case ClientInput(id: String, data: String)=> {
       Tracer.withNewContext("host_input_"+ getNum   , true) {

@@ -22,6 +22,8 @@ class FrameInterp {
     addFrame(frame) {
         this.time = getTime()
         //   console.log("Adding frame at " + this.time)
+        //   console.log("Frame " + JSON.stringify(frame))
+
 
         function fusion(frame0, frame1) {
             const frame = Object.assign({}, frame1)
@@ -30,6 +32,22 @@ class FrameInterp {
             //         frame[id0] = Object.assign({}, frame0, frame1)
             //     }
             // })
+
+            if ((undefined !== typeof (frame0))&&(undefined !== typeof (frame1))){
+            Object.keys(frame0).forEach(id0 => {
+                if (undefined !== typeof (frame[id0])) {
+                    Object.keys(frame1).forEach(id1 => {
+                        if ((id0 === id1)&&(undefined !== typeof (frame1[id1]))){
+                            Object.keys(frame0[id0]).forEach(p => {
+                                if (undefined === typeof (frame1[id1][p])) {
+                                    frame[id1][p] = frame0[id0][p]
+                                 }
+                             })
+                        }
+                    })
+                }
+            })
+            }
             return frame
         }
 

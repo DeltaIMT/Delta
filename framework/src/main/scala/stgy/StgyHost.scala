@@ -1,44 +1,36 @@
 package stgy
 
 import akka.actor.ActorRef
-import core.`abstract`.AbstractHost
 import core.user_import.{Element, Zone}
-import core.{HostPool, HyperHost}
+import core.{Host, HostPool, HyperHost}
 import kamon.Kamon
 import play.api.libs.json.Json
-
 import scala.util.Random
 
-
-class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zone) {
+class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool,zone) {
   val counter = Kamon.metrics.counter(getName("counter"))
   var rand = new Random()
 
   var targetFromOtherHost = collection.mutable.HashMap[ActorRef, collection.mutable.HashMap[String, Unity]]()
-  var neighbours = List[HyperHost]()
-
+  var neighbours = List[HyperHost[StgyHost]]()
 
   def getName(name: String) = "host-" + name + getNum
 
-  methods += "flush" -> ((arg: Any) => {
+  def flush() = {
     elements = collection.mutable.HashMap[String, Element]()
-  })
+  }
 
-  methods += "addUnity" -> ((arg: Any) => {
-    var e = arg.asInstanceOf[Unity]
+  def addUnity(e : Unity ) = {
     elements += e.id -> e
-  })
+  }
 
-  methods += "gainxp" -> ((arg: Any) => {
-    var e = arg.asInstanceOf[String]
+
+  def gainxp(e : String) = {
     if (elements.contains(e))
       elements(e).asInstanceOf[Evolving].gainKillXp
-  })
+  }
 
-  methods += "receiveTarget" -> ((arg: Any) => {
-    var seq = arg.asInstanceOf[Seq[Any]]
-    var who = seq(0).asInstanceOf[ActorRef]
-    var e = seq(1).asInstanceOf[Iterable[Unity]]
+  def receiveTarget(who : ActorRef, e : Iterable[Unity] ) = {
     if (!targetFromOtherHost.contains(who))
       targetFromOtherHost += who -> collection.mutable.HashMap[String, Unity]()
 
@@ -46,8 +38,7 @@ class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zon
     e.foreach(b => {
       targetFromOtherHost(who)(b.id) = b
     })
-
-  })
+  }
 
   override def tick(): Unit = {
         getNeighbours
@@ -64,7 +55,8 @@ class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zon
         val flags = elements.filter(e => e._2.isInstanceOf[Flag]).values.asInstanceOf[Iterable[Flag]]
         val arrows = elements.filter(e => e._2.isInstanceOf[Arrow]).values.asInstanceOf[Iterable[Arrow]]
         val spawner = elements.filter(e => e._2.isInstanceOf[Spawner]).values.asInstanceOf[Iterable[Spawner]]
-        neighbours.foreach(h => h.method("receiveTarget", Seq(self, damagable)))
+        neighbours.foreach(h => h.call( x =>  x.receiveTarget(self, damagable)  ) )
+
 
         flags foreach { f => {
           f.step
@@ -93,7 +85,7 @@ class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zon
                 if (elements.contains(a.shooterId))
                   elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
                 else {
-                  neighbours.foreach(h => h.method("gainxp", a.shooterId))
+                  neighbours.foreach(h => h.call( i => i.gainxp( a.shooterId)))
                 }
 
               }
@@ -155,7 +147,7 @@ class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zon
           val e = elem._2
           if (!zone.contains(e)) {
             //     println("Il faut sortir de " + zone.x + " " + zone.y)
-            hostPool.getHyperHost(e.x, e.y).method("addUnity", e)
+            hostPool.getHyperHost(e.x, e.y).call( i => i.addUnity(e.asInstanceOf[Unity]))
             elements -= elem._1
           }
         }

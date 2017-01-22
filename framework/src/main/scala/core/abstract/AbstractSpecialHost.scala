@@ -12,7 +12,7 @@ import scala.reflect.runtime.{universe => ru}
 import ru._
 
 
-class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostPool: HostPool) extends Actor{
+class AbstractSpecialHost[T <:AbstractClientView : TypeTag : ClassTag](val hostPool: HostPool[_]) extends Actor{
   import ru._
   var clients = collection.mutable.HashMap[String,(Observer,Cancellable)]()
   var idClient = 0

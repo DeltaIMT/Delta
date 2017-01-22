@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.RouteResult
 import akka.stream.ActorMaterializer
 import core.CoreMessage.Tick
+import core.`abstract`.ContainerHost
 import core.port_dispatch.ProviderPort
 import core.user_import.Zone
 import core.{HostPool, Websocket}
@@ -43,8 +44,12 @@ object Stgy extends App {
   val hostHeight = 600
   val actorRefOfSubscriber = actorSystem.actorOf(Props[Suber], "suber")
   Kamon.tracer.subscribe(actorRefOfSubscriber)
-  val hostPool = new HostPool(hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
-  val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new StgyHost(hostPool, new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight))), "host_" + i) }
+  val hostPool = new HostPool[StgyHost](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
+  val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => {
+    val zone = new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight)
+    val inside = new StgyHost(hostPool,zone)
+    actorSystem.actorOf(Props(new ContainerHost(hostPool,zone ,inside)), "host_" + i)
+  }}
   hostPool.addHost(hosts)
   val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient)), "providerPort")
   val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(new StgyProvider(hostPool)), "provider_" + i) }
@@ -77,7 +82,7 @@ object Stgy extends App {
       contents += Swing.VStrut(10)
       contents += Swing.Glue
       contents += Button("Shutdown") {shutdown}
-      contents += Button("Flush") { hostPool.hyperHostsMap.values foreach( _ method "flush" ) }
+      contents += Button("Flush") { hostPool.hyperHostsMap.values foreach( _.call( i => i.flush() )) }
       contents += Button("Close") { shutdown;sys.exit(0) }
       border = Swing.EmptyBorder(10, 10, 10, 10)
     }

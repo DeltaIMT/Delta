@@ -36,7 +36,7 @@ object Stgy extends App {
   implicit val executionContext = actorSystem.dispatcher
   implicit val flowMaterializer = ActorMaterializer()
   val initialPort = 9001
-  val numberOfClient = 30
+  val numberOfClient = 5
   val hostsGridWidth = 5
   val hostsGridHeight = 5
   val hostWidth = 600
@@ -46,10 +46,10 @@ object Stgy extends App {
   val hostPool = new HostPool(hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
   val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new StgyHost(hostPool, new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight))), "host_" + i) }
   hostPool.addHost(hosts)
-  val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient)), "providerPort")
-  val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(new StgyProvider(hostPool)), "provider_" + i) }
+  val providerClients = 0 until (numberOfClient-1) map { i => actorSystem.actorOf(Props(new StgyProvider(hostPool)), "provider_" + i) }
+  val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient,providerClients.toList)), "providerPort")
   val providers = providerPort :: providerClients.toList
-  val websockets = -1 until numberOfClient map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
+  val websockets = -1 until (numberOfClient-1) map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
   val routes = websockets.map(x => {
     x._1 ->
       (get & parameter("id")) {

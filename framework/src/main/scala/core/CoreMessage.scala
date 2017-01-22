@@ -21,4 +21,6 @@ object CoreMessage {
   case object Tick
   case object Disconnect
   case class Method(method : String, args  : Any)
+  case class FromProviderPort(actorRef: ActorRef, port:Int)
+  case class ClientDisconnection(port:Int)
 }

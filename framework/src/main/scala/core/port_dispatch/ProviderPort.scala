@@ -12,13 +12,16 @@ class ProviderPort(numberOfClient : Int, providers : Seq[ActorRef]) extends Acto
 
   override def receive: Receive = {
     case AddClient(id: String, client: ActorRef) => {
-      client ! PlayersUpdate(""+availablePorts.head)
+      if (availablePorts.isEmpty){
+        println ( "a pu de place")
+      }else {
+        client ! PlayersUpdate("" + availablePorts.head)
 
-      providers.seq(availablePorts.head - 9001) ! FromProviderPort(self,availablePorts.head )
+        providers.seq(availablePorts.head - 9001) ! FromProviderPort(self, availablePorts.head)
 
-      availablePorts = availablePorts.tail
-      println(availablePorts.toString() + " on connection")
-
+        availablePorts = availablePorts.tail
+        println(availablePorts.toString() + " on connection")
+      }
     }
 
     case DeleteClient(id) => {

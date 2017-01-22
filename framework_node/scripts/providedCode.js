@@ -24,7 +24,7 @@ module.exports.launch = () => {
     wsPort.onmessage = function (event) {
         data = event.data
         console.log("Connection to : " + 'ws://' + host + ':' + data + "/?id=" + id)
-        wsPort.close()
+        wsPort.close()        
         ws = new WebSocket('ws://' + host + ':' + data + "/?id=" + id)
         ws.onmessage = function (event) {
             var data = event.data

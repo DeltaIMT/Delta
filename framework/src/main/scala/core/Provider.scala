@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 
 
-class Provider[T <:AbstractClientView : TypeTag : ClassTag](hosts: HostPool) extends Actor {
+abstract class Provider[T <:AbstractClientView : TypeTag : ClassTag](hosts: HostPool) extends Actor {
 
   var clients = collection.mutable.HashMap[String,(Observer,Cancellable)]()
   var clientRef: ActorRef = null
@@ -56,32 +56,23 @@ class Provider[T <:AbstractClientView : TypeTag : ClassTag](hosts: HostPool) ext
     }
 
     case x: ClientInputWithLocation => {
-
-      // println(x.command)
-
       if (x.command == "ping") {
         clientRef ! PlayersUpdate("ping")
       }
 
       else {
         val jsonObject = Json.parse(x.command).asInstanceOf[JsArray].value
-        //  println(x.command)
         jsonObject foreach { j => {
           val hosts1 = (j \ "hosts").get.as[JsArray].value
           val hosts2 = hosts1 map { x => x.as[JsArray].value }
           val hosts = hosts2 map { x => x map { y => y.as[Double] } }
-          // println(hosts map {x => x.mkString(",")} mkString(";") )
-
           val data = (j \ "data").get.as[String]
-          //  println("hosts :" + hosts.map(x => x.mkString(",")).mkString(",")   )
-          //   println("data  :" + data)
           hosts foreach { h => this.hosts.getHyperHost(h(0), h(1)).host ! ClientInput(x.id, data) }
         }
         }
       }
 
     }
-
     case _ => {}
   }
 }

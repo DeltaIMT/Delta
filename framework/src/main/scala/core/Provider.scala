@@ -5,7 +5,6 @@ import core.CoreMessage._
 import core.`abstract`.{AbstractClientView, UpdateClient}
 import core.user_import.Observer
 import play.api.libs.json.{JsArray, Json}
-
 import scala.reflect.ClassTag
 import scala.reflect.runtime.{universe => ru}
 import ru._
@@ -13,45 +12,26 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: HostPool) extends Actor {
 
-
-abstract class Provider[T <:AbstractClientView : TypeTag : ClassTag](hosts: HostPool) extends Actor {
-
-  var clients = collection.mutable.HashMap[String,(Observer,Cancellable)]()
+  var clients = collection.mutable.HashMap[String, (Observer, Cancellable)]()
   var clientRef: ActorRef = null
-
-  def OnConnect(id:String ,obs : Observer) : Unit = {}
-  def OnDisconnect(id:String ,obs : Observer) : Unit = {}
-
-  def createInstance[T:TypeTag](ar : ActorRef) : Any= {
-    createInstance(typeOf[T],ar)
-  }
-
-  def createInstance(tpe:Type,ar : ActorRef): Any = {
-    val mirror = ru.runtimeMirror(getClass.getClassLoader)
-    val clsSym = tpe.typeSymbol.asClass
-    val clsMirror = mirror.reflectClass(clsSym)
-    val ctorSym = tpe.decl(ru.termNames.CONSTRUCTOR).asMethod
-    val ctorMirror = clsMirror.reflectConstructor(ctorSym)
-    val instance = ctorMirror(hosts,ar)
-    return instance
-  }
 
   override def receive: Receive = {
 
     case AddClient(id, playerActorRef) => {
       clientRef = playerActorRef
-      val clientView = context.actorOf(Props(createInstance[T](playerActorRef).asInstanceOf[T]  ))
-      val cancellable = context.system.scheduler.schedule(1000 milliseconds, 100 milliseconds,clientView,UpdateClient)
-      clients += (id -> (new Observer(id,clientView),cancellable))
+      val clientView = context.actorOf(Props(createInstance[T](playerActorRef).asInstanceOf[T]))
+      val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientView, UpdateClient)
+      clients += (id -> (new Observer(id, clientView), cancellable))
       OnConnect(id, clients(id)._1)
       println("Provider Connection    " + id)
     }
 
     case DeleteClient(id) => {
       clients(id)._2.cancel()
-      OnDisconnect(id ,clients(id)._1)
-      clients-= id
+      OnDisconnect(id, clients(id)._1)
+      clients -= id
       println("Provider Disconnection " + id)
     }
 
@@ -74,5 +54,23 @@ abstract class Provider[T <:AbstractClientView : TypeTag : ClassTag](hosts: Host
 
     }
     case _ => {}
+  }
+
+  def OnConnect(id: String, obs: Observer): Unit = {}
+
+  def OnDisconnect(id: String, obs: Observer): Unit = {}
+
+  def createInstance[T: TypeTag](ar: ActorRef): Any = {
+    createInstance(typeOf[T], ar)
+  }
+
+  def createInstance(tpe: Type, ar: ActorRef): Any = {
+    val mirror = ru.runtimeMirror(getClass.getClassLoader)
+    val clsSym = tpe.typeSymbol.asClass
+    val clsMirror = mirror.reflectClass(clsSym)
+    val ctorSym = tpe.decl(ru.termNames.CONSTRUCTOR).asMethod
+    val ctorMirror = clsMirror.reflectConstructor(ctorSym)
+    val instance = ctorMirror(hosts, ar)
+    return instance
   }
 }

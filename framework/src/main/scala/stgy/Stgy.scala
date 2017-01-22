@@ -8,7 +8,7 @@ import akka.stream.ActorMaterializer
 import core.CoreMessage.Tick
 import core.port_dispatch.ProviderPort
 import core.user_import.Zone
-import core.{HostPool, Provider, Websocket}
+import core.{HostPool, Websocket}
 import kamon.Kamon
 import kamon.metric.instrument.Histogram
 import kamon.trace.TraceInfo
@@ -18,7 +18,6 @@ import scala.concurrent.duration._
 class Suber extends Actor {
 
   val hash = collection.mutable.HashMap[String, Histogram]()
-  //(0 to 5).foreach( i => (0 to 5).foreach( j =>  hash += ("hostTick_" + i +"-" + j) ->  Kamon.metrics.histogram("host-trace" + i +"-" + j  )    ))
   override def receive: Receive = {
     case t: TraceInfo => {
       if(hash.contains(t.name))
@@ -32,10 +31,6 @@ class Suber extends Actor {
 
 object Stgy extends App {
   Kamon.start()
-
-
-
-
   println("framework starting")
   implicit val actorSystem = ActorSystem("akka-system")
   implicit val executionContext = actorSystem.dispatcher
@@ -46,49 +41,28 @@ object Stgy extends App {
   val hostsGridHeight = 5
   val hostWidth = 600
   val hostHeight = 600
-
-
   val actorRefOfSubscriber = actorSystem.actorOf(Props[Suber], "suber")
-
   Kamon.tracer.subscribe(actorRefOfSubscriber)
-
-//  Tracer.withNewContext("testTrace" , autoFinish = true) {
-//    Tracer.currentContext.withNewSegment("tralala","tsoin","tsoin"){
-//      Thread.sleep(300)
-//      println("j'aime les chips")
-//    }
-//  }
-
   val hostPool = new HostPool(hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
   val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => actorSystem.actorOf(Props(new StgyHost(hostPool, new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight))), "host_" + i) }
   hostPool.addHost(hosts)
-  val specialHost = actorSystem.actorOf(Props(new StgySpecialHost(hostPool)), "specialHost")
-
   val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient)), "providerPort")
-  val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(new Provider(hostPool, specialHost)), "provider_" + i) }
+  val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(new StgyProvider(hostPool)), "provider_" + i) }
   val providers = providerPort :: providerClients.toList
   val websockets = -1 until numberOfClient map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
-
-
   val routes = websockets.map(x => {
     x._1 ->
       (get & parameter("id")) {
         id => handleWebSocketMessages(x._2.flow(id, "region"))
       }
   })
-
   val interface = "localhost"
-
   routes foreach { route =>
     Http().bindAndHandle(RouteResult.route2HandlerFlow(route._2), "0.0.0.0", route._1)
   }
-
-  var cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, Tick) }
-
+  val cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, Tick) }
   println("framework working")
-
   import scala.swing._
-
   class UI extends MainFrame {
     title = "GUI for Delta Server"
     def shutdown = {
@@ -108,10 +82,6 @@ object Stgy extends App {
       border = Swing.EmptyBorder(10, 10, 10, 10)
     }
   }
-
   val ui = new UI
   ui.visible = true
-
-
-
 }

@@ -50,10 +50,6 @@ class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zon
   })
 
   override def tick(): Unit = {
-
-
-
-
         getNeighbours
         counter.increment()
         val unitys = elements.filter(e => e._2.isInstanceOf[Unity]).values.asInstanceOf[Iterable[Unity]]
@@ -164,10 +160,6 @@ class StgyHost(hostPool: HostPool, zone: Zone) extends AbstractHost(hostPool,zon
           }
         }
         }
-
-
-
-
   }
 
   def getNeighbours = {

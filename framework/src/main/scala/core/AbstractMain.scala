@@ -48,6 +48,8 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
 
   var cancellable: Seq[Cancellable]=_
   implicit var actorSystem: ActorSystem=_
+  var hostPool: HostPool[HostType] = _
+
   def launch = {
     println("framework starting")
     Kamon.start()
@@ -56,7 +58,7 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
     implicit val flowMaterializer = ActorMaterializer()
 
     val actorRefOfSubscriber: ActorRef = actorSystem.actorOf(Props[Suber], "suber")
-    val hostPool = new HostPool[HostType](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
+    hostPool = new HostPool[HostType](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
     val hosts: IndexedSeq[ActorRef] = 0 until hostsGridWidth * hostsGridHeight map { i => {
       val zone = new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight)
       val inside = createInstance[HostType](hostPool, zone)
@@ -80,42 +82,12 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
       Http().bindAndHandle(RouteResult.route2HandlerFlow(route._2), "0.0.0.0", route._1)
     }
 
-    cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, CallTrace((x: Host) => x.tick(),"tick")) }
+   // cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, CallTrace((x: Host) => x.tick(),"tick")) }
 
     println("framework working")
   }
 
-  def createUI = {
-    class UI extends MainFrame {
-      title = "GUI for Delta Server"
 
-      def shutdown = {
-        println("framework shutdown")
-        cancellable foreach { c => c.cancel() }
-        actorSystem.terminate()
-        Kamon.shutdown()
-        println("Done")
-      }
-
-      contents = new BoxPanel(Orientation.Vertical) {
-        contents += new Label("Server")
-        contents += Swing.VStrut(10)
-        contents += Swing.Glue
-        contents += Button("Shutdown") {
-          shutdown
-        }
-        //  contents += Button("Flush") { hostPool.hyperHostsMap.values foreach( _.call( i => i.flush() )) }
-        contents += Button("Close") {
-          shutdown;
-          sys.exit(0)
-        }
-        border = Swing.EmptyBorder(10, 10, 10, 10)
-      }
-    }
-
-    val ui = new UI
-    ui.visible = true
-  }
 
   def createInstance[T: TypeTag](arg: Any*): T = {
     createInstance(typeOf[T], arg).asInstanceOf[T]

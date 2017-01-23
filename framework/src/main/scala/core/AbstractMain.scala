@@ -1,26 +1,25 @@
 package core
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Cancellable, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{get, handleWebSocketMessages, parameter}
 import akka.http.scaladsl.server.RouteResult
 import akka.stream.ActorMaterializer
-import core.CoreMessage.Call
+import core.CoreMessage.{Call, CallTrace}
 import core.`abstract`.ContainerHost
 import core.port_dispatch.ProviderPort
 import core.user_import.Zone
 import kamon.Kamon
 import kamon.metric.instrument.Histogram
 import kamon.trace.TraceInfo
-import stgy.StgyProvider
-
-import scala.concurrent.duration._
 import scala.reflect.runtime.{universe => ru}
 import ru._
+import scala.collection.immutable.IndexedSeq
+import scala.concurrent.ExecutionContextExecutor
 import scala.language.postfixOps
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
-
+import scala.swing._
 
 class Suber extends Actor {
 
@@ -38,53 +37,89 @@ class Suber extends Actor {
 }
 
 
-class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provider[_]  : TypeTag : ClassTag] {
-  val initialPort = 9001
-  val numberOfClient = 30
+class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provider[_] : TypeTag : ClassTag] {
+  var initialPort = 9001
+  var numberOfClient = 30
+  var hostsGridWidth = 5
+  var hostsGridHeight = 5
+  var hostWidth = 600
+  var hostHeight = 600
 
-  Kamon.start()
-  println("framework starting")
-  implicit val actorSystem = ActorSystem("akka-system")
-  implicit val executionContext = actorSystem.dispatcher
-  implicit val flowMaterializer = ActorMaterializer()
-  val hostsGridWidth = 5
-  val hostsGridHeight = 5
-  val hostWidth = 600
-  val hostHeight = 600
-  val actorRefOfSubscriber = actorSystem.actorOf(Props[Suber], "suber")
-  val hostPool = new HostPool[HostType](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
-  val hosts = 0 until hostsGridWidth * hostsGridHeight map { i => {
-    val zone = new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight)
-    val inside = createInstance[HostType](hostPool, zone)
-    actorSystem.actorOf(Props(new ContainerHost(hostPool, zone, inside)), "host_" + i)
+
+  var cancellable: Seq[Cancellable]=_
+  implicit var actorSystem: ActorSystem=_
+  def launch = {
+    println("framework starting")
+    Kamon.start()
+    actorSystem = ActorSystem("akka-system")
+    implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
+    implicit val flowMaterializer = ActorMaterializer()
+
+    val actorRefOfSubscriber: ActorRef = actorSystem.actorOf(Props[Suber], "suber")
+    val hostPool = new HostPool[HostType](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
+    val hosts: IndexedSeq[ActorRef] = 0 until hostsGridWidth * hostsGridHeight map { i => {
+      val zone = new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight)
+      val inside = createInstance[HostType](hostPool, zone)
+      actorSystem.actorOf(Props(new ContainerHost(hostPool, zone, inside)), "host_" + i)
+    }
+    }
+    val providerClients = 0 until numberOfClient - 1 map { i => actorSystem.actorOf(Props(createInstance[ProviderType](hostPool)), "provider_" + i) }
+    val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient, providerClients)), "providerPort")
+    Kamon.tracer.subscribe(actorRefOfSubscriber)
+    val providers = providerPort :: providerClients.toList
+    val websockets = -1 until numberOfClient - 1 map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
+    hostPool.addHost(hosts)
+    val routes = websockets.map(x => {
+      x._1 ->
+        (get & parameter("id")) {
+          id => handleWebSocketMessages(x._2.flow(id, "region"))
+        }
+    })
+
+    routes foreach { route =>
+      Http().bindAndHandle(RouteResult.route2HandlerFlow(route._2), "0.0.0.0", route._1)
+    }
+
+    cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, CallTrace((x: Host) => x.tick(),"tick")) }
+
+    println("framework working")
   }
-  }
-  Kamon.tracer.subscribe(actorRefOfSubscriber)
-  val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient)), "providerPort")
-  val providerClients = 0 until numberOfClient map { i => actorSystem.actorOf(Props(createInstance[ProviderType](hostPool) ), "provider_" + i) }
-  hostPool.addHost(hosts)
-  val providers = providerPort :: providerClients.toList
-  val websockets = -1 until numberOfClient map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
-  val routes = websockets.map(x => {
-    x._1 ->
-      (get & parameter("id")) {
-        id => handleWebSocketMessages(x._2.flow(id, "region"))
+
+  def createUI = {
+    class UI extends MainFrame {
+      title = "GUI for Delta Server"
+
+      def shutdown = {
+        println("framework shutdown")
+        cancellable foreach { c => c.cancel() }
+        actorSystem.terminate()
+        Kamon.shutdown()
+        println("Done")
       }
-  })
-  val interface = "localhost"
-  val cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, Call((x: Host) => x.tick())) }
-  val ui = new UI
-  routes foreach { route =>
-    Http().bindAndHandle(RouteResult.route2HandlerFlow(route._2), "0.0.0.0", route._1)
+
+      contents = new BoxPanel(Orientation.Vertical) {
+        contents += new Label("Server")
+        contents += Swing.VStrut(10)
+        contents += Swing.Glue
+        contents += Button("Shutdown") {
+          shutdown
+        }
+        //  contents += Button("Flush") { hostPool.hyperHostsMap.values foreach( _.call( i => i.flush() )) }
+        contents += Button("Close") {
+          shutdown;
+          sys.exit(0)
+        }
+        border = Swing.EmptyBorder(10, 10, 10, 10)
+      }
+    }
+
+    val ui = new UI
+    ui.visible = true
   }
 
   def createInstance[T: TypeTag](arg: Any*): T = {
     createInstance(typeOf[T], arg).asInstanceOf[T]
   }
-
-  println("framework working")
-
-  import scala.swing._
 
   def createInstance(tpe: Type, arg: Seq[Any]): Any = {
     val mirror = ru.runtimeMirror(getClass.getClassLoader)
@@ -96,35 +131,5 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
     val instance = ctorMirror(arg: _*)
     return instance
   }
-
-  class UI extends MainFrame {
-    title = "GUI for Delta Server"
-
-    def shutdown = {
-      println("framework shutdown")
-      cancellable foreach { c => c.cancel() }
-      actorSystem.terminate()
-      Kamon.shutdown()
-      println("Done")
-    }
-
-    contents = new BoxPanel(Orientation.Vertical) {
-      contents += new Label("Server")
-      contents += Swing.VStrut(10)
-      contents += Swing.Glue
-      contents += Button("Shutdown") {
-        shutdown
-      }
-      //  contents += Button("Flush") { hostPool.hyperHostsMap.values foreach( _.call( i => i.flush() )) }
-      contents += Button("Close") {
-        shutdown;
-        sys.exit(0)
-      }
-      border = Swing.EmptyBorder(10, 10, 10, 10)
-    }
-  }
-
-  ui.visible = true
-
 
 }

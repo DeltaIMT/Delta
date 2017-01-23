@@ -11,7 +11,7 @@ var createOne = () => {
     k++
     if (k < N) {
 
-        setTimeout(createOne, 20)
+        setTimeout(createOne, 1000)
     }
     var id = id_g + k
     var address1 = 'ws://' + host + ':9000' + "/?id=" + id

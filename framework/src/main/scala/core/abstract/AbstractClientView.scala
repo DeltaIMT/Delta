@@ -16,7 +16,7 @@ case class Notify(any: Any)
 
 case object UpdateClient
 
-class AbstractClientView(hosts: HostPool[_ <: Host], client: ActorRef) extends Actor {
+class  AbstractClientView(hosts: HostPool[_ <: Host], client: ActorRef) extends Actor {
 
   var nextbuffer: Int = 0
   var buffers: mutable.HashMap[Int, (Int, List[Any])] = collection.mutable.HashMap[Int, (Int, List[Any])]()

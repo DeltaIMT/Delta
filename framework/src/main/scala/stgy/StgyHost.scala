@@ -15,6 +15,8 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
   var targetFromOtherHost = collection.mutable.HashMap[ActorRef, collection.mutable.HashMap[String, Unity]]()
   var neighbours = List[HyperHost[StgyHost]]()
 
+  var aggregs = collection.mutable.HashMap[String, Aggregator]()
+
   def getName(name: String) = "host-" + name + getNum
 
   def flush() = {
@@ -99,7 +101,7 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
         val arrow = A.shoot(Vec(closest._2.x, closest._2.y))
         elements += arrow.id -> arrow
       }
-      A.notifyClientViews
+   //   A.notifyClientViews
     }
     }
 
@@ -120,7 +122,7 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
         val arrows = A.shoot(targets.toList)
         arrows.foreach(arrow => elements += arrow.id -> arrow)
       }
-      A.notifyClientViews
+    //  A.notifyClientViews
     }
     }
 
@@ -136,6 +138,40 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
       }
     }
     }
+
+
+
+    aggregs.values.foreach( a => {
+      a.minXY = Vec(3000,3000)
+      a.maxXY = Vec(0,0)
+    })
+
+
+    var listId = List[String]()
+
+    unitys.foreach( u => {
+
+      listId ::= u.clientId
+      if (!aggregs.contains(u.clientId) ) {
+        aggregs += u.clientId -> new Aggregator(u.clientId, u.x, u.y)
+        aggregs(u.clientId).sub(u.clientViews.head)
+      }
+      else {
+        aggregs(u.clientId).minXY = Vec( math.min(aggregs(u.clientId).minXY.x, u.x),  math.min(aggregs(u.clientId).minXY.y, u.y)  )
+        aggregs(u.clientId).maxXY = Vec( math.max(aggregs(u.clientId).maxXY.x, u.x),  math.max(aggregs(u.clientId).maxXY.y, u.y)  )
+      }
+    })
+
+    listId = listId.distinct
+    aggregs.values.foreach( a => {
+      if (!listId.contains(a.clientId))
+        aggregs -= a.clientId
+      else
+        a.notifyClientViews
+    })
+
+
+
   }
 
   def addUnity(e: Unity) = {

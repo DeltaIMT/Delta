@@ -68,7 +68,7 @@ class FrameInterp {
             a = this.frame1
             b = this.frame2
             lambda = lambda - 1
-            console.log("Late interpolation")
+            //console.log("Late interpolation")
         }
 
         if (noInterp) {

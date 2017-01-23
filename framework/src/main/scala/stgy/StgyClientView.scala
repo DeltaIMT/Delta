@@ -14,6 +14,8 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
   var hashIdColor= collection.mutable.HashMap[String, Boolean]()
 
   var hashIdChangeHost = collection.mutable.HashMap[String, Boolean]()
+  var hashTime = collection.mutable.HashMap[String, Int]()
+
 
   var min = Vec(0,0)
   var max = Vec(3000,3000)
@@ -50,13 +52,23 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
 
   override def fromListToClientMsg(list: List[Any]) = {
 
+
+    val unitys = list.filter( x => x.isInstanceOf[Unity]).asInstanceOf[List[Unity]]
+    unitys.foreach( u =>
+      if (!hashTime.contains(u.id))
+        hashTime += u.id -> 5
+      else
+        hashTime(u.id) = 5
+    )
     pos = (max *0.5) +( min *0.5)
     min += Vec(100,100)
     max -= Vec(100,100)
     hash.keys.foreach( k =>  hash(k) = hash(k)-1 )
+    hashTime.keys.foreach( k =>  hashTime(k) = hashTime(k)-1 )
+
     hash= hash.filter( (pair) => pair._2>0)
     numberOfUnit = hash.size.toDouble
-    val unitys = list.filter( x => x.isInstanceOf[Unity]).asInstanceOf[List[Unity]]
+
     unitys.foreach( u => {
       if( !hashIdColor.contains(u.id) )
         hashIdColor+= u.id -> false
@@ -65,13 +77,11 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
       if ( !hashIdChangeHost.contains(u.id) )
         hashIdChangeHost += u.id -> true
       else {
-        if ((hash.contains(u.id))&&(hash(u.id) == 4)){
+        if ((hashTime.contains(u.id))&&(hashTime(u.id) == 4)){
           hashIdChangeHost(u.id)= false
-          println("we don't need to send the color again")
         }
         else{
           hashIdChangeHost(u.id)=true
-          println("some frame late , need to send the color again")
         }
       }
     })

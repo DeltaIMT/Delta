@@ -173,6 +173,11 @@ class Commander(var x : Double,var y : Double,var id : String,var clientId : Str
 
 }
 
+class Aggregator(val clientId : String , val x : Double, val y : Double ) extends Element with Observable {
+  var minXY = Vec()
+  var maxXY = Vec()
+}
+
 class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
 
   override var radius: Int =  20

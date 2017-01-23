@@ -14,4 +14,8 @@ class HyperHost[T <: Host](val host : ActorRef)  {
     host ! Call(func)
   }
 
+  def callTrace(func : T=> Unit, name: String ) = {
+    host ! CallTrace(func,name)
+  }
+
 }

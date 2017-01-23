@@ -24,7 +24,7 @@ abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: Hos
 
     case AddClient(id, playerActorRef) => {
       clientRef = playerActorRef
-      val clientView = context.actorOf(Props(createInstance[T](playerActorRef).asInstanceOf[T]))
+      val clientView = context.actorOf(Props(createInstance[T](playerActorRef).asInstanceOf[T]) , "clientview_" + id)
       val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientView, UpdateClient)
       clients += (id -> (new Observer(id, clientView), cancellable))
       OnConnect(id, clients(id)._1)

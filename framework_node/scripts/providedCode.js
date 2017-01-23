@@ -4,7 +4,7 @@ var dataManipulationFunction = (arg) => { }
 var defineCommandToServer = () => { return "default message" }
 var fps = 0
 var ws
-var getPing = () =>{}
+var getPing = () => { }
 module.exports.launch = () => {
     var uuid = require('node-uuid');
     var id = uuid.v4()
@@ -18,15 +18,15 @@ module.exports.launch = () => {
     var ping
 
 
-    var wsPort = new WebSocket('ws://' + host + ':9000' + "/?id=" + id)
+    const wsPort = new WebSocket('ws://' + host + ':9000' + "/?id=" + id)
     console.log("Searching port at 9000")
 
-    wsPort.onmessage = function (event) {
+    wsPort.onmessage =  (event) => {
         data = event.data
         console.log("Connection to : " + 'ws://' + host + ':' + data + "/?id=" + id)
-        wsPort.close()        
+
         ws = new WebSocket('ws://' + host + ':' + data + "/?id=" + id)
-        ws.onmessage = function (event) {
+        ws.onmessage =  (event)=>  {
             var data = event.data
 
             if (data == "ping") {
@@ -40,7 +40,23 @@ module.exports.launch = () => {
                 dataManipulationFunction(data)
             }
         }
+        wsPort.close(1000, "job done")
     }
+
+
+    wsPort.onerror = (err) => {
+        console.log("wsPort Error : " + err)
+    }
+
+    wsPort.onclose = (e) => {
+        console.log("wsPort Close : " + e)
+    }
+
+    wsPort.onopen = (e) => {
+        console.log("wsPort Open : " + e)
+    }
+
+
 
     getPing = (callback) => {
         ws.send("ping")

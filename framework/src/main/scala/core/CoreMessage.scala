@@ -24,4 +24,5 @@ object CoreMessage {
   case class FromProviderPort(actorRef: ActorRef, port:Int)
   case class ClientDisconnection(port:Int)
   case class Call[T <: Host]( func : T => Unit )
+  case class CallTrace[T <: Host]( func : T => Unit , name : String)
 }

@@ -52,7 +52,8 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
 
   override def fromListToClientMsg(list: List[Any]) = {
 
-
+    // hashTime uploaded each time "fromListToClientMsg is called :
+    // if the element is unknown, we added it inside hashTime, else we bring its value to 5
     val unitys = list.filter( x => x.isInstanceOf[Unity]).asInstanceOf[List[Unity]]
     unitys.foreach( u => {
       if( !hashIdColor.contains(u.id) )

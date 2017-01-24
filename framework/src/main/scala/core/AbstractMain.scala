@@ -69,7 +69,7 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
     val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient, providerClients)), "providerPort")
     Kamon.tracer.subscribe(actorRefOfSubscriber)
     val providers = providerPort :: providerClients.toList
-    val websockets = -1 until numberOfClient - 1 map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i) }
+    val websockets = -1 until numberOfClient - 1 map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i,flowMaterializer) }
     hostPool.addHost(hosts)
     val routes = websockets.map(x => {
       x._1 ->

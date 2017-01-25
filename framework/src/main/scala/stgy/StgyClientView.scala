@@ -23,18 +23,13 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
 
     any match {
       case e: IdGiver => {id = e.id; min= Vec(e.x-100,e.y-100) ; max= Vec(e.x+100,e.y+100)}
-      case unit: Unity => {
+      case a: Aggregator => {
 
-        min.x = math.min( min.x , unit.x)
-        min.y = math.min( min.y , unit.y)
-        max.x = math.max( max.x , unit.x)
-        max.y = math.max( max.y , unit.y)
+        min.x = math.min( min.x , a.minXY.x)
+        min.y = math.min( min.y , a.minXY.y)
+        max.x = math.max( max.x , a.maxXY.x)
+        max.y = math.max( max.y , a.maxXY.y)
 
-
-        if(hash.contains(unit.id))
-          hash(unit.id) = 5
-        else
-          hash += unit.id -> 5
       }
       case _ => {
         println("notify not matched")

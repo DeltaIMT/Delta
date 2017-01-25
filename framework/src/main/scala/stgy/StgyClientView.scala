@@ -88,8 +88,8 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
     val listString = list.map {
       case u : Unity =>{
         val colorString = if ((!hashIdColor(u.id))||(hashIdChangeHost(u.id))) s""","color":[${u.color(0)},${u.color(1)},${u.color(2)}]""" else ""
-        if ((!hashIdColor(u.id))||(hashIdChangeHost(u.id)))
-          println("color needed")
+//        if ((!hashIdColor(u.id))||(hashIdChangeHost(u.id)))
+//          println("color needed")
 
 
         u match {

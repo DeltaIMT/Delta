@@ -3,6 +3,7 @@ package core
 import akka.actor.ActorRef
 import core.user_import.Element
 
+
 object CoreMessage {
   case class DeleteClient(id: String)
   case class AddClient(id: String, playerActorRef: ActorRef)

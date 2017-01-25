@@ -28,12 +28,10 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
     any match {
       case e: IdGiver => {id = e.id; min= Vec(e.x-100,e.y-100) ; max= Vec(e.x+100,e.y+100)}
       case a: Aggregator => {
-
         min.x = math.min( min.x , a.minXY.x)
         min.y = math.min( min.y , a.minXY.y)
         max.x = math.max( max.x , a.maxXY.x)
         max.y = math.max( max.y , a.maxXY.y)
-
       }
       case _ => {
         println("notify not matched")
@@ -87,7 +85,7 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
 
     val listString = list.map {
       case u : Unity =>{
-        val colorString = if ((!hashIdColor(u.id))||(hashIdChangeHost(u.id))) s""","color":[${u.color(0)},${u.color(1)},${u.color(2)}]""" else ""
+        val colorString = if ((!hashIdColor(u.id))||hashIdChangeHost(u.id)) s""","color":[${u.color(0)},${u.color(1)},${u.color(2)}]""" else ""
 //        if ((!hashIdColor(u.id))||(hashIdChangeHost(u.id)))
 //          println("color needed")
 

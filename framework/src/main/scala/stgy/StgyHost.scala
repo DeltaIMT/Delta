@@ -149,11 +149,12 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
 
     var listId = List[String]()
 
-    unitys.foreach( u => {
+    unitys.filter( u => !u.isInstanceOf[Arrow]) .foreach( u => {
 
       listId ::= u.clientId
       if (!aggregs.contains(u.clientId) ) {
         aggregs += u.clientId -> new Aggregator(u.clientId, u.x, u.y)
+        if(u.clientViews.size >0)
         aggregs(u.clientId).sub(u.clientViews.head)
       }
       else {

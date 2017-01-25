@@ -13,6 +13,10 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
 
   var hashIdColor= collection.mutable.HashMap[String, Boolean]()
 
+  var hashIdChangeHost = collection.mutable.HashMap[String, Boolean]()
+  var hashTime = collection.mutable.HashMap[String, Int]()
+
+
   var min = Vec(0,0)
   var max = Vec(3000,3000)
 
@@ -43,25 +47,51 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
 
   override def fromListToClientMsg(list: List[Any]) = {
 
-
-
-    pos = (max *0.5) +( min *0.5)
-    min += Vec(100,100)
-    max -= Vec(100,100)
-    hash.keys.foreach( k =>  hash(k) = hash(k)-1 )
-    hash= hash.filter( (pair) => pair._2>0)
-    numberOfUnit = hash.size.toDouble
+    // hashTime uploaded each time "fromListToClientMsg is called :
+    // if the element is unknown, we added it inside hashTime, else we bring its value to 5
     val unitys = list.filter( x => x.isInstanceOf[Unity]).asInstanceOf[List[Unity]]
     unitys.foreach( u => {
       if( !hashIdColor.contains(u.id) )
         hashIdColor+= u.id -> false
       else
         hashIdColor(u.id) = true
-    })
+
+      // hashTime uploaded each time "fromListToClientMsg is called :
+      // if the element is unknown, we added it inside hashTime, else we bring its value to 5
+      if (!hashTime.contains(u.id))
+        hashTime += u.id -> 5
+      else {
+        if (!hashIdChangeHost.contains(u.id)) {
+          hashIdChangeHost += u.id -> true
+        }
+        else {
+          if (hashTime(u.id) == 4)
+            hashIdChangeHost(u.id) = false
+          else
+            hashIdChangeHost(u.id) = true
+        }
+        hashTime(u.id) = 5
+      }
+    }
+    )
+    pos = (max *0.5) +( min *0.5)
+    min += Vec(100,100)
+    max -= Vec(100,100)
+    hash.keys.foreach( k =>  hash(k) = hash(k)-1 )
+
+    // while processing "fromListToClientMsg", we decrease the value of each key we have
+    hashTime.keys.foreach( k =>  hashTime(k) = hashTime(k)-1 )
+
+    hash= hash.filter( (pair) => pair._2>0)
+    numberOfUnit = hash.size.toDouble
 
     val listString = list.map {
       case u : Unity =>{
-        val colorString = if (!hashIdColor(u.id) || true) s""","color":[${u.color(0)},${u.color(1)},${u.color(2)}]""" else ""
+        val colorString = if ((!hashIdColor(u.id))||(hashIdChangeHost(u.id))) s""","color":[${u.color(0)},${u.color(1)},${u.color(2)}]""" else ""
+        if ((!hashIdColor(u.id))||(hashIdChangeHost(u.id)))
+          println("color needed")
+
+
         u match {
           case e: Commander => {
             s"""{"type":"com","id":"${e.id}","spawning":"${1.0 - e.canSpawnIn / e.frameToSpawn.toFloat}","xp":"${e.xp}","mine":${id == e.clientId},"health":"${e.health}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""

@@ -28,12 +28,13 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
     counter.increment()
     val unitys = elements.filter(e => e._2.isInstanceOf[Unity]).values.asInstanceOf[Iterable[Unity]]
 
-    val damagable = elements.filter(e => e._2.isInstanceOf[Damagable]).values.asInstanceOf[Iterable[Damagable]]
-    val bowmen = damagable.filter(x => x.isInstanceOf[Bowman]).asInstanceOf[Iterable[Bowman]]
-    val coms = damagable.filter(x => x.isInstanceOf[Commander]).asInstanceOf[Iterable[Commander]]
+    val damagable = unitys collect { case d: Damagable => d }
+    val bowmen = damagable collect { case e: Bowman => e }
+    val coms = damagable collect { case e: Commander => e }
+    val swordmen = damagable collect { case e: Swordman => e }
     var otherDamagable = List[Damagable]()
     targetFromOtherHost.values.map(x => x.values).foreach(x => otherDamagable ++= x.asInstanceOf[Iterable[Damagable]])
-    val otherBowmen = otherDamagable.filter(x => x.isInstanceOf[Bowman]).asInstanceOf[Iterable[Bowman]]
+    val otherBowmen = otherDamagable collect { case e: Bowman => e }
     val extendedDamagable = damagable ++ otherDamagable
     val flags = elements.filter(e => e._2.isInstanceOf[Flag]).values.asInstanceOf[Iterable[Flag]]
     val arrows = elements.filter(e => e._2.isInstanceOf[Arrow]).values.asInstanceOf[Iterable[Arrow]]
@@ -61,15 +62,21 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
           a.doMove
         val enemy = damagable filter { b => b.clientId != a.clientId }
         enemy.foreach(e => {
+          //There is a shot unit
           if ((Vec(e.x, e.y) - Vec(a.x, a.y)).length < e.radius) {
             e.damage(0.201)
             elements -= a.id
-
-            if (elements.contains(a.shooterId))
-              elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
-            else {
-              neighbours.foreach(h => if (trace) h.callTrace(_.gainxp(a.shooterId), "gainxp") else h.call(_.gainxp(a.shooterId)))
-            }
+            //            if (elements.contains(a.shooterId))
+            //              elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
+            //            else {
+            //              neighbours.foreach(h => if (trace) h.callTrace(_.gainxp(a.shooterId), "gainxp") else h.call(_.gainxp(a.shooterId)))
+            //            }
+//                        if (elements.contains(a.shooterId))
+//                          elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
+//                        else {
+//                          neighbours.foreach(h => if (trace) h.callTrace(_.gainxp(a.shooterId), "gainxp") else h.call(_.gainxp(a.shooterId)))
+//                        }
+            //gainxpAggreg
 
           }
         })
@@ -86,6 +93,27 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
     })
     damagable.foreach(u => if (u.isDead) elements -= u.id)
 
+
+    swordmen foreach { A => {
+      A.step
+      var closest: (Double, Damagable) = (Double.MaxValue, null)
+      //bowmen.foreach(B => {
+      damagable.foreach(B => {
+        if (B.clientId != A.clientId) {
+          val distance = (Vec(A.x, A.y) - Vec(B.x, B.y)).length()
+          if (distance < closest._1)
+            closest = (distance, B)
+        }
+      })
+
+      if (closest._2 != null && A.canShoot && A.canAttack(closest._2)) {
+        val damage = A.attack(closest._2)
+        closest._2.health -= damage
+      }
+
+    }
+    }
+
     bowmen foreach { A => {
       A.step
       var closest: (Double, Damagable) = (Double.MaxValue, null)
@@ -98,10 +126,10 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
         }
       })
       if (A.canShoot && closest._1 < 350) {
-        val arrow = A.shoot(Vec(closest._2.x, closest._2.y))
+        val arrow = A.shoot(closest._2)
         elements += arrow.id -> arrow
       }
-   //   A.notifyClientViews
+      //   A.notifyClientViews
     }
     }
 
@@ -118,11 +146,10 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
       })
       if (A.canShoot && closest._1 < 350) {
         val target = Vec(closest._2.x, closest._2.y)
-        val targets = 1 to 10 map { i => target + Vec(Random.nextInt(50) - 25, Random.nextInt(50) - 25) }
-        val arrows = A.shoot(targets.toList)
+        val arrows = A.shoot(target)
         arrows.foreach(arrow => elements += arrow.id -> arrow)
       }
-    //  A.notifyClientViews
+      //  A.notifyClientViews
     }
     }
 
@@ -140,31 +167,30 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
     }
 
 
-
-    aggregs.values.foreach( a => {
-      a.minXY = Vec(3000,3000)
-      a.maxXY = Vec(0,0)
+    aggregs.values.foreach(a => {
+      a.minXY = Vec(3000, 3000)
+      a.maxXY = Vec(0, 0)
     })
 
 
     var listId = List[String]()
 
-    unitys.filter( u => !u.isInstanceOf[Arrow]) .foreach( u => {
+    unitys.filter(u => !u.isInstanceOf[Arrow]).foreach(u => {
 
       listId ::= u.clientId
-      if (!aggregs.contains(u.clientId) ) {
+      if (!aggregs.contains(u.clientId)) {
         aggregs += u.clientId -> new Aggregator(u.clientId, u.x, u.y)
-        if(u.clientViews.size >0)
-        aggregs(u.clientId).sub(u.clientViews.head)
+        if (u.clientViews.size > 0)
+          aggregs(u.clientId).sub(u.clientViews.head)
       }
       else {
-        aggregs(u.clientId).minXY = Vec( math.min(aggregs(u.clientId).minXY.x, u.x),  math.min(aggregs(u.clientId).minXY.y, u.y)  )
-        aggregs(u.clientId).maxXY = Vec( math.max(aggregs(u.clientId).maxXY.x, u.x),  math.max(aggregs(u.clientId).maxXY.y, u.y)  )
+        aggregs(u.clientId).minXY = Vec(math.min(aggregs(u.clientId).minXY.x, u.x), math.min(aggregs(u.clientId).minXY.y, u.y))
+        aggregs(u.clientId).maxXY = Vec(math.max(aggregs(u.clientId).maxXY.x, u.x), math.max(aggregs(u.clientId).maxXY.y, u.y))
       }
     })
 
     listId = listId.distinct
-    aggregs.values.foreach( a => {
+    aggregs.values.foreach(a => {
       if (!listId.contains(a.clientId))
         aggregs -= a.clientId
       else
@@ -172,16 +198,10 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
     })
 
 
-
   }
 
   def addUnity(e: Unity) = {
     elements += e.id -> e
-  }
-
-  def gainxp(e: String) = {
-    if (elements.contains(e))
-      elements(e).asInstanceOf[Evolving].gainKillXp
   }
 
   def receiveTarget(who: ActorRef, e: Iterable[Unity]) = {
@@ -214,6 +234,17 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
         neighbours ::= hostPool.getHyperHost(zone.x, zone.y + zone.h)
       if (zone.y >= hostPool.h)
         neighbours ::= hostPool.getHyperHost(zone.x, zone.y - zone.h)
+    }
+  }
+
+  def gainxp(e: String) = {
+    if (elements.contains(e))
+      elements(e).asInstanceOf[Evolving].gainKillXp
+  }
+
+  def gainxpAggreg(clientId: String) = {
+    if(aggregs.contains(clientId)){
+      aggregs(clientId).xp += 1
     }
   }
 

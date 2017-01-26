@@ -97,6 +97,9 @@ class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends Abs
           case e: Bowman => {
             s"""{"type":"bowman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health}","xp":"${e.xp}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
           }
+          case e: Swordman => {
+            s"""{"type":"swordman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health}","xp":"${e.xp}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
+          }
           case e: Arrow => {
             s"""{"type":"arrow","id":"${e.id}","x":"${e.x.toInt}","y":"${e.y.toInt}"}"""
           }

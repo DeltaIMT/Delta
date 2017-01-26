@@ -96,6 +96,10 @@ const drawer = (context) => {
                 return typeof (frame[k].type) !== undefined && frame[k].type == 'bowman'
             }).map(k => frame[k])
 
+            swordmen = Object.keys(frame).filter(k => {
+                return typeof (frame[k].type) !== undefined && frame[k].type == 'swordman'
+            }).map(k => frame[k])
+
             coms = Object.keys(frame).filter(k => {
                 return typeof (frame[k].type) !== undefined && frame[k].type == 'com'
             }).map(k => frame[k])
@@ -166,6 +170,31 @@ const drawer = (context) => {
         contextBowman.shadowBlur = 2;
         contextBowman.fill()
 
+
+        var canvasCacheSwordman = document.createElement('canvas')
+        canvasCacheSwordman.setAttribute('width', 80)
+        canvasCacheSwordman.setAttribute('height', 80)
+        var contextSwordman = canvasCacheSwordman.getContext('2d')
+        contextSwordman.beginPath()
+        var x = parseInt(40)
+        var y = parseInt(40)
+        contextSwordman.moveTo(x, y + 18);
+        contextSwordman.lineTo(x + 20, y - 10);
+        contextSwordman.lineTo(x - 20, y - 10);
+        contextSwordman.closePath()
+        contextSwordman.fillStyle = "rgba(" + 0 + ", " + 0 + ", " + 0 + ",0.5)"
+        contextSwordman.shadowBlur = 30;
+        contextSwordman.shadowColor = "black";
+        contextSwordman.fill()
+        contextSwordman.shadowBlur = 20;
+        contextSwordman.fill()
+        contextSwordman.shadowBlur = 5;
+        contextSwordman.fill()
+        contextSwordman.shadowBlur = 3;
+        contextSwordman.fill()
+        contextSwordman.shadowBlur = 2;
+        contextSwordman.fill()
+
         var canvasCacheCom = document.createElement('canvas')
         canvasCacheCom.setAttribute('width', 80)
         canvasCacheCom.setAttribute('height', 80)
@@ -187,6 +216,21 @@ const drawer = (context) => {
         context.beginPath()
         context.arc(bowman.x, bowman.y, 20, 0, Math.PI * 2)
         context.fillStyle = "rgb(" + bowman.color[0] + ", " + bowman.color[1] + ", " + bowman.color[2] + ")"
+        context.fill()
+    }
+
+    for (const swordman of swordmen) {
+        if (!low)
+            context.drawImage(canvasCacheSwordman, swordman.x - 40, swordman.y - 40)
+        context.beginPath()
+        var x = parseInt(swordman.x)
+        var y = parseInt(swordman.y)
+        context.moveTo(x, y + 18);
+        context.lineTo(x + 20, y - 10);
+        context.lineTo(x - 20, y - 10);
+        context.closePath()
+
+        context.fillStyle = "rgb(" + swordman.color[0] + ", " + swordman.color[1] + ", " + swordman.color[2] + ")"
         context.fill()
     }
 
@@ -253,74 +297,72 @@ const drawer = (context) => {
     }
 
 
-    //Heath Bar
-    for (const bowman of bowmen) {
-        context.beginPath()
-        context.arc(bowman.x, bowman.y, 7, 0, Math.PI * 2)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
-        context.stroke()
+    // //Heath Bar
+    // for (const bowman of bowmen) {
+    //     context.beginPath()
+    //     context.arc(bowman.x, bowman.y, 7, 0, Math.PI * 2)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(bowman.x, bowman.y, 7, 0, Math.PI * 2 * bowman.health)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
-        context.stroke()
+    //     context.beginPath()
+    //     context.arc(bowman.x, bowman.y, 7, 0, Math.PI * 2 * bowman.health)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
-        context.stroke()
+    //     context.beginPath()
+    //     context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(bowman.xp))))
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
-        context.stroke()
-    }
+    //     context.beginPath()
+    //     context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(bowman.xp))))
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
+    //     context.stroke()
+    // }
 
-    //Heath Bar
-    for (const com of coms) {
+    // //Heath Bar
+    // for (const com of coms) {
 
-        context.beginPath()
-        context.arc(com.x, com.y, 7, 0, Math.PI * 2)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
-        context.stroke()
+    //     context.beginPath()
+    //     context.arc(com.x, com.y, 7, 0, Math.PI * 2)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(com.x, com.y, 7, 0, Math.PI * 2 * com.health / 5.0)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
-        context.stroke()
+    //     context.beginPath()
+    //     context.arc(com.x, com.y, 7, 0, Math.PI * 2 * com.health / 5.0)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(com.x, com.y, 12, 0, Math.PI * 2)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
-        context.stroke()
+    //     context.beginPath()
+    //     context.arc(com.x, com.y, 12, 0, Math.PI * 2)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(com.x, com.y, 12, 0, Math.PI * 2 * com.spawning)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 50 + ", " + 130 + ", " + 255 + ")"
-        context.stroke()
+    //     context.beginPath()
+    //     context.arc(com.x, com.y, 12, 0, Math.PI * 2 * com.spawning)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 50 + ", " + 130 + ", " + 255 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(com.x, com.y, 17, 0, Math.PI * 2)
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
-        context.stroke()
+    //     context.beginPath()
+    //     context.arc(com.x, com.y, 17, 0, Math.PI * 2)
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
+    //     context.stroke()
 
-        context.beginPath()
-        context.arc(com.x, com.y, 17, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(com.xp))))
-        context.lineWidth = 5
-        context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
-        context.stroke()
-
-
-    }
+    //     context.beginPath()
+    //     context.arc(com.x, com.y, 17, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(com.xp))))
+    //     context.lineWidth = 5
+    //     context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
+    //     context.stroke()
+    // }
 
     //Possessing and spawning Bar
     for (const flag of flags) {

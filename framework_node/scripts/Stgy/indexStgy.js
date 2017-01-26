@@ -165,7 +165,7 @@ const loop = () => {
 
     const frame = frameInterp.getInterp()
     selectable = {}
-    const selectableIds = Object.keys(frame).filter(k => { return frame[k].type == "bowman" || frame[k].type == "com" })
+    const selectableIds = Object.keys(frame).filter(k => { return frame[k].type == "bowman" || frame[k].type == "com"  || frame[k].type == "swordman" })
     selectableIds.forEach(k => { selectable[k] = frame[k] })
     selectableVal = Object.keys(selectable).map(key => selectable[key])
     Draw.setSelectedId(getSelected())

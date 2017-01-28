@@ -15,7 +15,7 @@ trait Unity extends Element with Observable {
 trait Movable extends Unity {
   var move = false
   var target = Vec()
-  var speed = 1
+  var speed : Double
 
   def getSpeed : Vec = {
     val pos = Vec(x, y)
@@ -40,13 +40,14 @@ trait Damagable extends Unity {
   var health = 1.0
   var maxHealth = 1.0
   var radius : Int
+  var xpCost : Double
 
   def damage(amount: Double) = {
     health = math.max(0, health - amount)
   }
 
   def damagableStep = {
-    health = math.min(maxHealth, health + 0.0002*maxHealth)
+    health = math.min(maxHealth, health + 0.002*maxHealth)
   }
 
   def isDead: Boolean = health <= 0
@@ -154,8 +155,10 @@ class Flag(var x : Double,var y : Double,var id : String,var clientId : String,v
 }
 
 class Commander(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Spawner with Evolving{
-  health = 5
-  maxHealth = 5
+  health = 2
+  maxHealth = 2
+  var speed = 1.0
+  var xpCost = 10.0
   override var radius: Int =  25
 
 
@@ -197,19 +200,20 @@ class Aggregator(val clientId : String , var x : Double, var y : Double, var col
 
   var minXY = Vec(x,y)
   var maxXY = Vec(x,y)
-  var xp = 0
-  var xpSum= 0
-  var usedXpSum= 0
-  var xpUsed = 0
+  var xp = 0.0
+  var xpSum= 0.0
+  var usedXpSum= 0.0
+  var xpUsed = 0.0
 }
 
 
 class Swordman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
   override var radius: Int = 20
-  maxHealth = 5
-  health = 5
-  speed = 2
-  var damage = 0.3
+  maxHealth = 3
+  health = 3
+  var speed = 2.0
+  var xpCost = 3.0
+  var damage = 5*0.201/6.0
   def step() = {
     doMove
     shooterStep
@@ -218,17 +222,19 @@ class Swordman(var x : Double,var y : Double,var id : String,var clientId : Stri
 
   def canAttack(e : Damagable) : Boolean = {
     val vector = Vec(x,y)-Vec(e.x,e.y)
-    vector.length()<40
+    vector.length()<50
   }
 
   def attack(e : Damagable) : Double = {
+    canShootIn = 10
     damage
   }
 
 }
 
 class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
-
+  var speed = 1.0
+  var xpCost = 1.0
   override var radius: Int =  20
 
   def shoot(target: Unity): Arrow = {
@@ -259,8 +265,9 @@ class Bowman(var x : Double,var y : Double,var id : String,var clientId : String
 }
 
 class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color :Array[Int], var shooterId : String) extends Movable {
-  speed = 10
+  var speed = 10.0
   var frame = 0
+  var shotFrom = Vec(x,y)
   def shouldDie: Boolean = {
     frame+=1
     frame==60

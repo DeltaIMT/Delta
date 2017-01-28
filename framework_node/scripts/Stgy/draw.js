@@ -240,8 +240,6 @@ const drawer = (context) => {
             context.drawImage(canvasCacheCom, com.x - 40, com.y - 40)
         context.beginPath()
         roundRect(context, com.x - 22, com.y - 22, 44, 44, 7)
-        //context.rect(com.x - 25, com.y - 25, 50, 50)
-        //  context.arc(com.x, com.y, 25, 0, Math.PI * 2)
         context.fillStyle = "rgb(" + parseInt(com.color[0]*com.health) + ", " + parseInt(com.color[1]*com.health) + ", " + parseInt(com.color[2]*com.health) + ")"
         context.fill()
     }

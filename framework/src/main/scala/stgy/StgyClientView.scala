@@ -9,8 +9,8 @@ import core.user_import.Zone
 class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends AbstractClientView(hostPool, client) {
   var pos = Vec(1500, 1500)
   var id = ""
-  var totalXp = 0
-  var totalUsedXp = 0
+  var totalXp = 0.0
+  var totalUsedXp = 0.0
   var hash = collection.mutable.HashMap[String, Int]()
   var numberOfUnit = 1.0
 

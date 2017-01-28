@@ -70,17 +70,13 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
             if (!e.isDead) {
               e.damage(0.201)
               elements -= a.id
-              //            if (elements.contains(a.shooterId))
-              //              elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
-              //            else {
-              //              neighbours.foreach(h => if (trace) h.callTrace(_.gainxp(a.shooterId), "gainxp") else h.call(_.gainxp(a.shooterId)))
-              //            }
-
               if (e.isDead) {
                 if (elements.contains(a.shooterId) && aggregs.contains(a.clientId))
-                  aggregs(a.clientId).xp += 1
+                  aggregs(a.clientId).xp += e.xpCost
                 else {
-                  neighbours.foreach(h => if (trace) h.callTrace(_.gainxpAggreg(a.shooterId), "gainxp") else h.call(_.gainxpAggreg(a.shooterId)))
+                  val h = hostPool.getHyperHost(a.shotFrom.x, a.shotFrom.y)
+                  if (trace) h.callTrace(_.gainxpAggreg(a.shooterId, e.xpCost), "gainxp") else h.call(_.gainxpAggreg(a.shooterId, e.xpCost)
+                  )
                 }
               }
 
@@ -106,7 +102,7 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
       var closest: (Double, Damagable) = (Double.MaxValue, null)
       //bowmen.foreach(B => {
       damagable.foreach(B => {
-        if (B.clientId != A.clientId) {
+        if (B.clientId != A.clientId && !B.isDead) {
           val distance = (Vec(A.x, A.y) - Vec(B.x, B.y)).length()
           if (distance < closest._1)
             closest = (distance, B)
@@ -116,7 +112,7 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
       if (closest._2 != null && A.canShoot && A.canAttack(closest._2)) {
         val damage = A.attack(closest._2)
         closest._2.health -= damage
-        if(closest._2.isDead) gainxpAggreg(A.id)
+        if (closest._2.isDead) gainxpAggreg(A.id, closest._2.xpCost)
       }
 
     }
@@ -247,10 +243,10 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
     }
   }
 
-  def gainxpAggreg(shooterId: String) = {
+  def gainxpAggreg(shooterId: String, xp: Double) = {
     if (elements.contains(shooterId))
       if (aggregs.contains(elements(shooterId).asInstanceOf[Unity].clientId)) {
-        aggregs(elements(shooterId).asInstanceOf[Unity].clientId).xp += 1
+        aggregs(elements(shooterId).asInstanceOf[Unity].clientId).xp += xp
       }
   }
 
@@ -279,7 +275,7 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
           }
         }
         else if (id == "2") {
-          if (ag.usedXpSum+2 < ag.xpSum) {
+          if (ag.usedXpSum + 2 < ag.xpSum) {
             ag.xpUsed += 3
             ag.notifyClientViews
             val idObj = Random.alphanumeric.take(10).mkString
@@ -289,7 +285,7 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
           }
         }
         else if (id == "3") {
-          if (ag.usedXpSum+9 < ag.xpSum) {
+          if (ag.usedXpSum + 9 < ag.xpSum) {
             ag.xpUsed += 10
             ag.notifyClientViews
             val idObj = Random.alphanumeric.take(10).mkString

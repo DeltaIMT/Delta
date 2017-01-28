@@ -1,11 +1,11 @@
-var Draw = require('./draw')
-var Mous = require('./mouse')
-var Intr = require('./intersection')
+let Draw = require('./draw')
+let Mous = require('./mouse')
+let Intr = require('./intersection')
 
-var moveOrder = []
-var getTranslatedMouse = (mouse) => {
-    var cam = Draw.getCamera()
-    var trans = {}
+let moveOrder = []
+let getTranslatedMouse = (mouse) => {
+    let cam = Draw.getCamera()
+    let trans = {}
     trans.p1 = { x: mouse.p1.x * 1 + cam.x * 1, y: mouse.p1.y * 1 + cam.y * 1 }
     trans.p2 = { x: mouse.p2.x * 1 + cam.x * 1, y: mouse.p2.y * 1 + cam.y * 1 }
     return trans
@@ -28,29 +28,29 @@ Mous.onDrag((mouse) => {
     })
 })
 
-var moveSquareCompute = (mouse) => {
-    var num = getSelected().length
-    var x1 = mouse.p1.x
-    var y1 = mouse.p1.y
-    var x2 = mouse.p2.x
-    var y2 = mouse.p2.y
-    var vx = x2 - x1
-    var vy = y2 - y1
+const moveSquareCompute = (mouse) => {
+    const num = getSelected().length
+    const x1 = mouse.p1.x
+    const y1 = mouse.p1.y
+    const x2 = mouse.p2.x
+    const y2 = mouse.p2.y
+    let vx = x2 - x1
+    let vy = y2 - y1
     if (Math.abs(vx) > 30 || Math.abs(vy) > 30) {
-        var vl = Math.sqrt(vx * vx + vy * vy)
-        var numInWidth = (vl / 45)
-        var numInLength = num / numInWidth
+        const vl = Math.sqrt(vx * vx + vy * vy)
+        const numInWidth = (vl / 45)
+        const numInLength = num / numInWidth
         vx /= vl; vy /= vl;
-        var px = -vy
-        var py = vx
+        let px = -vy
+        let py = vx
         px *= 45
         py *= 45
         return { x1: x1, y1: y1, x2: x2, y2: y2, vx: vx * 45, vy: vy * 45, px: px, py: py, numW: numInWidth, numL: numInLength }
     }
 
     else {
-        var square = {}
-        var sqrt = Math.sqrt(num)
+        let square = {}
+        let sqrt = Math.sqrt(num)
         square.numW = sqrt
         square.numL = sqrt
         square.x1 = x1 - square.numW * 45 / 2
@@ -105,6 +105,35 @@ Mous.onDragRight((mouse) => {
     Draw.setMoveSquare(square)
 })
 
+
+const distance2 = (x1, y1, x2, y2) => {
+
+    return Math.pow(parseInt(x1) - parseInt(x2), 2) + Math.pow(parseInt(y1) - parseInt(y2), 2)
+}
+
+document.addEventListener('mousedown', function (e) {
+
+    if (e.button == 0) {
+        const cam = Draw.getCamera()
+        let mouseX = e.screenX + cam.x
+        let mouseY = e.screenY + cam.y
+        const sorted = selectableVal.sort((a, b) => distance2(a.x, a.y, mouseX, mouseY)< distance2(b.x, b.y, mouseX, mouseY))
+        if (distance2(sorted[0].x, sorted[0].y, mouseX, mouseY) < 110 *110) {
+            console.log("Found selected")
+            selectedselectable.push(sorted[0].id)
+
+            if (e.shiftKey) {
+
+            }
+
+        }
+
+
+    }
+})
+
+
+
 Mous.onTrail((trail) => {
     Draw.setTrail(trail)
 })
@@ -123,8 +152,8 @@ Mous.onTrailEnd((trail) => {
     const trailSize = trail.length
     const selectedSize = getSelected().length
     console.log(selectedSize)
-    var cam = Draw.getCamera()
-    for (var i = 0; i < selectedSize; i++) {
+    let cam = Draw.getCamera()
+    for (let i = 0; i < selectedSize; i++) {
         const b = selectable[getSelected()[i]]
         const pos = linearInterp(trail, parseFloat(i * trailSize) / parseFloat(selectedSize))
         pos.x += cam.x
@@ -151,13 +180,12 @@ document.addEventListener("contextmenu", function (e) {
 
 document.addEventListener('keydown', (event) => {
     const keyName = event.keyCode;
-    console.log(keyName)
     if (keyName === 49 || keyName === 50 || keyName === 51) {
         client.send(
             JSON.stringify([{
-                hosts : [[Draw.getPos().x,Draw.getPos().y]],
+                hosts: [[Draw.getPos().x, Draw.getPos().y]],
                 data: JSON.stringify({
-                    id: "" + (parseInt(keyName)-48),
+                    id: "" + (parseInt(keyName) - 48),
                     x: Draw.getPos().x,
                     y: Draw.getPos().y
                 })
@@ -193,8 +221,8 @@ const loop = () => {
     // if (moveOrder.length == 0)
     //     toServer = JSON.stringify([{ hosts: [], data: "" }])
     if (moveOrder.length > 0) {
-        var toServer
-        var numToSend = 20
+        let toServer
+        let numToSend = 20
         if (moveOrder.length > numToSend) {
             toServer = JSON.stringify(moveOrder.slice(0, numToSend))
             moveOrder = moveOrder.slice(numToSend);
@@ -209,7 +237,7 @@ const loop = () => {
 }
 
 setTimeout(loop, 200)
-var client = require('../providedCode')
+let client = require('../providedCode')
 client.launch()
 
 setInterval(() => { client.getPing((ping) => Draw.setPing(ping)) }, 1000)
@@ -217,10 +245,10 @@ setInterval(() => { client.getPing((ping) => Draw.setPing(ping)) }, 1000)
 const frameInterp = require('./frameInterp')
 Draw.setFrameGetter(frameInterp)
 
-var zlib = require('zlib')
+let zlib = require('zlib')
 client.dataManipulation(dataZiped => {
     // console.log("Received Zipped :\n" + dataZiped)
-    var data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
+    let data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
         //   console.log("Received :\n" + data)
         data = JSON.parse(data)
         const newFrame = {}

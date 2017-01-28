@@ -51,4 +51,13 @@ class Vec(var x: Double, var y: Double) {
     this
   }
 
+  def norm(): Vec = {
+    val l = length()
+    var newVec = Vec(0,0)
+    if (l != 0) {
+     newVec = Vec(x/l,y/l)
+    }
+    newVec
+  }
+
 }

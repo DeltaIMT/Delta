@@ -118,15 +118,10 @@ const drawer = (context) => {
         context.beginPath()
         context.moveTo(wall.x, wall.y)
         context.lineTo(wall.x2, wall.y2)
-        context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + "," + 1.0 + ")"
-        context.lineWidth = 2
+        context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 255 + ")"
+        context.lineWidth = 4
         context.stroke()
         context.closePath()
-        context.beginPath()
-        context.arc(wall.xh, wall.yh, 5, 0, Math.PI * 2)
-        context.fillStyle = "rgb(255,0,0)"
-        context.fill()
-
     }
 
     context.shadowBlur = 30;

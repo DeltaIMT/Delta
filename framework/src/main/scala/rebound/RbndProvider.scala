@@ -11,7 +11,7 @@ class RbndProvider(hostPool: HostPool[RbndHost]) extends Provider[RbndClientView
     val randx = 200 + Random.nextInt(2600)
     val randy = 200 + Random.nextInt(2600)
     val objId = Random.alphanumeric.take(10).mkString
-    val newBall = new Ball(randx, randy, 0, 1, objId, id)
+    val newBall = new Ball(randx, randy, 0, 3 , objId, id)
     newBall.sub(obs)
     hostPool.getHyperHost(randx, randy).call(host => {
       host.elements += objId -> newBall

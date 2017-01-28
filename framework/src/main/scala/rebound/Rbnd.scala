@@ -21,10 +21,27 @@ class Ball(var x : Double, var y : Double, var vx : Double, var vy : Double, var
   var energy = 1.0
   val radius = 20
 
+  def collide(ball : Ball)  = {
+      val position = Vec(ball.x, ball.y)
+      var point = (position + Vec(x,y))*0.5
+
+      if( (position- Vec(x,y)).length() < 2*ball.radius  ) {
+        val n2 = (position - point).normalize()
+        val v2 = Vec(-n2.y, n2.x)
+        val a = ball.vx
+        val b = ball.vy
+        val speedV = a * Vec(1, 0).dotProd(v2) + b * Vec(0, 1).dotProd(v2)
+        val speedN = a * Vec(1, 0).dotProd(n2) + b * Vec(0, 1).dotProd(n2)
+        val newSpeed = v2 * speedV - n2 * speedN
+        ball.vx = newSpeed.x
+        ball.vy = newSpeed.y
+    }
+  }
+
 }
 
 class Wall(var x : Double, var y : Double, var x2 : Double, var y2 : Double, var id: String, var clientId: String ) extends Element with Observable {
-
+  var frameleft = 60*3
   val v =  Vec(x2-x,y2-y).norm()
   val n = Vec(-v.y, v.x)
   val B = Vec(x,y)
@@ -44,13 +61,12 @@ class Wall(var x : Double, var y : Double, var x2 : Double, var y2 : Double, var
 
   def collide(ball : Ball)  = {
 
+
     val A = Vec(ball.x,ball.y)
     val BH = getBH(A)
     val H = B + BH
     lastH = H
     val distance = (H-A).length
-
-
     if(distance< ball.radius){
       if( isInSegment(BH)  ){
         shouldDie= true

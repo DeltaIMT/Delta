@@ -30,10 +30,10 @@ class RbndClientView(hostPool: HostPool[RbndHost], client: ActorRef) extends Abs
 
     val listString = list.map {
       case e: Ball => {
-        s"""{"type":"ball","id":"${e.id}","x":"${e.x.toInt}","y":"${e.y.toInt}"}"""
+        s"""{"type":"ball","id":"${e.id}","x":"${e.x.toInt}","y":"${e.y.toInt}","energy":"${e.energy}"}"""
       }
       case e: Wall => {
-        s"""{"type":"wall","id":"${e.id}","xh":"${e.lastH.x.toInt}","yh":"${e.lastH.y.toInt}","x":"${e.x.toInt}","y":"${e.y.toInt}","x2":"${e.x2.toInt}","y2":"${e.y2.toInt}"}"""
+        s"""{"type":"wall","id":"${e.id}","x":"${e.x.toInt}","y":"${e.y.toInt}","x2":"${e.x2.toInt}","y2":"${e.y2.toInt}"}"""
       }
     } ++ List(
       s"""{"type":"camera","id":"0","x":"${ball.x.toInt}","y":"${ball.y.toInt}"}""",

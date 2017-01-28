@@ -21,6 +21,7 @@ document.addEventListener('keydown', function (event) {
     }
 });
 
+module.exports.getPos = () => currentPos
 module.exports.getCamera = () => cam
 module.exports.setSelectionSquare = (drag) => selectionSquare = drag
 module.exports.setSelectedId = (ids) => selectedIds = ids
@@ -215,7 +216,7 @@ const drawer = (context) => {
             context.drawImage(canvasCacheBowman, bowman.x - 40, bowman.y - 40)
         context.beginPath()
         context.arc(bowman.x, bowman.y, 20, 0, Math.PI * 2)
-        context.fillStyle = "rgb(" + bowman.color[0] + ", " + bowman.color[1] + ", " + bowman.color[2] + ")"
+        context.fillStyle = "rgb(" + parseInt(bowman.color[0]*bowman.health) + ", " + parseInt(bowman.color[1]*bowman.health) + ", " + parseInt(bowman.color[2]*bowman.health) + ")"
         context.fill()
     }
 
@@ -230,7 +231,7 @@ const drawer = (context) => {
         context.lineTo(x - 20, y - 10);
         context.closePath()
 
-        context.fillStyle = "rgb(" + swordman.color[0] + ", " + swordman.color[1] + ", " + swordman.color[2] + ")"
+        context.fillStyle = "rgb(" + parseInt(swordman.color[0]*swordman.health) + ", " + parseInt(swordman.color[1]*swordman.health) + ", " + parseInt(swordman.color[2]*swordman.health) + ")"
         context.fill()
     }
 
@@ -241,7 +242,7 @@ const drawer = (context) => {
         roundRect(context, com.x - 22, com.y - 22, 44, 44, 7)
         //context.rect(com.x - 25, com.y - 25, 50, 50)
         //  context.arc(com.x, com.y, 25, 0, Math.PI * 2)
-        context.fillStyle = "rgb(" + com.color[0] + ", " + com.color[1] + ", " + com.color[2] + ")"
+        context.fillStyle = "rgb(" + parseInt(com.color[0]*com.health) + ", " + parseInt(com.color[1]*com.health) + ", " + parseInt(com.color[2]*com.health) + ")"
         context.fill()
     }
 
@@ -431,7 +432,7 @@ const drawer = (context) => {
 
     }
     context.shadowBlur = 30;
-    context.shadowColor = "black";
+    context.shadowColor = "black"
     context.beginPath()
     context.fillStyle = "rgba(" + 150 + ", " + 150 + ", " + 150 + "," + 0.4 + ")"
     context.rect(0, 0, 350, 130)
@@ -440,10 +441,46 @@ const drawer = (context) => {
     context.font = "bold 18px Courier New";
     context.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
     if (other !== null)
-        context.fillText("Own units       : " + other.n, 10, 30);
+        context.fillText("xp : " + other.xp + " used : " + other.usedXp, 10, 30)
     if (bowmen != undefined && flags != undefined)
-        context.fillText("Total displayed : " + (bowmen.length + flags.length), 10, 55);
-    context.fillText("Ping : " + parseInt(ping * 10) / 10.0, 10, 80);
-    context.fillText("Draw fps        : " + parseInt(10000.0 / msElapsed) / 10.0, 10, 105);
+        context.fillText("Total displayed : " + (bowmen.length + flags.length), 10, 55)
+    context.fillText("Ping : " + parseInt(ping * 10) / 10.0, 10, 80)
+    context.fillText("Draw fps        : " + parseInt(10000.0 / msElapsed) / 10.0, 10, 105)
+
+    //Draw icon o spawning
+    const iconX = 20
+    const iconY = 150
+    const iconSize = 60
+    const iconHalfX = iconX + (iconSize / 2)
+
+
+
+    context.fillStyle = "rgba(" + 150 + ", " + 150 + ", " + 150 + "," + 0.4 + ")"
+    roundRect(context, iconX, iconY + 0 * (iconSize + iconSize / 3), iconSize, iconSize, 7)
+    context.fill()
+    roundRect(context, iconX, iconY + 1 * (iconSize + iconSize / 3), iconSize, iconSize, 7)
+    context.fill()
+    roundRect(context, iconX, iconY + 2 * (iconSize + iconSize / 3), iconSize, iconSize, 7)
+    context.fill()
+    context.beginPath()
+    context.arc(iconHalfX, iconY + iconSize / 2, 20, 0, Math.PI * 2)
+    const x3 = parseInt(iconHalfX)
+    const y3 = parseInt(iconY + iconSize + iconSize / 3 + iconSize / 2)
+    context.moveTo(x3, y3 + 18)
+    context.lineTo(x3 + 20, y3 - 10)
+    context.lineTo(x3 - 20, y3 - 10)
+    context.fillStyle = "rgba(" + 150 + ", " + 150 + ", " + 150 + "," + 1.0 + ")"
+    context.fill()
+    context.closePath()
+    roundRect(context, iconX + (iconSize - 44) / 2, iconY + 2 * (iconSize + iconSize / 3) + (iconSize - 44) / 2, 44, 44, 7)
+    context.fillStyle = "rgba(" + 150 + ", " + 150 + ", " + 150 + "," + 1.0 + ")"
+    context.fill()
+
+    context.beginPath()
+    context.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
+    context.fillText("1", iconHalfX-5,5+ iconY+ iconSize / 2)
+    context.fillText("2", iconHalfX-5,5+ iconY + 1 * (iconSize + iconSize / 3)+ iconSize / 2)
+    context.fillText("3", iconHalfX-5,5+ iconY + 2 * (iconSize + iconSize / 3)+ iconSize / 2)
+
 }
 

@@ -119,7 +119,7 @@ const linearInterp = (path, float_i) => {
 
 Mous.onTrailEnd((trail) => {
     Draw.setTrail([])
-    
+
     const trailSize = trail.length
     const selectedSize = getSelected().length
     console.log(selectedSize)
@@ -149,11 +149,30 @@ document.addEventListener("contextmenu", function (e) {
     e.preventDefault()
 });
 
+document.addEventListener('keydown', (event) => {
+    const keyName = event.keyCode;
+    console.log(keyName)
+    if (keyName === 49 || keyName === 50 || keyName === 51) {
+        client.send(
+            JSON.stringify([{
+                hosts : [[Draw.getPos().x,Draw.getPos().y]],
+                data: JSON.stringify({
+                    id: "" + (parseInt(keyName)-48),
+                    x: Draw.getPos().x,
+                    y: Draw.getPos().y
+                })
+            }])
+        )
+
+    }
+}
+)
+
 
 let selectedselectable = []
 
 const getSelected = () => {
-    return selectedselectable.filter(id =>    selectable[id] != undefined)
+    return selectedselectable.filter(id => selectable[id] != undefined)
 }
 
 let toBeSelected = []
@@ -165,7 +184,7 @@ const loop = () => {
 
     const frame = frameInterp.getInterp()
     selectable = {}
-    const selectableIds = Object.keys(frame).filter(k => { return frame[k].type == "bowman" || frame[k].type == "com"  || frame[k].type == "swordman" })
+    const selectableIds = Object.keys(frame).filter(k => { return frame[k].type == "bowman" || frame[k].type == "com" || frame[k].type == "swordman" })
     selectableIds.forEach(k => { selectable[k] = frame[k] })
     selectableVal = Object.keys(selectable).map(key => selectable[key])
     Draw.setSelectedId(getSelected())

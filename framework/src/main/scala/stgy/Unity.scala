@@ -46,10 +46,10 @@ trait Damagable extends Unity {
   }
 
   def damagableStep = {
-    health = math.min(maxHealth, health + 0.0008)
+    health = math.min(maxHealth, health + 0.0002*maxHealth)
   }
 
-  def isDead: Boolean = health == 0
+  def isDead: Boolean = health <= 0
 }
 
 trait Shooter {
@@ -79,7 +79,7 @@ trait Spawner extends Unity{
   }
 
   def canSpawn: Boolean = {
-    canSpawnIn == 0
+    false//canSpawnIn == 0
   }
 
   def spawn: Unity = {
@@ -193,19 +193,23 @@ class Commander(var x : Double,var y : Double,var id : String,var clientId : Str
 
 }
 
-class Aggregator(val clientId : String , var x : Double, var y : Double ) extends Element with Observable {
+class Aggregator(val clientId : String , var x : Double, var y : Double, var color : Array[Int] ) extends Element with Observable {
+
   var minXY = Vec(x,y)
   var maxXY = Vec(x,y)
   var xp = 0
+  var xpSum= 0
+  var usedXpSum= 0
+  var xpUsed = 0
 }
 
 
 class Swordman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
   override var radius: Int = 20
-  maxHealth = 10
-  health = 10
+  maxHealth = 5
+  health = 5
   speed = 2
-  var damage = 0.5
+  var damage = 0.3
   def step() = {
     doMove
     shooterStep

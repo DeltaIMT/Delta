@@ -1,10 +1,12 @@
 package stgy
 
 import akka.actor.ActorRef
+import akka.actor.FSM.->
 import core.user_import.{Element, Zone}
 import core.{Host, HostPool, HyperHost}
 import kamon.Kamon
 import play.api.libs.json.Json
+
 import scala.util.Random
 
 class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, zone) {
@@ -64,20 +66,25 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
         enemy.foreach(e => {
           //There is a shot unit
           if ((Vec(e.x, e.y) - Vec(a.x, a.y)).length < e.radius) {
-            e.damage(0.201)
-            elements -= a.id
-            //            if (elements.contains(a.shooterId))
-            //              elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
-            //            else {
-            //              neighbours.foreach(h => if (trace) h.callTrace(_.gainxp(a.shooterId), "gainxp") else h.call(_.gainxp(a.shooterId)))
-            //            }
-//                        if (elements.contains(a.shooterId))
-//                          elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
-//                        else {
-//                          neighbours.foreach(h => if (trace) h.callTrace(_.gainxp(a.shooterId), "gainxp") else h.call(_.gainxp(a.shooterId)))
-//                        }
-            //gainxpAggreg
 
+            if (!e.isDead) {
+              e.damage(0.201)
+              elements -= a.id
+              //            if (elements.contains(a.shooterId))
+              //              elements(a.shooterId).asInstanceOf[Evolving].gainKillXp
+              //            else {
+              //              neighbours.foreach(h => if (trace) h.callTrace(_.gainxp(a.shooterId), "gainxp") else h.call(_.gainxp(a.shooterId)))
+              //            }
+
+              if (e.isDead) {
+                if (elements.contains(a.shooterId) && aggregs.contains(a.clientId))
+                  aggregs(a.clientId).xp += 1
+                else {
+                  neighbours.foreach(h => if (trace) h.callTrace(_.gainxpAggreg(a.shooterId), "gainxp") else h.call(_.gainxpAggreg(a.shooterId)))
+                }
+              }
+
+            }
           }
         })
       }
@@ -109,6 +116,7 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
       if (closest._2 != null && A.canShoot && A.canAttack(closest._2)) {
         val damage = A.attack(closest._2)
         closest._2.health -= damage
+        if(closest._2.isDead) gainxpAggreg(A.id)
       }
 
     }
@@ -179,9 +187,11 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
 
       listId ::= u.clientId
       if (!aggregs.contains(u.clientId)) {
-        aggregs += u.clientId -> new Aggregator(u.clientId, u.x, u.y)
+        aggregs += u.clientId -> new Aggregator(u.clientId, u.x, u.y, u.color)
         if (u.clientViews.size > 0)
           aggregs(u.clientId).sub(u.clientViews.head)
+        else
+          println("NO CLIENT VIEW FOUND")
       }
       else {
         aggregs(u.clientId).minXY = Vec(math.min(aggregs(u.clientId).minXY.x, u.x), math.min(aggregs(u.clientId).minXY.y, u.y))
@@ -191,10 +201,10 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
 
     listId = listId.distinct
     aggregs.values.foreach(a => {
-      if (!listId.contains(a.clientId))
-        aggregs -= a.clientId
-      else
-        a.notifyClientViews
+      //      if (!listId.contains(a.clientId))
+      //        aggregs -= a.clientId
+      //      else
+      a.notifyClientViews
     })
 
 
@@ -237,25 +247,60 @@ class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, 
     }
   }
 
+  def gainxpAggreg(shooterId: String) = {
+    if (elements.contains(shooterId))
+      if (aggregs.contains(elements(shooterId).asInstanceOf[Unity].clientId)) {
+        aggregs(elements(shooterId).asInstanceOf[Unity].clientId).xp += 1
+      }
+  }
+
   def gainxp(e: String) = {
     if (elements.contains(e))
       elements(e).asInstanceOf[Evolving].gainKillXp
   }
 
-  def gainxpAggreg(clientId: String) = {
-    if(aggregs.contains(clientId)){
-      aggregs(clientId).xp += 1
-    }
-  }
-
-  override def clientInput(id: String, data: String): Unit = {
+  override def clientInput(idClient: String, data: String): Unit = {
 
     val json = Json.parse(data)
     val id = (json \ "id").get.as[String]
     val x = (json \ "x").get.as[Double]
     val y = (json \ "y").get.as[Double]
-
-    if (elements.contains(id)) {
+    if (id == "1" || id == "2" || id == "3") {
+      if (aggregs.contains(idClient)) {
+        val ag = aggregs(idClient)
+        if (id == "1") {
+          if (ag.usedXpSum < ag.xpSum) {
+            ag.xpUsed += 1
+            ag.notifyClientViews
+            val idObj = Random.alphanumeric.take(10).mkString
+            val unit = new Bowman(x + Random.nextInt(200) - 100, y + Random.nextInt(200) - 100, idObj, idClient, ag.color)
+            unit.sub(ag.clientViews.head)
+            elements += idObj -> unit
+          }
+        }
+        else if (id == "2") {
+          if (ag.usedXpSum+2 < ag.xpSum) {
+            ag.xpUsed += 3
+            ag.notifyClientViews
+            val idObj = Random.alphanumeric.take(10).mkString
+            val unit = new Swordman(x + Random.nextInt(200) - 100, y + Random.nextInt(200) - 100, idObj, idClient, ag.color)
+            unit.sub(ag.clientViews.head)
+            elements += idObj -> unit
+          }
+        }
+        else if (id == "3") {
+          if (ag.usedXpSum+9 < ag.xpSum) {
+            ag.xpUsed += 10
+            ag.notifyClientViews
+            val idObj = Random.alphanumeric.take(10).mkString
+            val unit = new Commander(x + Random.nextInt(200) - 100, y + Random.nextInt(200) - 100, idObj, idClient, ag.color)
+            unit.sub(ag.clientViews.head)
+            elements += idObj -> unit
+          }
+        }
+      }
+    }
+    else if (elements.contains(id)) {
       val bm = elements(id).asInstanceOf[Movable]
       bm.move = true
       bm.target = Vec(x, y)

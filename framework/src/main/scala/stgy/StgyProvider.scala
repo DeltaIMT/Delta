@@ -12,8 +12,14 @@ class StgyProvider(hostPool: HostPool[StgyHost]) extends Provider[StgyClientView
 
   var rand = new Random()
 
+
+
   override def OnConnect(id: String, obs: Observer) = {
-    var color = Array(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255))
+
+    var a = Random.nextDouble()*math.Pi*2
+    def sin(angle: Double, phase : Double) : Int = (123.0+122.0*math.sin(angle + phase)).toInt
+    var color= Array( sin(a,0), sin(a, math.Pi/3) , sin(a , 2*math.Pi/3))
+
     val randx = 200+rand.nextInt(2600)
     val randy = 200+rand.nextInt(2600)
     val numberOfStartUnit = 4

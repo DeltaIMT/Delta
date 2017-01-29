@@ -8,22 +8,17 @@ const Intr = require('./intersection')
 
 let selectedIds = []
 let selectionSquare = null
-
+let moveSquare = null
 let selectable = []
 let centerPosition = null
+let moveOrder = []
+let ping = 0
 window.onload = () => {
     let time = 0
-
-    let ping = 0
     let endTime = performance.now()
     let msElapsed = 0
     let startTime = performance.now()
-
-    let moveSquare = null
-
     let trail = []
-
-
     const loop = () => {
         time += 1
         endTime = performance.now()
@@ -36,13 +31,26 @@ window.onload = () => {
         selectableIds.forEach(k => { newSelectable.push(frame[k]) })
         selectable = newSelectable
 
+
+        if (moveOrder.length > 0) {
+            let toServer
+            let numToSend = 20
+            if (moveOrder.length > numToSend) {
+                toServer = JSON.stringify(moveOrder.slice(0, numToSend))
+                moveOrder = moveOrder.slice(numToSend);
+            }
+            else {
+                toServer = JSON.stringify(moveOrder)
+                moveOrder = []
+            }
+            client.send(toServer)
+        }
+
         Drawer.draw(frame, msElapsed, time, ping, selectedIds, moveSquare, selectionSquare, trail)
         window.requestAnimationFrame(loop)
     }
     window.requestAnimationFrame(loop)
 }
-
-
 
 
 client.launch()
@@ -60,7 +68,7 @@ client.dataManipulation(dataZiped => {
     })
 })
 
-
+setInterval(() => { client.getPing((ping1) => ping =ping1) }, 1000)
 
 const getTranslatedMouse = (mouse) => {
     let cam = Drawer.cam()
@@ -92,7 +100,6 @@ document.addEventListener("contextmenu", function (e) {
     e.preventDefault()
 })
 
-
 document.addEventListener('keydown', (event) => {
     const keyName = event.keyCode;
     if (keyName === 49 || keyName === 50 || keyName === 51) {
@@ -110,3 +117,79 @@ document.addEventListener('keydown', (event) => {
     }
 }
 )
+
+const moveSquareCompute = (mouse) => {
+    const num = selectedIds.length
+    const x1 = mouse.p1.x
+    const y1 = mouse.p1.y
+    const x2 = mouse.p2.x
+    const y2 = mouse.p2.y
+    let vx = x2 - x1
+    let vy = y2 - y1
+    if (Math.abs(vx) > 30 || Math.abs(vy) > 30) {
+        const vl = Math.sqrt(vx * vx + vy * vy)
+        const numInWidth = (vl / 45)
+        const numInLength = num / numInWidth
+        vx /= vl; vy /= vl;
+        let px = -vy
+        let py = vx
+        px *= 45
+        py *= 45
+        return { x1: x1, y1: y1, x2: x2, y2: y2, vx: vx * 45, vy: vy * 45, px: px, py: py, numW: numInWidth, numL: numInLength }
+    }
+
+    else {
+        let square = {}
+        let sqrt = Math.sqrt(num)
+        square.numW = sqrt
+        square.numL = sqrt
+        square.x1 = x1 - square.numW * 45 / 2
+        square.y1 = y1 - square.numL * 45 / 2
+        square.x2 = x1 + square.numW * 45 / 2
+        square.y2 = square.y1
+        square.vx = 45
+        square.vy = 0
+        square.px = 0
+        square.py = 45
+        return square
+    }
+
+}
+
+Mous.onDragRightEnd((mouse) => {
+    const square = moveSquareCompute(getTranslatedMouse(mouse))
+
+    let offX = 0
+    let offY = 0
+   selectedIds.forEach(k => {
+        const b = selectable.find( e=> e.id = k)
+        const hosts = []
+        for (let j = -1; j <= 1; j++)
+            for (let i = -1; i <= 1; i++) {
+                hosts.push([b.x * 1.0 + 600 * i, b.y * 1.0 + 600 * j])
+            }
+
+
+        moveOrder.push(
+            {
+                hosts: hosts,
+                data: JSON.stringify({
+                    id: b.id,
+                    x: parseInt(square.x1 + offX * square.vx + offY * square.px),
+                    y: parseInt(square.y1 + offX * square.vy + offY * square.py)
+                })
+            }
+        )
+        offX += 1
+        if (offX >= square.numW) {
+            offX = 0
+            offY += 1
+        }
+    })
+    moveSquare = null
+})
+
+Mous.onDragRight((mouse) => {
+    const square = moveSquareCompute(getTranslatedMouse(mouse))
+    moveSquare = square
+})

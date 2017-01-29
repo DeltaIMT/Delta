@@ -42,8 +42,8 @@ class FrameInterp {
             return frame
         }
 
-        this.frame0 = fusion(this.frame0, this.frame1)
-        this.frame1 = fusion(this.frame1, this.frame2)
+        this.frame0 = this.frame1 //fusion(this.frame0, this.frame1)
+        this.frame1 = this.frame2 //fusion(this.frame1, this.frame2)
         this.frame2 = fusion(this.frame2,  frame)
 
     }

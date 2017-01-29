@@ -296,72 +296,7 @@ const drawer = (context) => {
     }
 
 
-    // //Heath Bar
-    // for (const bowman of bowmen) {
-    //     context.beginPath()
-    //     context.arc(bowman.x, bowman.y, 7, 0, Math.PI * 2)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(bowman.x, bowman.y, 7, 0, Math.PI * 2 * bowman.health)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(bowman.x, bowman.y, 12, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(bowman.xp))))
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
-    //     context.stroke()
-    // }
-
-    // //Heath Bar
-    // for (const com of coms) {
-
-    //     context.beginPath()
-    //     context.arc(com.x, com.y, 7, 0, Math.PI * 2)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(com.x, com.y, 7, 0, Math.PI * 2 * com.health / 5.0)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 0 + ", " + 255 + ", " + 0 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(com.x, com.y, 12, 0, Math.PI * 2)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(com.x, com.y, 12, 0, Math.PI * 2 * com.spawning)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 50 + ", " + 130 + ", " + 255 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(com.x, com.y, 17, 0, Math.PI * 2)
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 50 + ", " + 50 + ", " + 50 + ")"
-    //     context.stroke()
-
-    //     context.beginPath()
-    //     context.arc(com.x, com.y, 17, 0, Math.PI * 2 * (1.0 - 1.0 / (1.0 + 0.1 * parseFloat(com.xp))))
-    //     context.lineWidth = 5
-    //     context.strokeStyle = "rgb(" + 255 + ", " + 255 + ", " + 0 + ")"
-    //     context.stroke()
-    // }
+  
 
     //Possessing and spawning Bar
     for (const flag of flags) {

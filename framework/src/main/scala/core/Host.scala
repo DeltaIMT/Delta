@@ -3,7 +3,7 @@ package core
 import akka.actor.ActorRef
 import core.user_import.{Element, Zone}
 
-abstract class Host(val hostPool: HostPool[_], val zone: Zone) {
+abstract class Host(val hostPool: HostPool[_,_], val zone: Zone) {
   var container: ActorRef = _
   def setContainer(ar : ActorRef) = {container = ar}
   def self() = container

@@ -9,7 +9,7 @@ import play.api.libs.json.Json
 
 import scala.util.Random
 
-class StgyHost(hostPool: HostPool[StgyHost], zone: Zone) extends Host(hostPool, zone) {
+class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) extends Host(hostPool, zone) {
   val trace = true
   val counter = Kamon.metrics.counter(getName("counter"))
   var rand = new Random()

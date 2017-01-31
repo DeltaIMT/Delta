@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object Stgy extends App {
 
-  val main = new AbstractMain[StgyHost, StgyProvider]()
+  val main = new AbstractMain[StgyHost, StgyProvider, StgyHostObserver]()
   main.numberOfClient = 100
   main.launch
   val cancellable = main.hostPool.hyperHostsMap.values.map(hh => main.actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, hh.host, CallTrace((x: Host) => x.tick(), "tick")))

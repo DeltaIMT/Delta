@@ -6,12 +6,13 @@ import akka.http.scaladsl.server.Directives.{get, handleWebSocketMessages, param
 import akka.http.scaladsl.server.RouteResult
 import akka.stream.ActorMaterializer
 import core.CoreMessage.{Call, CallTrace}
-import core.`abstract`.ContainerHost
+import core.`abstract`.{ContainerHost, ContainerHostObserver}
 import core.port_dispatch.ProviderPort
 import core.user_import.Zone
 import kamon.Kamon
 import kamon.metric.instrument.Histogram
 import kamon.trace.TraceInfo
+
 import scala.reflect.runtime.{universe => ru}
 import ru._
 import scala.collection.immutable.IndexedSeq
@@ -37,7 +38,7 @@ class Suber extends Actor {
 }
 
 
-class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provider[_] : TypeTag : ClassTag] {
+class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provider[_] : TypeTag : ClassTag, HostObserverType <: HostObserver : TypeTag : ClassTag] {
   var initialPort = 9001
   var numberOfClient = 30
   var hostsGridWidth = 5
@@ -48,7 +49,7 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
 
   var cancellable: Seq[Cancellable]=_
   implicit var actorSystem: ActorSystem=_
-  var hostPool: HostPool[HostType] = _
+  var hostPool: HostPool[HostType, HostObserverType] = _
 
   def launch = {
     println("framework starting")
@@ -58,19 +59,23 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
     implicit val flowMaterializer = ActorMaterializer()
 
     val actorRefOfSubscriber: ActorRef = actorSystem.actorOf(Props[Suber], "suber")
-    hostPool = new HostPool[HostType](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
+    hostPool = new HostPool[HostType, HostObserverType](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
     val hosts: IndexedSeq[ActorRef] = 0 until hostsGridWidth * hostsGridHeight map { i => {
       val zone = new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight)
       val inside = createInstance[HostType](hostPool, zone)
       actorSystem.actorOf(Props(new ContainerHost(hostPool, zone, inside)), "host_" + i)
     }
     }
-    val providerClients = 0 until numberOfClient - 1 map { i => actorSystem.actorOf(Props(createInstance[ProviderType](hostPool)), "provider_" + i) }
+    val hostObserver = createInstance[HostObserverType](hostPool)
+    val containerHostObserver = actorSystem.actorOf(Props(new ContainerHostObserver[HostType, HostObserverType](hostPool, hostObserver)))
+    val hyperHostObserver = new HyperHostObserver(containerHostObserver)
+    val providerClients = 0 until numberOfClient - 1 map { i => actorSystem.actorOf(Props(createInstance[ProviderType](hostPool, hyperHostObserver)), "provider_" + i) }
     val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient, providerClients)), "providerPort")
     Kamon.tracer.subscribe(actorRefOfSubscriber)
     val providers = providerPort :: providerClients.toList
     val websockets = -1 until numberOfClient - 1 map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i,flowMaterializer) }
     hostPool.addHost(hosts)
+
     val routes = websockets.map(x => {
       x._1 ->
         (get & parameter("id")) {

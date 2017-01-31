@@ -3,11 +3,11 @@ package core.`abstract`
 import akka.actor.Actor
 import core.CoreMessage._
 import core.user_import.Zone
-import core.{HostPool, Host}
+import core.{Host, HostObserver, HostPool}
 import kamon.trace.Tracer
 
 
-class ContainerHost[T <: Host](val hostPool: HostPool[T], val zone: Zone, val insideHost : T) extends Actor {
+class ContainerHost[T <: Host, U <: HostObserver](val hostPool: HostPool[T, U], val zone: Zone, val insideHost : T) extends Actor {
 
   insideHost.setContainer(self)
   private val getNum = (zone.x.toInt/zone.w).toInt + "-" + (zone.y.toInt/zone.w).toInt

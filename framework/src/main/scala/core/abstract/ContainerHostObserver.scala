@@ -6,17 +6,17 @@ import core.CoreMessage._
 import core.{Host, HostObserver, HostPool}
 import kamon.trace.Tracer
 
-class ContainerHostObserver[T <: Host](val hostPool: HostPool[T], val insideHostObserver : HostObserver) extends Actor{
+class ContainerHostObserver[T <: Host, U <: HostObserver](val hostPool: HostPool[T, U], val insideHostObserver : U) extends Actor{
 
   insideHostObserver.setContainer(self)
 
   override def receive: Receive = {
 
-    case call:Call[HostObserver] =>{
+    case call:Call[U] =>{
       call.func(insideHostObserver)
     }
 
-    case call:CallTrace[HostObserver] =>{
+    case call:CallTrace[U] =>{
       Tracer.withNewContext("host_observer_method_" +call.name  , true) {
         call.func(insideHostObserver)
       }

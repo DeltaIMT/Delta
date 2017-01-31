@@ -3,7 +3,7 @@ package core
 import akka.actor.ActorRef
 
 
-class HostObserver(val hostPool: HostPool[_]) {
+abstract class HostObserver(val hostPool: HostPool[_,_]) {
 
   var container: ActorRef = _
 

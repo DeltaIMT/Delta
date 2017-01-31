@@ -6,7 +6,7 @@ import core.{HostPool, HyperHost}
 import core.`abstract`.AbstractClientView
 import core.user_import.Zone
 
-class StgyClientView(hostPool: HostPool[StgyHost], client: ActorRef) extends AbstractClientView(hostPool, client) {
+class StgyClientView(hostPool: HostPool[StgyHost, StgyHostObserver], client: ActorRef) extends AbstractClientView(hostPool, client) {
   var pos = Vec(1500, 1500)
   var id = ""
   var totalXp = 0.0

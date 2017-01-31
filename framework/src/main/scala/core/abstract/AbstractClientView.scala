@@ -7,7 +7,7 @@ import java.util.zip.GZIPOutputStream
 import akka.actor.{Actor, ActorRef}
 import core.CoreMessage.{AnyParts, Disconnect, PlayersUpdate}
 import core.user_import.{Element, Zone}
-import core.{Host, HostPool, HyperHost}
+import core.{Host, HostObserver, HostPool, HyperHost}
 
 import scala.collection.mutable
 import scala.reflect.runtime.{universe => ru}
@@ -16,7 +16,7 @@ case class Notify(any: Any)
 
 case object UpdateClient
 
-class  AbstractClientView(hosts: HostPool[_ <: Host], client: ActorRef) extends Actor {
+class  AbstractClientView(hosts: HostPool[_ <: Host, _ <: HostObserver], client: ActorRef) extends Actor {
 
   var nextbuffer: Int = 0
   var buffers: mutable.HashMap[Int, (Int, List[Any])] = collection.mutable.HashMap[Int, (Int, List[Any])]()

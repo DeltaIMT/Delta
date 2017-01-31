@@ -2,7 +2,7 @@ package core
 
 import akka.actor.ActorRef
 
-class HostPool[T <: Host](val w : Double,val h: Double, val wn :Int, val hn : Int) {
+class HostPool[T <: Host, U <: HostObserver](val w : Double,val h: Double, val wn :Int, val hn : Int) {
 
   var hyperHostsMap =  collection.mutable.HashMap[ActorRef,HyperHost[T]]()
   var hosts  = IndexedSeq[ActorRef]()

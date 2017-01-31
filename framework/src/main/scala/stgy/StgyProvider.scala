@@ -1,13 +1,13 @@
 package stgy
 
 import core.user_import.{Observable, Observer}
-import core.{HostPool, Provider}
+import core.{HostPool, HyperHostObserver, Provider}
 
 import scala.util.Random
 
 
 class IdGiver(val id: String,val x: Double, val y :Double) extends Observable {}
-class StgyProvider(hostPool: HostPool[StgyHost]) extends Provider[StgyClientView](hostPool) {
+class StgyProvider(hostPool: HostPool[StgyHost, StgyHostObserver], hostObserver: HyperHostObserver) extends Provider[StgyClientView](hostPool, hostObserver) {
 
 
   var rand = new Random()

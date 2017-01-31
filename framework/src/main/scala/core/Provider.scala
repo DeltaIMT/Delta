@@ -13,7 +13,7 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: HostPool[_]) extends Actor {
+abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: HostPool[_], hostObserver: ActorRef) extends Actor {
 
   var clients = collection.mutable.HashMap[String, (Observer, Cancellable)]()
   var clientRef: ActorRef = null
@@ -27,6 +27,7 @@ abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: Hos
       val clientView = context.actorOf(Props(createInstance[T](playerActorRef).asInstanceOf[T]), "clientview_" + id)
       val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientView, UpdateClient)
       clients += (id -> (new Observer(id, clientView), cancellable))
+      hostObserver ! AddClientView(id, clientView)
       OnConnect(id, clients(id)._1)
       //      println("Provider Connection    " + id)
     }
@@ -36,6 +37,7 @@ abstract class Provider[T <: AbstractClientView : TypeTag : ClassTag](hosts: Hos
       OnDisconnect(id, clients(id)._1)
       clients -= id
       //      println("Provider Disconnection " + id)
+      hostObserver ! DeleteClientView(id)
       providerPort ! ClientDisconnection(portUsed)
     }
 

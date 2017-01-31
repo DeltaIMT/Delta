@@ -26,4 +26,6 @@ object CoreMessage {
   case class ClientDisconnection(port:Int)
   case class Call[T <: Host]( func : T => Unit )
   case class CallTrace[T <: Host]( func : T => Unit , name : String)
+  case class AddClientView(idClient: String, clientViewRef: ActorRef)
+  case class DeleteClientView(idClient: String)
 }

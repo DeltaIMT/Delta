@@ -38,7 +38,7 @@ class Suber extends Actor {
 }
 
 
-class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provider[_] : TypeTag : ClassTag, HostObserverType <: HostObserver : TypeTag : ClassTag] {
+class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provider[_,_] : TypeTag : ClassTag, HostObserverType <: HostObserver : TypeTag : ClassTag] {
   var initialPort = 9001
   var numberOfClient = 30
   var hostsGridWidth = 5
@@ -66,15 +66,19 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
       actorSystem.actorOf(Props(new ContainerHost(hostPool, zone, inside)), "host_" + i)
     }
     }
+
     val hostObserver = createInstance[HostObserverType](hostPool)
     val containerHostObserver = actorSystem.actorOf(Props(new ContainerHostObserver[HostType, HostObserverType](hostPool, hostObserver)))
-    val hyperHostObserver = new HyperHostObserver(containerHostObserver)
+    val hyperHostObserver = new HyperHostObserver[HostObserverType](containerHostObserver)
+
     val providerClients = 0 until numberOfClient - 1 map { i => actorSystem.actorOf(Props(createInstance[ProviderType](hostPool, hyperHostObserver)), "provider_" + i) }
     val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient, providerClients)), "providerPort")
     Kamon.tracer.subscribe(actorRefOfSubscriber)
     val providers = providerPort :: providerClients.toList
     val websockets = -1 until numberOfClient - 1 map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i,flowMaterializer) }
+
     hostPool.addHost(hosts)
+    hostPool.setHyperHostObserver(hyperHostObserver)
 
     val routes = websockets.map(x => {
       x._1 ->

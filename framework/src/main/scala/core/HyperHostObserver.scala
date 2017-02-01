@@ -6,16 +6,16 @@ import core.CoreMessage.{Call, CallTrace, ClientInput}
 import scala.concurrent.duration._
 
 
-class HyperHostObserver(val hostObserver: ActorRef) {
+class HyperHostObserver[T <: HostObserver](val hostObserver: ActorRef) {
   implicit val timeout = Timeout(1.second)
 
   def clientInput(id :String , data: String) = hostObserver ! ClientInput(id, data)
 
-  def call(func : HostObserver=> Unit ) = {
+  def call(func : T => Unit ) = {
     hostObserver ! Call(func)
   }
 
-  def callTrace(func : HostObserver=> Unit, name: String ) = {
+  def callTrace(func : T => Unit, name: String ) = {
     hostObserver ! CallTrace(func,name)
   }
 }

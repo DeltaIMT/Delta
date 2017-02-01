@@ -6,10 +6,15 @@ class HostPool[T <: Host, U <: HostObserver](val w : Double,val h: Double, val w
 
   var hyperHostsMap =  collection.mutable.HashMap[ActorRef,HyperHost[T]]()
   var hosts  = IndexedSeq[ActorRef]()
+  var hostObserver: HyperHostObserver[U] = _
+
   def addHost(hosts: IndexedSeq[ActorRef]) = {
     this.hosts = hosts
     hosts foreach {h =>hyperHostsMap += h -> new HyperHost[T](h)}
   }
+
+  def setHyperHostObserver(hyperHostObserver: HyperHostObserver[U]) = hostObserver = hyperHostObserver
+  def getHyperHostObserver() = hostObserver
 
   def clamp(i : Int ) = math.min(math.max(i,0), wn*hn-1  )
 

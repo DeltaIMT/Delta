@@ -27,15 +27,17 @@ object Stgy extends App {
 
   main.launch(hosts,hostObserver)
 
+
   hosts.map(h => h.zone).foreach( z => {
     main.HP.hosts(z).call( h1 =>{
       val h1zone = h1.zone.asInstanceOf[SquareZone]
-      h1.neighbours = main.HP.getHosts(new SquareZone(h1zone.x-1,h1zone.y-1, h1zone.w+2, h1zone.h+2)).filter(_== h1).toList
+      h1.neighbours = main.HP.getHosts(new SquareZone(h1zone.x-10,h1zone.y-10, h1zone.w+20, h1zone.h+20)).filter(_!= h1).toList
     })
   })
 
-  main.HP.hosts.values.foreach( hr => main.setInterval(hr,16, h=> h.tick) )
+  main.HP.hosts.values.foreach( hr =>  main.setHostInterval(hr,16, h=> h.tick) )
 
+  main.setHostObserverInterval(main.HP.hostObserver,1000, h=> h.tick)
 
 
   val ui = new UI

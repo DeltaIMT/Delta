@@ -19,7 +19,7 @@ object CoreMessage {
   case class Method(method : String, args  : Any)
   case class FromProviderPort(actorRef: ActorRef, port:Int)
   case class ClientDisconnection(port:Int)
-  case class Call[T <: Host]( func : T => Unit )
+  case class Call[T]( func : T => Unit )
   case class CallTrace[T <: Host]( func : T => Unit , name : String)
   case class AddClientView(idClient: String, clientViewRef: ActorRef)
   case class DeleteClientView(idClient: String)

@@ -2,17 +2,17 @@ package stgy
 
 import akka.actor.ActorRef
 import akka.actor.FSM.->
-import core.clientView.ClientView
+import core.clientView.ClientViewActor
 import core.host.{HostObserver, HostPool}
 import core.spatial.Zone
 
 
-class StgyClientView(client: ActorRef) extends ClientView(client) {
+class StgyClientView(client: ActorRef) extends ClientViewActor(client) {
   val HP = HostPool[StgyHost, StgyHostObserver]
   var pos = Vec(1500, 1500)
   var id = ""
-  var totalXp = 0.0
-  var totalUsedXp = 0.0
+  var xp = 0.0
+
   var hash = collection.mutable.HashMap[String, Int]()
   var numberOfUnit = 1.0
 
@@ -37,32 +37,7 @@ class StgyClientView(client: ActorRef) extends ClientView(client) {
         min = Vec(e.x - 100, e.y - 100);
         max = Vec(e.x + 100, e.y + 100)
       }
-//      case a: Aggregator => {
-//        min.x = math.min(min.x, a.minXY.x)
-//        min.y = math.min(min.y, a.minXY.y)
-//        max.x = math.max(max.x, a.maxXY.x)
-//        max.y = math.max(max.y, a.maxXY.y)
-//
-//        if (!hashAggreg.contains((a.x, a.y))) {
-//          hashAggreg += (a.x, a.y) -> a
-//        }
-//        else {
-//          hashAggreg((a.x, a.y)) = a
-//        }
-//
-//
-//        totalXp = hashAggreg.values.map(x => x.xp).sum
-//        totalUsedXp = hashAggreg.values.map(x => x.xpUsed).sum
-//
-//        hostPool.getHyperHost(a.x, a.y).call(host => {
-//          if (host.aggregs.contains(id))
-//          host.aggregs(id).xpSum = totalXp
-//          host.aggregs(id).usedXpSum = totalUsedXp
-//
-//        })
-//
-//
-//      }
+
       case _ => {
        // println("notify not matched")
       }
@@ -141,7 +116,7 @@ class StgyClientView(client: ActorRef) extends ClientView(client) {
       case e => "NOT ELEMENT : " + e
     } ++ List(
       s"""{"type":"camera","id":"0","x":"${pos.x.toInt}","y":"${pos.y.toInt}"}""",
-      s"""{"type":"other","id":"1","n":"${numberOfUnit}","xp":"${totalXp}","usedXp":"${totalUsedXp}"}""")
+      s"""{"type":"other","id":"1","n":"${numberOfUnit}","xp":"${xp}","usedXp":"${xp}"}""")
     val string = listString.mkString("[", ",", "]")
     // println(string)
     string

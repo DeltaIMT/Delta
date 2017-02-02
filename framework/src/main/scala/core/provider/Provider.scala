@@ -15,7 +15,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.{universe => ru}
 import ru._
 
-abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : ClassTag] extends Actor {
+abstract class Provider[ClientViewImpl <: clientView.ClientViewActor : TypeTag : ClassTag] extends Actor {
 
   var clients = collection.mutable.HashMap[String, (observerPattern.Observer, Cancellable)]()
   var clientRef: ActorRef = null

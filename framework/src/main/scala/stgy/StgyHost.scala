@@ -61,9 +61,8 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
                 if (elements.contains(a.shooterId) && aggregs.contains(a.clientId))
                   aggregs(a.clientId).xp += e.xpCost
                 else {
-                  val h = HP.getHost(a.shotFrom)
-                  h.call(_.gainxpAggreg(a.shooterId, e.xpCost)
-                  )
+                  gainxpAggreg(a.clientId, e.xpCost)
+
                 }
               }
 
@@ -99,7 +98,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
       if (closest._2 != null && A.canShoot && A.canAttack(closest._2)) {
         val damage = A.attack(closest._2)
         closest._2.health -= damage
-        if (closest._2.isDead) gainxpAggreg(A.id, closest._2.xpCost)
+        if (closest._2.isDead) gainxpAggreg(A.clientId, closest._2.xpCost)
       }
 
     }
@@ -207,21 +206,15 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
 
 
 
-  def gainxpAggreg(shooterId: String, xp: Double) = {
-    if (elements.contains(shooterId))
-      if (aggregs.contains(elements(shooterId).asInstanceOf[Unity].clientId)) {
-        aggregs(elements(shooterId).asInstanceOf[Unity].clientId).xp += xp
-      }
+  def gainxpAggreg(clientId: String, xp: Double) = {
+    HP.hostObserver.call( h =>  h.gainxp(clientId, xp  ))
+    println("sending xp to host Obs " + clientId + " " + xp )
   }
 
-  def gainxp(e: String) = {
-    if (elements.contains(e))
-      elements(e).asInstanceOf[Evolving].gainKillXp
-  }
 
   override def clientInput(idClient: String, data: String): Unit = {
 
-    println("received : " + data)
+  //  println("received : " + data)
     val json = Json.parse(data)
     val id = (json \ "id").get.as[String]
     val x = (json \ "x").get.as[Double]

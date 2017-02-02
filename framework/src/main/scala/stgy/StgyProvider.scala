@@ -14,10 +14,7 @@ class IdGiver(val id: String,val x: Double, val y :Double) extends Observable {}
 
 class StgyProvider extends Provider[StgyClientView] {
   val HP = HostPool[StgyHost, StgyHostObserver]
-
   var rand = new Random()
-
-
 
   override def OnConnect(id: String, obs: Observer) = {
 
@@ -56,9 +53,9 @@ class StgyProvider extends Provider[StgyClientView] {
   }
 
   override def hostsStringToZone(s: String): Zone = {
-    println(s)
+    //println(s)
    val json = Json.parse(s).asInstanceOf[JsArray].value
-    println(json)
+    //println(json)
     val x = json(0).as[Int]
     val y = json(1).as[Int]
     val w = json(2).as[Int]

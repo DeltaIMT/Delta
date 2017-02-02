@@ -30,7 +30,11 @@ HostObserverImpl <: HostObserver[_] : TypeTag : ClassTag
   implicit var actorSystem: ActorSystem=_
   implicit var executionContext:ExecutionContextExecutor=_
 
-  def setInterval( hr : HostRef[HostImpl] , time : Int, func : HostImpl => Unit ) = {
+  def setHostInterval( hr : HostRef[HostImpl] , time : Int, func : HostImpl => Unit ) = {
+    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor , Call(func)  )
+  }
+
+  def setHostObserverInterval( hr : HostRef[HostObserverImpl] , time : Int, func : HostObserverImpl => Unit ) = {
     actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor , Call(func)  )
   }
 

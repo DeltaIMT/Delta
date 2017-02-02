@@ -27,6 +27,8 @@ class StgyClientView(hostPool: HostPool[StgyHost, StgyHostObserver], client: Act
 
   override def dataToViewZone(): List[Zone] = List(new Zone(pos.x - 1500, pos.y - 1500, 3000, 3000))
 
+  override def dataToHostObserver() : HostObserver => Any =  (ho : HostObserver) => ho.getNumUnit(id)
+
   override def onNotify(any: Any): Unit = {
 
     any match {
@@ -71,7 +73,7 @@ class StgyClientView(hostPool: HostPool[StgyHost, StgyHostObserver], client: Act
     //  hostPool.getHyperHost(x, y).exec(l => l -= idBall)
   }
 
-  override def fromListToClientMsg(list: List[Any]) = {
+  override def fromListToClientMsg(list: List[Any], fromHo : Any) = {
 
     // hashTime uploaded each time "fromListToClientMsg is called :
     // if the element is unknown, we added it inside hashTime, else we bring its value to 5

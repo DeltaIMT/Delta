@@ -105,7 +105,7 @@ document.addEventListener('keydown', (event) => {
     if (keyName === 49 || keyName === 50 || keyName === 51) {
         client.send(
             JSON.stringify([{
-                hosts: [[centerPosition.x, centerPosition.y]],
+                hosts: JSON.stringify([parseInt(centerPosition.x)-50, parseInt(centerPosition.y)-50,50,50]),
                 data: JSON.stringify({
                     id: "" + (parseInt(keyName) - 48),
                     x: centerPosition.x,
@@ -163,16 +163,12 @@ Mous.onDragRightEnd((mouse) => {
     let offY = 0
    selectedIds.forEach(k => {
         const b = selectable.find( e=> e.id = k)
-        const hosts = []
-        for (let j = -1; j <= 1; j++)
-            for (let i = -1; i <= 1; i++) {
-                hosts.push([b.x * 1.0 + 600 * i, b.y * 1.0 + 600 * j])
-            }
+        const hosts = [parseInt(b.x-500),parseInt(b.y-500),500,500]
 
 
         moveOrder.push(
             {
-                hosts: hosts,
+                hosts: JSON.stringify(hosts),
                 data: JSON.stringify({
                     id: b.id,
                     x: parseInt(square.x1 + offX * square.vx + offY * square.px),

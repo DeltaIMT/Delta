@@ -6,7 +6,7 @@ object Vec {
   def apply() = new Vec(0, 0)
 }
 
-class Vec(var x: Double, var y: Double) {
+class Vec(var x: Double, var y: Double) extends Element {
 
   def +(v: Vec) = Vec(x + v.x, y + v.y)
 

@@ -2,11 +2,13 @@ package stgy
 
 import akka.actor.ActorRef
 import akka.actor.FSM.->
-import core.{HostPool, HyperHost}
-import core.`abstract`.AbstractClientView
-import core.user_import.Zone
+import core.clientView.ClientView
+import core.host.{HostObserver, HostPool}
+import core.spatial.Zone
 
-class StgyClientView(hostPool: HostPool[StgyHost, StgyHostObserver], client: ActorRef) extends AbstractClientView(hostPool, client) {
+
+class StgyClientView(client: ActorRef) extends ClientView(client) {
+  val HP = HostPool[StgyHost, StgyHostObserver]
   var pos = Vec(1500, 1500)
   var id = ""
   var totalXp = 0.0
@@ -25,9 +27,7 @@ class StgyClientView(hostPool: HostPool[StgyHost, StgyHostObserver], client: Act
   var max = Vec(3000, 3000)
 
 
-  override def dataToViewZone(): List[Zone] = List(new Zone(pos.x - 1500, pos.y - 1500, 3000, 3000))
-
-  override def dataToHostObserver() : HostObserver => Any =  (ho : HostObserver) => ho.getNumUnit(id)
+  override def dataToViewZone(): Zone = new SquareZone(pos.x - 1500, pos.y - 1500, 3000, 3000)
 
   override def onNotify(any: Any): Unit = {
 
@@ -37,34 +37,34 @@ class StgyClientView(hostPool: HostPool[StgyHost, StgyHostObserver], client: Act
         min = Vec(e.x - 100, e.y - 100);
         max = Vec(e.x + 100, e.y + 100)
       }
-      case a: Aggregator => {
-        min.x = math.min(min.x, a.minXY.x)
-        min.y = math.min(min.y, a.minXY.y)
-        max.x = math.max(max.x, a.maxXY.x)
-        max.y = math.max(max.y, a.maxXY.y)
-
-        if (!hashAggreg.contains((a.x, a.y))) {
-          hashAggreg += (a.x, a.y) -> a
-        }
-        else {
-          hashAggreg((a.x, a.y)) = a
-        }
-
-
-        totalXp = hashAggreg.values.map(x => x.xp).sum
-        totalUsedXp = hashAggreg.values.map(x => x.xpUsed).sum
-
-        hostPool.getHyperHost(a.x, a.y).call(host => {
-          if (host.aggregs.contains(id))
-          host.aggregs(id).xpSum = totalXp
-          host.aggregs(id).usedXpSum = totalUsedXp
-
-        })
-
-
-      }
+//      case a: Aggregator => {
+//        min.x = math.min(min.x, a.minXY.x)
+//        min.y = math.min(min.y, a.minXY.y)
+//        max.x = math.max(max.x, a.maxXY.x)
+//        max.y = math.max(max.y, a.maxXY.y)
+//
+//        if (!hashAggreg.contains((a.x, a.y))) {
+//          hashAggreg += (a.x, a.y) -> a
+//        }
+//        else {
+//          hashAggreg((a.x, a.y)) = a
+//        }
+//
+//
+//        totalXp = hashAggreg.values.map(x => x.xp).sum
+//        totalUsedXp = hashAggreg.values.map(x => x.xpUsed).sum
+//
+//        hostPool.getHyperHost(a.x, a.y).call(host => {
+//          if (host.aggregs.contains(id))
+//          host.aggregs(id).xpSum = totalXp
+//          host.aggregs(id).usedXpSum = totalUsedXp
+//
+//        })
+//
+//
+//      }
       case _ => {
-        println("notify not matched")
+       // println("notify not matched")
       }
     }
   }
@@ -73,7 +73,7 @@ class StgyClientView(hostPool: HostPool[StgyHost, StgyHostObserver], client: Act
     //  hostPool.getHyperHost(x, y).exec(l => l -= idBall)
   }
 
-  override def fromListToClientMsg(list: List[Any], fromHo : Any) = {
+  override def fromListToClientMsg(list: List[Any]) = {
 
     // hashTime uploaded each time "fromListToClientMsg is called :
     // if the element is unknown, we added it inside hashTime, else we bring its value to 5

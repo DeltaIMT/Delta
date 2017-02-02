@@ -2,16 +2,16 @@ package core
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
-import akka.stream.{ActorMaterializer, FlowShape, Materializer, OverflowStrategy}
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Sink, Source}
+import akka.stream.{FlowShape, Materializer, OverflowStrategy}
 import core.CoreMessage._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
-class Websocket( val provider : ActorRef,val port : Int,implicit val mat : Materializer) {
+import scala.concurrent.ExecutionContext.Implicits.global
+
+class Websocket(val provider : ActorRef, val port : Int, implicit val mat : Materializer) {
   val playerActorSource= Source.actorRef[Any](10000,OverflowStrategy.fail)
 
-  def flow(id: String, regionName: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>
+  def flow(id: String) : Flow[Message,Message, Any] = Flow.fromGraph(GraphDSL.create(playerActorSource) { implicit builder => playerActor =>
     import GraphDSL.Implicits._
   //  println("Websocket flow called " + id + " on port : " + port)
     val materialization = builder.materializedValue.map(playerActorRef => AddClient(id, playerActorRef))

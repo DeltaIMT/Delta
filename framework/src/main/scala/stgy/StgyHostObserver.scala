@@ -1,8 +1,8 @@
 package stgy
 
-import core.{HostObserver, HostPool}
+import core.host.HostObserver
 
-class StgyHostObserver(hostPool: HostPool[StgyHost, StgyHostObserver]) extends HostObserver(hostPool){
+class StgyHostObserver extends HostObserver[StgyClientView]{
 
   var unitys = collection.mutable.HashMap[String, List[String]]()
 
@@ -13,5 +13,5 @@ class StgyHostObserver(hostPool: HostPool[StgyHost, StgyHostObserver]) extends H
     unitys(clientId) = unityId::unitys(clientId)
   }
 
-
+  override def clientInput(id: String, data: String): Unit = {}
 }

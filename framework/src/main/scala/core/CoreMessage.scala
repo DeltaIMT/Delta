@@ -1,7 +1,7 @@
 package core
 
 import akka.actor.ActorRef
-import core.user_import.Element
+import core.host.Host
 
 
 object CoreMessage {
@@ -13,11 +13,6 @@ object CoreMessage {
   case class SetProvider(actor : ActorRef)
   case class ConnectClient(actor: ActorRef)
   case class PlayersUpdate(json: String)
-  case class TransfertTo(id: String, host: ActorRef)
-  case class Transfert(id: String, element: Element)
-  case class Set(id: String, element: Element)
-  case class Foreach(f : Element => Unit)
-  case class Exec(f : collection.mutable.HashMap[String,Element]=> Unit)
   case class AnyParts(buffer : Int,anys : List[Any])
   case object Tick
   case object Disconnect
@@ -28,4 +23,5 @@ object CoreMessage {
   case class CallTrace[T <: Host]( func : T => Unit , name : String)
   case class AddClientView(idClient: String, clientViewRef: ActorRef)
   case class DeleteClientView(idClient: String)
+  case object UpdateClient
 }

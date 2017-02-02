@@ -1,33 +1,31 @@
 package stgy
 
-import akka.actor.ActorRef
-import akka.actor.FSM.->
-import core.user_import.{Element, Zone}
-import core.{Host, HostPool, HyperHost}
-import kamon.Kamon
+
+import core.host.{Host, HostPool, HostRef}
+import core.spatial.{Viewable, Zone}
 import play.api.libs.json.Json
 
 import scala.util.Random
 
-class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) extends Host(hostPool, zone) {
-  val trace = true
-  val counter = Kamon.metrics.counter(getName("counter"))
+class StgyHost(zone: SquareZone) extends Host(zone) {
+
+  val HP = HostPool[StgyHost, StgyHostObserver]
+  var elements  =collection.mutable.HashMap[String, Element]()
+
   var rand = new Random()
 
-  var targetFromOtherHost = collection.mutable.HashMap[ActorRef, collection.mutable.HashMap[String, Unity]]()
-  var neighbours = List[HyperHost[StgyHost]]()
+  var targetFromOtherHost = collection.mutable.HashMap[SquareZone, collection.mutable.HashMap[String, Unity]]()
+  var neighbours = List[HostRef[StgyHost]]()
 
   var aggregs = collection.mutable.HashMap[String, Aggregator]()
 
-  def getName(name: String) = "host-" + name + getNum
 
   def flush() = {
     elements = collection.mutable.HashMap[String, Element]()
   }
 
-  override def tick(): Unit = {
-    getNeighbours
-    counter.increment()
+  def tick(): Unit = {
+
     val unitys = elements.filter(e => e._2.isInstanceOf[Unity]).values.asInstanceOf[Iterable[Unity]]
 
     val damagable = unitys collect { case d: Damagable => d }
@@ -41,19 +39,8 @@ class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) exten
     val flags = elements.filter(e => e._2.isInstanceOf[Flag]).values.asInstanceOf[Iterable[Flag]]
     val arrows = elements.filter(e => e._2.isInstanceOf[Arrow]).values.asInstanceOf[Iterable[Arrow]]
     val spawner = elements.filter(e => e._2.isInstanceOf[Spawner]).values.asInstanceOf[Iterable[Spawner]]
-    neighbours.foreach(h => if (trace) h.callTrace(_.receiveTarget(self, damagable), "receiveTarget") else h.call(_.receiveTarget(self, damagable)))
+    neighbours.foreach(h =>  h.call(_.receiveTarget(zone, damagable)))
 
-
-    flags foreach { f => {
-      f.step
-      f.computePossessing(extendedDamagable)
-      if (f.canSpawn) {
-        val spawned = f.spawn
-        f.clientViews.foreach(cv => spawned.sub(cv))
-        elements += spawned.id -> spawned
-      }
-    }
-    }
 
     arrows foreach {
       a => {
@@ -74,8 +61,8 @@ class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) exten
                 if (elements.contains(a.shooterId) && aggregs.contains(a.clientId))
                   aggregs(a.clientId).xp += e.xpCost
                 else {
-                  val h = hostPool.getHyperHost(a.shotFrom.x, a.shotFrom.y)
-                  if (trace) h.callTrace(_.gainxpAggreg(a.shooterId, e.xpCost), "gainxp") else h.call(_.gainxpAggreg(a.shooterId, e.xpCost)
+                  val h = HP.getHost(a.shotFrom)
+                  h.call(_.gainxpAggreg(a.shooterId, e.xpCost)
                   )
                 }
               }
@@ -161,10 +148,8 @@ class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) exten
       val e = elem._2
       if (!zone.contains(e)) {
         //     println("Il faut sortir de " + zone.x + " " + zone.y)
-        if (trace)
-          hostPool.getHyperHost(e.x, e.y).callTrace(_.addUnity(e.asInstanceOf[Unity]), "addUnity")
-        else
-          hostPool.getHyperHost(e.x, e.y).call(_.addUnity(e.asInstanceOf[Unity]))
+
+          HP.getHost(e).call(_.addUnity(e.asInstanceOf[Unity]))
         elements -= elem._1
       }
     }
@@ -210,7 +195,7 @@ class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) exten
     elements += e.id -> e
   }
 
-  def receiveTarget(who: ActorRef, e: Iterable[Unity]) = {
+  def receiveTarget(who: SquareZone, e: Iterable[Unity]) = {
     if (!targetFromOtherHost.contains(who))
       targetFromOtherHost += who -> collection.mutable.HashMap[String, Unity]()
 
@@ -220,28 +205,7 @@ class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) exten
     })
   }
 
-  def getNeighbours = {
-    if (neighbours.isEmpty) {
-      if (zone.x < hostPool.wn * hostPool.w) {
-        neighbours ::= hostPool.getHyperHost(zone.x + zone.w, zone.y)
-        if (zone.y < hostPool.hn * hostPool.h)
-          neighbours ::= hostPool.getHyperHost(zone.x + zone.w, zone.y + zone.h)
-        if (zone.y >= hostPool.h)
-          neighbours ::= hostPool.getHyperHost(zone.x + zone.w, zone.y - zone.h)
-      }
-      if (zone.x >= hostPool.w) {
-        neighbours ::= hostPool.getHyperHost(zone.x - zone.w, zone.y)
-        if (zone.y < hostPool.hn * hostPool.h)
-          neighbours ::= hostPool.getHyperHost(zone.x - zone.w, zone.y + zone.h)
-        if (zone.y >= hostPool.h)
-          neighbours ::= hostPool.getHyperHost(zone.x - zone.w, zone.y - zone.h)
-      }
-      if (zone.y < hostPool.hn * hostPool.h)
-        neighbours ::= hostPool.getHyperHost(zone.x, zone.y + zone.h)
-      if (zone.y >= hostPool.h)
-        neighbours ::= hostPool.getHyperHost(zone.x, zone.y - zone.h)
-    }
-  }
+
 
   def gainxpAggreg(shooterId: String, xp: Double) = {
     if (elements.contains(shooterId))
@@ -257,6 +221,7 @@ class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) exten
 
   override def clientInput(idClient: String, data: String): Unit = {
 
+    println("received : " + data)
     val json = Json.parse(data)
     val id = (json \ "id").get.as[String]
     val x = (json \ "x").get.as[Double]
@@ -301,5 +266,9 @@ class StgyHost(hostPool: HostPool[StgyHost, StgyHostObserver], zone: Zone) exten
       bm.move = true
       bm.target = Vec(x, y)
     }
+  }
+
+  override def getViewableFromZone(zone: Zone): Iterable[Viewable] = {
+    elements.values
   }
 }

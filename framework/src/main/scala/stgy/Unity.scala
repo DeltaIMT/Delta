@@ -1,6 +1,6 @@
 package stgy
 
-import core.user_import.{Element, Observable, Observer}
+import core.observerPattern.{Observable, Observer}
 
 import scala.util.Random
 

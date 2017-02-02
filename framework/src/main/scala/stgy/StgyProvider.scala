@@ -1,14 +1,19 @@
 package stgy
 
-import core.user_import.{Observable, Observer}
-import core.{HostPool, HyperHostObserver, Provider}
+
+import core.host.HostPool
+import core.observerPattern.{Observable, Observer}
+import core.provider.Provider
+import core.spatial.Zone
+import play.api.libs.json.{JsArray, Json}
 
 import scala.util.Random
 
 
 class IdGiver(val id: String,val x: Double, val y :Double) extends Observable {}
-class StgyProvider(hostPool: HostPool[StgyHost, StgyHostObserver], hostObserver: HyperHostObserver[StgyHostObserver]) extends Provider[StgyClientView, StgyHostObserver](hostPool, hostObserver) {
 
+class StgyProvider extends Provider[StgyClientView] {
+  val HP = HostPool[StgyHost, StgyHostObserver]
 
   var rand = new Random()
 
@@ -32,8 +37,8 @@ class StgyProvider(hostPool: HostPool[StgyHost, StgyHostObserver], hostObserver:
 
     spawned foreach {
       b =>
-        hostPool.getHyperHost(b.x, b.y).call( i => i.addUnity(b)  )
-        hostPool.getHyperHostObserver().call( i => i.addUnity(b.id, b.clientId))
+        HP.getHost(Vec(b.x, b.y)).call( i => i.addUnity(b)  )
+        HP.hostObserver.call( i => i.addUnity(b.id, b.clientId))
         b.sub(obs)
     }
 
@@ -49,4 +54,16 @@ class StgyProvider(hostPool: HostPool[StgyHost, StgyHostObserver], hostObserver:
   override def OnDisconnect(id: String, obs: Observer) = {
     obs.onDisconnect()
   }
+
+  override def hostsStringToZone(s: String): Zone = {
+    println(s)
+   val json = Json.parse(s).asInstanceOf[JsArray].value
+    println(json)
+    val x = json(0).as[Int]
+    val y = json(1).as[Int]
+    val w = json(2).as[Int]
+    val h = json(3).as[Int]
+    new SquareZone(x,y,w,h)
+  }
+
 }

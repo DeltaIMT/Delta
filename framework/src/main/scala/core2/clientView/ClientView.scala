@@ -9,13 +9,14 @@ import core.CoreMessage.AnyParts
 import core.`abstract`.{Notify, UpdateClient}
 import core2.CoreMessage.{Disconnect, PlayersUpdate}
 import core2.HostPool
-import core2.host.Host
+import core2.host.{Host, HostObserver}
 import core2.spatial.Zone
+import shapeless.list
 
 import scala.collection.mutable
 
 
-class ClientView(client: ActorRef) extends Actor {
+abstract class ClientView(client: ActorRef) extends Actor {
 
   var nextbuffer: Int = 0
   var buffers: mutable.HashMap[Int, (Int, List[Any])] = collection.mutable.HashMap[Int, (Int, List[Any])]()
@@ -66,17 +67,17 @@ class ClientView(client: ActorRef) extends Actor {
   }
 
   // USER JOB
-  def dataToViewZone(): Zone = _
+  def dataToViewZone(): Zone
 
-  def onNotify(any: Any): Unit = {}
+  def onNotify(any: Any): Unit
 
-  def onDisconnect(any: Any): Unit = {}
+  def onDisconnect(any: Any): Unit
 
-  def fromListToClientMsg(list: List[Any]): String = list.mkString(",")
+  def fromListToClientMsg(list: List[Any]): String
 
   def zoneToMessage(zone: Zone): Unit = {
 
-    var hostInsideZones = HostPool[Host, _].hosts.filter { case (z, hr) => z.intersect(zone) }.values
+    var hostInsideZones = HostPool[Host, HostObserver[_]].hosts.filter { case (z, hr) => z.intersect(zone) }.values
     buffers += nextbuffer -> (hostInsideZones.size, List[Any]())
 
     val nextbufferCopy = nextbuffer

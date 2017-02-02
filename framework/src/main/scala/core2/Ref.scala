@@ -1,7 +1,7 @@
 package core2
 
 import akka.actor.ActorRef
-import core.CoreMessage.Call
+import core2.CoreMessage.Call
 
 trait Ref[T] {
   val actor : ActorRef

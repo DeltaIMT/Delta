@@ -1,12 +1,12 @@
 package core2
 
 import akka.actor.{Actor, ActorRef, Cancellable, Props}
-import core.CoreMessage.{FromProviderPort, _}
-import core.`abstract`.UpdateClient
+import core2.CoreMessage._
 import core2.clientView.ClientViewRef
 import core2.host.{Host, HostObserver}
 import core2.spatial.Zone
 import play.api.libs.json.{JsArray, Json}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -27,14 +27,14 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
       clientRef = playerActorRef
       val clientView = context.actorOf(Props(createInstance[ClientViewImpl](playerActorRef).asInstanceOf[ClientViewImpl]), "clientview_" + id)
       val clientViewRef = new ClientViewRef[ClientViewImpl](clientView)
-      HostPool[_, HostObserver[ClientViewImpl]].hostsObserver.call(x => x.id2ClientView += id -> clientViewRef)
+      HostPool[Host, HostObserver[ClientViewImpl]].hostObserver.call(x => x.id2ClientView += id -> clientViewRef)
       val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientView, UpdateClient)
       clients += (id -> (new observerPattern.Observer(id, clientView), cancellable))
       OnConnect(id, clients(id)._1)
     }
 
     case DeleteClient(id) => {
-      HostPool[_, HostObserver[ClientViewImpl]].hostsObserver.call(x => x.id2ClientView -= id)
+      HostPool[Host, HostObserver[ClientViewImpl]].hostObserver.call(x => x.id2ClientView -= id)
       clients(id)._2.cancel()
       OnDisconnect(id, clients(id)._1)
       clients -= id
@@ -63,7 +63,7 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
       jsonObject foreach { j => {
         val hostsZones = hostsStringToZone((j \ "hosts").get.as[String])
         val data = (j \ "data").get.as[String]
-        HostPool[Host, _].getHosts(hostsZones).foreach(hostRef => hostRef.clientInput(id, data))
+        HostPool[Host, HostObserver[_] ].getHosts(hostsZones).foreach(hostRef => hostRef.clientInput(id, data))
       }
       }
     }

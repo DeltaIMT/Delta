@@ -1,7 +1,8 @@
 package core2.host
 
 import akka.actor.Actor
-import core.CoreMessage._
+import core2.CoreMessage.{Call, ClientInput}
+
 
 class HostActor[T <: InputReceiver](val host : T) extends Actor {
   override def receive: Receive = {

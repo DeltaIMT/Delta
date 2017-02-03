@@ -44,7 +44,7 @@ class FrameInterp {
 
         this.frame0 = this.frame1 //fusion(this.frame0, this.frame1)
         this.frame1 = this.frame2 //fusion(this.frame1, this.frame2)
-        this.frame2 = fusion(this.frame2,  frame)
+        this.frame2 = noInterp ? frame : fusion(this.frame2,  frame)
 
     }
 

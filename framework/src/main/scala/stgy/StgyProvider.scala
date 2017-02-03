@@ -10,7 +10,7 @@ import play.api.libs.json.{JsArray, Json}
 import scala.util.Random
 
 
-class IdGiver(val id: String,val x: Double, val y :Double) extends Observable {}
+
 
 class StgyProvider extends Provider[StgyClientView] {
   val HP = HostPool[StgyHost, StgyHostObserver]
@@ -32,19 +32,13 @@ class StgyProvider extends Provider[StgyClientView] {
     val com = new Commander(randx, randy, Random.alphanumeric.take(10).mkString, id, color)
     val spawned : List[Unity] = com::bowmen.toList :::swordman.toList //flag::
 
+    HP.hostObserver.call( ho => ho.clientId2Color+= id -> color)
+
     spawned foreach {
       b =>
         HP.getHost(Vec(b.x, b.y)).call( i => i.addUnity(b)  )
-        HP.hostObserver.call( i => i.addUnity(b.id, b.clientId))
         b.sub(obs)
     }
-
-
-    //tell the client view what is the client id, this is a hack
-
-    var idGiver = new IdGiver(id,randx,randy)
-    idGiver.sub(obs)
-    idGiver.notifyClientViews
 
   }
 
@@ -52,15 +46,17 @@ class StgyProvider extends Provider[StgyClientView] {
     obs.onDisconnect()
   }
 
-  override def hostsStringToZone(s: String): Zone = {
+  override def hostsStringToZone(s: String): Option[Zone] = {
     //println(s)
    val json = Json.parse(s).asInstanceOf[JsArray].value
     //println(json)
     val x = json(0).as[Int]
+    if(x == -1)
+      return None
     val y = json(1).as[Int]
     val w = json(2).as[Int]
     val h = json(3).as[Int]
-    new SquareZone(x,y,w,h)
+    Option(new SquareZone(x,y,w,h))
   }
 
 }

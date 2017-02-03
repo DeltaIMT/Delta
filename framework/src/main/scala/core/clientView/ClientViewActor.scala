@@ -14,25 +14,23 @@ import core.spatial.Zone
 import scala.collection.mutable
 
 
-abstract class ClientViewActor(client: ActorRef) extends Actor {
-
-
+class ClientViewActor[ClientViewImpl <: ClientView](client: ActorRef,clientView : ClientViewImpl) extends Actor {
 
   var nextbuffer: Int = 0
   var buffers: mutable.HashMap[Int, (Int, List[Any])] = collection.mutable.HashMap[Int, (Int, List[Any])]()
 
   override def receive: Receive = {
     case x: Notify => {
-      onNotify(x.any)
+      clientView.onNotify(x.any)
     }
     case UpdateClient => {
-      zoneToMessage(dataToViewZone())
+      zoneToMessage(clientView.dataToViewZone())
       nextbuffer = nextbuffer + 1
       buffers -= nextbuffer - 4
     }
 
-    case x:Call[ActorRef]  => {
-      x.func(self)
+    case x:Call[ClientViewImpl]  => {
+      x.func(clientView)
     }
     case x: AnyParts => {
       // println("Any part : destination : "+x.buffer + " content : " + worker.fromListToClientMsg(x.anys))
@@ -43,14 +41,12 @@ abstract class ClientViewActor(client: ActorRef) extends Actor {
         if (buffers(num)._1 == 0) {
           //println("Total parts : " + worker.fromListToClientMsg(buffers(num)._2))
           //      println("Buffer size:"+ buffers.values.size)
-          val toDeflate = fromListToClientMsg(buffers(num)._2)
-
+          val toDeflate = clientView.fromListToClientMsg(buffers(num)._2)
 
           val arrOutputStream = new ByteArrayOutputStream()
           val zipOutputStream = new GZIPOutputStream(arrOutputStream)
           zipOutputStream.write(toDeflate.getBytes)
           zipOutputStream.close()
-
 
           client ! PlayersUpdate(Base64.getEncoder.encodeToString(arrOutputStream.toByteArray))
         }
@@ -61,40 +57,23 @@ abstract class ClientViewActor(client: ActorRef) extends Actor {
     }
 
     case Disconnect => {
-
-      onDisconnect()
-
+      clientView.onDisconnect()
     }
-
-
   }
 
   // USER JOB
-  def dataToViewZone(): Zone
 
-  def onNotify(any: Any): Unit
-
-  def onDisconnect(any: Any): Unit
-
-  def fromListToClientMsg(list: List[Any]): String
 
   def zoneToMessage(zone: Zone): Unit = {
-
     var hostInsideZones = HostPool[Host, HostObserver[_]].hosts.filter { case (z, hr) => z.intersect(zone) }.values
     buffers += nextbuffer -> (hostInsideZones.size, List[Any]())
-
     val nextbufferCopy = nextbuffer
-
     hostInsideZones.foreach({
       _.call(
-
         inside => {
           val res = inside.getViewableFromZone(zone).toList
           self ! AnyParts(nextbufferCopy, res)
         })
-
     })
-
   }
-
 }

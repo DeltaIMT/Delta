@@ -12,13 +12,14 @@ let moveSquare = null
 let selectable = []
 let centerPosition = null
 let moveOrder = []
+let moveTrail = []
 let ping = 0
 window.onload = () => {
     let time = 0
     let endTime = performance.now()
     let msElapsed = 0
     let startTime = performance.now()
-    let trail = []
+
     const loop = () => {
         time += 1
         endTime = performance.now()
@@ -46,7 +47,7 @@ window.onload = () => {
             client.send(toServer)
         }
 
-        Drawer.draw(frame, msElapsed, time, ping, selectedIds, moveSquare, selectionSquare, trail)
+        Drawer.draw(frame, msElapsed, time, ping, selectedIds, moveSquare, selectionSquare, moveTrail)
         window.requestAnimationFrame(loop)
     }
     window.requestAnimationFrame(loop)
@@ -68,7 +69,7 @@ client.dataManipulation(dataZiped => {
     })
 })
 
-setInterval(() => { client.getPing((ping1) => ping =ping1) }, 1000)
+setInterval(() => { client.getPing((ping1) => ping = ping1) }, 1000)
 
 const getTranslatedMouse = (mouse) => {
     let cam = Drawer.cam()
@@ -102,18 +103,15 @@ document.addEventListener("contextmenu", function (e) {
 
 document.addEventListener('keydown', (event) => {
     const keyName = event.keyCode;
-    if (keyName === 49 || keyName === 50 || keyName === 51) {
+    if (keyName === 49 || keyName === 50 || keyName === 51 || keyName === 49 + 7) {
         client.send(
             JSON.stringify([{
-                hosts: JSON.stringify([parseInt(centerPosition.x)-50, parseInt(centerPosition.y)-50,50,50]),
+                hosts: JSON.stringify([-1]),
                 data: JSON.stringify({
-                    id: "" + (parseInt(keyName) - 48),
-                    x: centerPosition.x,
-                    y: centerPosition.y
+                    id: "" + (parseInt(keyName) - 48)
                 })
             }])
         )
-
     }
 }
 )
@@ -161,10 +159,10 @@ Mous.onDragRightEnd((mouse) => {
 
     let offX = 0
     let offY = 0
-   selectedIds.forEach(k => {
-        const b = selectable.find( e=> e.id = k)
-        const hosts = [parseInt(b.x-500),parseInt(b.y-500),500,500]
-
+    selectedIds.forEach(k => {
+        const b = selectable.find(e => e.id = k)
+        const hosts = [parseInt(b.x - 250), parseInt(b.y - 250), 500, 500]
+        
 
         moveOrder.push(
             {
@@ -189,3 +187,41 @@ Mous.onDragRight((mouse) => {
     const square = moveSquareCompute(getTranslatedMouse(mouse))
     moveSquare = square
 })
+
+Mous.onTrail((trail) => {
+    moveTrail = trail
+})
+
+Mous.onTrailEnd((trail) => {
+    moveTrail = []
+
+    const trailSize = trail.length
+    const selectedSize = selectedIds.length
+    console.log(selectedSize)
+     let cam = Drawer.cam()
+    
+    for (let i = 0; i < selectedSize; i++) {
+         const b = selectable.find(e => e.id = selectedIds[i])
+        const pos = linearInterp(trail, parseFloat(i * trailSize) / parseFloat(selectedSize))
+        pos.x += cam.x
+        pos.y += cam.y
+        moveOrder.push(
+            {
+                hosts: JSON.stringify([parseInt(b.x - 250), parseInt(b.y - 250), 500, 500]),
+                data: JSON.stringify({
+                    id: b.id,
+                    x: parseInt(pos.x),
+                    y: parseInt(pos.y)
+                })
+            }
+        )
+    }
+
+})
+
+const linearInterp = (path, float_i) => {
+    const first = path[Math.floor(float_i)]
+    const last = path[Math.ceil(float_i)]
+    const t = float_i - Math.floor(float_i)
+    return { x: first.x * (1 - t) + last.x * t, y: first.y * (1 - t) + last.y * t }
+}

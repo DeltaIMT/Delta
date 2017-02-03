@@ -17,6 +17,7 @@ class Vec(var x: Double, var y: Double) extends Element {
   def *(v: Vec) = Vec(x * v.x, y * v.y)
 
   def *(mul: Double) = Vec(x * mul, y * mul)
+  def /(mul: Double) = Vec(x / mul, y / mul)
 
   def *=(v: Vec) = {
     x *= v.x

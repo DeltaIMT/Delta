@@ -18,7 +18,7 @@ const background = new Image()
 background.src = './texture/background.png'
 
 const cam = {}
-module.exports.cam =() => cam
+module.exports.cam = () => cam
 
 
 
@@ -79,7 +79,7 @@ module.exports.draw = (frame, msElapsed, time, ping, selectedIds, moveSquare, se
     if (moveSquare) drawMoveSquare(moveSquare)
     if (selectionSquare) drawSelectionSquare(selectionSquare)
     context.translate(cam.x, cam.y);
-    if (trail.length > 1) drawTrail(trail)
+    if (trail.length > 1) drawTrail(trail,time)
 
     context.shadowBlur = 30;
     context.shadowColor = "black"
@@ -92,6 +92,7 @@ module.exports.draw = (frame, msElapsed, time, ping, selectedIds, moveSquare, se
     context.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
     if (other !== null)
         context.fillText("xp : " + other.xp + " used : " + other.usedXp, 10, 30)
+    context.fillText("Units : " + other.n, 10, 50)
     context.fillText("Ping : " + parseInt(ping * 10) / 10.0, 10, 80)
     context.fillText("Draw fps        : " + parseInt(10000.0 / msElapsed) / 10.0, 10, 105)
 
@@ -100,6 +101,12 @@ module.exports.draw = (frame, msElapsed, time, ping, selectedIds, moveSquare, se
 
 }
 
+const getColor = (e) => {
+    if (typeof (e.color) !== undefined && (e.color) !== undefined && typeof (e.color[0]) !== undefined && typeof (e.color[1]) !== undefined && typeof (e.color[2]) !== undefined && typeof (e.health) !== undefined)
+        return "rgb(" + parseInt(e.color[0] * e.health) + ", " + parseInt(e.color[1] * e.health) + ", " + parseInt(e.color[2] * e.health) + ")"
+    else
+        return "rgb(0,0,0)"
+}
 
 function roundRect(ctx, x, y, width, height, radius) {
     if (typeof radius === 'number') {
@@ -239,7 +246,7 @@ const drawBowmen = (bowmen, canvasCacheBowman) => {
         context.drawImage(canvasCacheBowman, bowman.x - 40, bowman.y - 40)
         context.beginPath()
         context.arc(bowman.x, bowman.y, 20, 0, Math.PI * 2)
-        context.fillStyle = "rgb(" + parseInt(bowman.color[0] * bowman.health) + ", " + parseInt(bowman.color[1] * bowman.health) + ", " + parseInt(bowman.color[2] * bowman.health) + ")"
+        context.fillStyle = getColor(bowman)
         context.fill()
     }
 }
@@ -256,7 +263,7 @@ const drawSwordmen = (swordmen, canvasCacheSwordman) => {
         context.lineTo(x - 20, y - 10);
         context.closePath()
 
-        context.fillStyle = "rgb(" + parseInt(swordman.color[0] * swordman.health) + ", " + parseInt(swordman.color[1] * swordman.health) + ", " + parseInt(swordman.color[2] * swordman.health) + ")"
+        context.fillStyle = getColor(swordman)
         context.fill()
     }
 }
@@ -267,7 +274,7 @@ const drawComs = (coms, canvasCacheCom) => {
         context.drawImage(canvasCacheCom, com.x - 40, com.y - 40)
         context.beginPath()
         roundRect(context, com.x - 22, com.y - 22, 44, 44, 7)
-        context.fillStyle = "rgb(" + parseInt(com.color[0] * com.health) + ", " + parseInt(com.color[1] * com.health) + ", " + parseInt(com.color[2] * com.health) + ")"
+        context.fillStyle =getColor(com)
         context.fill()
     }
 }
@@ -308,14 +315,14 @@ const drawSelectionSquare = (selectionSquare) => {
     context.shadowBlur = 0;
 }
 
-const drawTrail = (trail) => {
+const drawTrail = (trail,time) => {
     context.shadowBlur = 30;
     context.beginPath()
     context.moveTo(trail[0].x, trail[0].y)
     for (const t of trail) {
         context.lineTo(t.x, t.y)
     }
-    context.lineWidth = 2 * (2 + Math.sin(t * 0.10))
+    context.lineWidth = 2 * (2 + Math.sin(time * 0.10))
     context.strokeStyle = "rgba(" + 0 + ", " + 255 + ", " + 0 + "," + 0.5 + ")"
     context.stroke()
     context.shadowBlur = 0
@@ -352,7 +359,7 @@ const drawIcons = () => {
     context.fillText("1", iconHalfX - 5, 5 + iconY + iconSize / 2)
     context.fillText("2", iconHalfX - 5, 5 + iconY + 1 * (iconSize + iconSize / 3) + iconSize / 2)
     context.fillText("3", iconHalfX - 5, 5 + iconY + 2 * (iconSize + iconSize / 3) + iconSize / 2)
-} 
+}
 
 
 const canvasCacheBowman = createCacheBowman()

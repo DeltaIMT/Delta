@@ -1,5 +1,6 @@
 package stgy
 
+import akka.actor.FSM.->
 import core.observerPattern.{Observable, Observer}
 
 import scala.util.Random
@@ -196,14 +197,29 @@ class Commander(var x : Double,var y : Double,var id : String,var clientId : Str
 
 }
 
-class Aggregator(val clientId : String , var x : Double, var y : Double, var color : Array[Int] ) extends Element with Observable {
+class Aggregator  {
 
-  var minXY = Vec(x,y)
-  var maxXY = Vec(x,y)
-  var xp = 0.0
-  var xpSum= 0.0
-  var usedXpSum= 0.0
-  var xpUsed = 0.0
+  var obj2position = collection.mutable.HashMap[String, Vec]()
+  var cameraPos = Vec(0,0)
+  var cameraVel = Vec(0,0)
+
+  def size = obj2position.size
+  def get = {
+    cameraPos
+  }
+
+  def update = {
+    val perfectPos = obj2position.values.foldLeft(Vec(0,0)){_+_ }/ (if(size>0) size.toDouble else 1.0)
+    cameraVel = (perfectPos- cameraPos)*0.2
+    cameraPos = cameraPos + cameraVel
+  }
+
+  def add(objId : String, v: Vec) = {
+    obj2position += objId -> v
+  }
+
+  def delete(objId : String) = obj2position-= objId
+
 }
 
 

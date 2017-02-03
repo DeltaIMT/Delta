@@ -2,7 +2,7 @@ package core.provider
 
 import akka.actor.{Actor, ActorRef, Cancellable, Props}
 import core.CoreMessage._
-import core.clientView.ClientViewRef
+import core.clientView.{ClientViewActor, ClientViewRef}
 import core.host.{Host, HostObserver, HostPool}
 import core.spatial.Zone
 import core.{clientView, observerPattern}
@@ -15,8 +15,9 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.{universe => ru}
 import ru._
 
-abstract class Provider[ClientViewImpl <: clientView.ClientViewActor : TypeTag : ClassTag] extends Actor {
+abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : ClassTag] extends Actor {
 
+  val HP0 =  HostPool[Host, HostObserver[ClientViewImpl]]
   var clients = collection.mutable.HashMap[String, (observerPattern.Observer, Cancellable)]()
   var clientRef: ActorRef = null
   var providerPort: ActorRef = null
@@ -26,11 +27,14 @@ abstract class Provider[ClientViewImpl <: clientView.ClientViewActor : TypeTag :
 
     case AddClient(id, playerActorRef) => {
       clientRef = playerActorRef
-      val clientView = context.actorOf(Props(createInstance[ClientViewImpl](playerActorRef).asInstanceOf[ClientViewImpl]), "clientview_" + id)
-      val clientViewRef = new ClientViewRef[ClientViewImpl](clientView)
-      HostPool[Host, HostObserver[ClientViewImpl]].hostObserver.call(x => x.id2ClientView += id -> clientViewRef)
-      val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientView, UpdateClient)
-      clients += (id -> (new observerPattern.Observer(id, clientView), cancellable))
+      //Instanciation of ClientView layers
+      val clientView = createInstance[ClientViewImpl](id)
+      val clientViewActor = context.actorOf(Props(new ClientViewActor(playerActorRef,clientView)), "clientview_" + id)
+      val clientViewRef = new ClientViewRef[ClientViewImpl](clientViewActor)
+      val HP = HostPool[Host, HostObserver[ClientViewImpl]]
+      HP.hostObserver.call(x => x.id2ClientView += id -> clientViewRef)
+      val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientViewActor, UpdateClient)
+      clients += (id -> (new observerPattern.Observer(id, clientViewActor), cancellable))
       OnConnect(id, clients(id)._1)
     }
 
@@ -55,18 +59,21 @@ abstract class Provider[ClientViewImpl <: clientView.ClientViewActor : TypeTag :
   }
 
   def clientInput(id: String, command: String): Unit = {
-    if (command == "ping") {
+    if (command == "ping")
       clientRef ! PlayersUpdate("ping")
-    }
-
     else {
       val jsonObject = Json.parse(command).asInstanceOf[JsArray].value
       jsonObject foreach { j => {
-          val hostsZones = hostsStringToZone((j \ "hosts").get.as[String])
+        val hostsZones = hostsStringToZone((j \ "hosts").get.as[String])
         val data = (j \ "data").get.as[String]
-        val selectedHR =  HostPool[Host, HostObserver[_] ].getHosts(hostsZones)
-       // println(selectedHR.mkString(","))
-       selectedHR.foreach(hostRef => hostRef.clientInput(id, data))
+
+        hostsZones match {
+          case Some(zone) => {
+            val selectedHR =  HostPool[Host, HostObserver[_] ].getHosts(zone)
+            selectedHR.foreach(hostRef => hostRef.clientInput(id, data))
+          }
+          case None => HP0.hostObserver.clientInput(id, data)
+        }
       }
       }
     }
@@ -76,19 +83,21 @@ abstract class Provider[ClientViewImpl <: clientView.ClientViewActor : TypeTag :
 
   def OnDisconnect(id: String, obs: observerPattern.Observer): Unit = {}
 
-  def createInstance[T: TypeTag](ar: ActorRef): Any = {
-    createInstance(typeOf[T], ar)
+  def createInstance[T: TypeTag](arg: Any*): T = {
+    createInstance(typeOf[T], arg).asInstanceOf[T]
   }
 
-  def createInstance(tpe: Type, ar: ActorRef): Any = {
+  def createInstance(tpe: Type, arg: Seq[Any]): Any = {
     val mirror = ru.runtimeMirror(getClass.getClassLoader)
     val clsSym = tpe.typeSymbol.asClass
     val clsMirror = mirror.reflectClass(clsSym)
     val ctorSym = tpe.decl(ru.termNames.CONSTRUCTOR).asMethod
     val ctorMirror = clsMirror.reflectConstructor(ctorSym)
-    val instance = ctorMirror(ar)
+
+    val instance = ctorMirror(arg: _*)
     return instance
   }
 
-  def hostsStringToZone(s: String): Zone
+
+  def hostsStringToZone(s: String): Option[Zone]
 }

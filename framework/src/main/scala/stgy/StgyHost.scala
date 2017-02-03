@@ -10,14 +10,12 @@ import scala.util.Random
 class StgyHost(zone: SquareZone) extends Host(zone) {
 
   val HP = HostPool[StgyHost, StgyHostObserver]
-  var elements  =collection.mutable.HashMap[String, Element]()
+  var elements = collection.mutable.HashMap[String, Element]()
 
   var rand = new Random()
 
   var targetFromOtherHost = collection.mutable.HashMap[SquareZone, collection.mutable.HashMap[String, Unity]]()
   var neighbours = List[HostRef[StgyHost]]()
-
-  var aggregs = collection.mutable.HashMap[String, Aggregator]()
 
 
   def flush() = {
@@ -39,13 +37,16 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
     val flags = elements.filter(e => e._2.isInstanceOf[Flag]).values.asInstanceOf[Iterable[Flag]]
     val arrows = elements.filter(e => e._2.isInstanceOf[Arrow]).values.asInstanceOf[Iterable[Arrow]]
     val spawner = elements.filter(e => e._2.isInstanceOf[Spawner]).values.asInstanceOf[Iterable[Spawner]]
-    neighbours.foreach(h =>  h.call(_.receiveTarget(zone, damagable)))
+    neighbours.foreach(h => h.call(_.receiveTarget(zone, damagable)))
 
+    damagable.foreach(d => {
+      HP.hostObserver.call(ho => ho.aggreg(d.clientId, d.id, Vec(d.x, d.y)))
+    })
 
     arrows foreach {
       a => {
         if (a.shouldDie) {
-          elements -= a.id
+          kill(a)
         }
         else
           a.doMove
@@ -56,14 +57,9 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
 
             if (!e.isDead) {
               e.damage(0.201)
-              elements -= a.id
+              kill(a)
               if (e.isDead) {
-                if (elements.contains(a.shooterId) && aggregs.contains(a.clientId))
-                  aggregs(a.clientId).xp += e.xpCost
-                else {
-                  gainxpAggreg(a.clientId, e.xpCost)
-
-                }
+                gainxpAggreg(a.clientId, e.xpCost)
               }
 
             }
@@ -80,7 +76,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
         elements += spawned.id -> spawned
       }
     })
-    damagable.foreach(u => if (u.isDead) elements -= u.id)
+    damagable.foreach(u => if (u.isDead) kill(u))
 
 
     swordmen foreach { A => {
@@ -139,55 +135,24 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
         val arrows = A.shoot(target)
         arrows.foreach(arrow => elements += arrow.id -> arrow)
       }
-      //  A.notifyClientViews
     }
     }
 
     elements foreach { elem => {
       val e = elem._2
       if (!zone.contains(e)) {
-        //     println("Il faut sortir de " + zone.x + " " + zone.y)
-
-          HP.getHost(e).call(_.addUnity(e.asInstanceOf[Unity]))
+        HP.getHost(e).call(_.addUnity(e.asInstanceOf[Unity]))
         elements -= elem._1
       }
     }
     }
 
 
-    aggregs.values.foreach(a => {
-      a.minXY = Vec(3000, 3000)
-      a.maxXY = Vec(0, 0)
-    })
+  }
 
-
-    var listId = List[String]()
-
-    unitys.filter(u => !u.isInstanceOf[Arrow]).foreach(u => {
-
-      listId ::= u.clientId
-      if (!aggregs.contains(u.clientId)) {
-        aggregs += u.clientId -> new Aggregator(u.clientId, u.x, u.y, u.color)
-        if (u.clientViews.size > 0)
-          aggregs(u.clientId).sub(u.clientViews.head)
-        else
-          println("NO CLIENT VIEW FOUND")
-      }
-      else {
-        aggregs(u.clientId).minXY = Vec(math.min(aggregs(u.clientId).minXY.x, u.x), math.min(aggregs(u.clientId).minXY.y, u.y))
-        aggregs(u.clientId).maxXY = Vec(math.max(aggregs(u.clientId).maxXY.x, u.x), math.max(aggregs(u.clientId).maxXY.y, u.y))
-      }
-    })
-
-    listId = listId.distinct
-    aggregs.values.foreach(a => {
-      //      if (!listId.contains(a.clientId))
-      //        aggregs -= a.clientId
-      //      else
-      a.notifyClientViews
-    })
-
-
+  def kill(u : Unity)= {
+    elements -= u.id
+    HP.hostObserver.call( ho => ho.deleteAggreg(u.clientId,u.id) )
   }
 
   def addUnity(e: Unity) = {
@@ -205,56 +170,21 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
   }
 
 
-
   def gainxpAggreg(clientId: String, xp: Double) = {
-    HP.hostObserver.call( h =>  h.gainxp(clientId, xp  ))
-    println("sending xp to host Obs " + clientId + " " + xp )
+    HP.hostObserver.call(h => h.gainxp(clientId, xp))
   }
 
 
   override def clientInput(idClient: String, data: String): Unit = {
 
-  //  println("received : " + data)
+    //  println("received : " + data)
     val json = Json.parse(data)
     val id = (json \ "id").get.as[String]
     val x = (json \ "x").get.as[Double]
     val y = (json \ "y").get.as[Double]
-    if (id == "1" || id == "2" || id == "3") {
-      if (aggregs.contains(idClient)) {
-        val ag = aggregs(idClient)
-        if (id == "1") {
-          if (ag.usedXpSum < ag.xpSum) {
-            ag.xpUsed += 1
-            ag.notifyClientViews
-            val idObj = Random.alphanumeric.take(10).mkString
-            val unit = new Bowman(x + Random.nextInt(200) - 100, y + Random.nextInt(200) - 100, idObj, idClient, ag.color)
-            unit.sub(ag.clientViews.head)
-            elements += idObj -> unit
-          }
-        }
-        else if (id == "2") {
-          if (ag.usedXpSum + 2 < ag.xpSum) {
-            ag.xpUsed += 3
-            ag.notifyClientViews
-            val idObj = Random.alphanumeric.take(10).mkString
-            val unit = new Swordman(x + Random.nextInt(200) - 100, y + Random.nextInt(200) - 100, idObj, idClient, ag.color)
-            unit.sub(ag.clientViews.head)
-            elements += idObj -> unit
-          }
-        }
-        else if (id == "3") {
-          if (ag.usedXpSum + 9 < ag.xpSum) {
-            ag.xpUsed += 10
-            ag.notifyClientViews
-            val idObj = Random.alphanumeric.take(10).mkString
-            val unit = new Commander(x + Random.nextInt(200) - 100, y + Random.nextInt(200) - 100, idObj, idClient, ag.color)
-            unit.sub(ag.clientViews.head)
-            elements += idObj -> unit
-          }
-        }
-      }
-    }
-    else if (elements.contains(id)) {
+
+
+    if (elements.contains(id)) {
       val bm = elements(id).asInstanceOf[Movable]
       bm.move = true
       bm.target = Vec(x, y)

@@ -1,6 +1,7 @@
 package stgy
 
-import core.user_import.{Element, Observable, Observer}
+import akka.actor.FSM.->
+import core.observerPattern.{Observable, Observer}
 
 import scala.util.Random
 
@@ -15,7 +16,13 @@ trait Unity extends Element with Observable {
 trait Movable extends Unity {
   var move = false
   var target = Vec()
-  var speed = 5
+  var speed : Double
+
+  def getSpeed : Vec = {
+    val pos = Vec(x, y)
+    val dir = (target - pos).normalize()
+    dir * speed * (if (move) 1.0 else 0.0)
+  }
 
   def doMove = {
     if ((Vec(x, y) - target).length() < 1)
@@ -34,16 +41,17 @@ trait Damagable extends Unity {
   var health = 1.0
   var maxHealth = 1.0
   var radius : Int
+  var xpCost : Double
 
   def damage(amount: Double) = {
     health = math.max(0, health - amount)
   }
 
   def damagableStep = {
-    health = math.min(maxHealth, health + 0.0008)
+    health = math.min(maxHealth, health + 0.002*maxHealth)
   }
 
-  def isDead: Boolean = health == 0
+  def isDead: Boolean = health <= 0
 }
 
 trait Shooter {
@@ -73,12 +81,12 @@ trait Spawner extends Unity{
   }
 
   def canSpawn: Boolean = {
-    canSpawnIn == 0
+    false//canSpawnIn == 0
   }
 
   def spawn: Unity = {
     canSpawnIn = frameToSpawn
-    new Bowman(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
+    if (Random.nextBoolean() )  new Bowman(x, y, Random.alphanumeric.take(10).mkString, clientId, color) else new Swordman(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
   }
 }
 
@@ -148,11 +156,27 @@ class Flag(var x : Double,var y : Double,var id : String,var clientId : String,v
 }
 
 class Commander(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Spawner with Evolving{
-  health = 5
-  maxHealth = 5
+  health = 2
+  maxHealth = 2
+  var speed = 1.0
+  var xpCost = 10.0
   override var radius: Int =  25
-  def shoot(targets: List[Vec]): List[Arrow] = {
+
+
+  def shoot(target: Unity): List[Arrow] = {
+    target match {
+      case e:Movable => {
+        shoot(Vec(e.x, e.y) + e.getSpeed *30)
+      }
+      case e:Damagable => {
+        shoot(Vec(e.x,e.y))
+      }
+    }
+  }
+
+  def shoot(target: Vec): List[Arrow] = {
     canShootIn = 60 / (xp.toInt+1) + 20
+    val targets = 1 to 10 map { i => target + Vec(Random.nextInt(50) - 25, Random.nextInt(50) - 25) }
     val arrows =targets.map( t => {
      val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color, id)
       arrow.move=true
@@ -161,7 +185,7 @@ class Commander(var x : Double,var y : Double,var id : String,var clientId : Str
       arrow.speed = arrow.speed - 5 + Random.nextInt(10)
       arrow
     })
-    arrows
+    arrows.toList
   }
 
   def step() = {
@@ -173,14 +197,73 @@ class Commander(var x : Double,var y : Double,var id : String,var clientId : Str
 
 }
 
-class Aggregator(val clientId : String , var x : Double, var y : Double ) extends Element with Observable {
-  var minXY = Vec(x,y)
-  var maxXY = Vec(x,y)
+class Aggregator  {
+
+  var obj2position = collection.mutable.HashMap[String, Vec]()
+  var cameraPos = Vec(0,0)
+  var cameraVel = Vec(0,0)
+
+  def size = obj2position.size
+  def get = {
+    cameraPos
+  }
+
+  def update = {
+    val perfectPos = obj2position.values.foldLeft(Vec(0,0)){_+_ }/ (if(size>0) size.toDouble else 1.0)
+    cameraVel = (perfectPos- cameraPos)*0.2
+    cameraPos = cameraPos + cameraVel
+  }
+
+  def add(objId : String, v: Vec) = {
+    obj2position += objId -> v
+  }
+
+  def delete(objId : String) = obj2position-= objId
+
+}
+
+
+class Swordman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
+  override var radius: Int = 20
+  maxHealth = 3
+  health = 3
+  var speed = 2.0
+  var xpCost = 3.0
+  var damage = 5*0.201/6.0
+  def step() = {
+    doMove
+    shooterStep
+    damagableStep
+  }
+
+  def canAttack(e : Damagable) : Boolean = {
+    val vector = Vec(x,y)-Vec(e.x,e.y)
+    vector.length()<50
+  }
+
+  def attack(e : Damagable) : Double = {
+    canShootIn = 10
+    damage
+  }
+
 }
 
 class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
-
+  var speed = 1.0
+  var xpCost = 1.0
   override var radius: Int =  20
+
+  def shoot(target: Unity): Arrow = {
+    target match {
+      case e:Movable => {
+        shoot(Vec(e.x, e.y) + e.getSpeed *30)
+      }
+      case e:Damagable => {
+        shoot(Vec(e.x,e.y))
+      }
+    }
+  }
+
   def shoot(target: Vec): Arrow = {
     canShootIn = 60 /(xp.toInt+1) +20
     val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color , id)
@@ -198,8 +281,9 @@ class Bowman(var x : Double,var y : Double,var id : String,var clientId : String
 }
 
 class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color :Array[Int], var shooterId : String) extends Movable {
-  speed = 10
+  var speed = 10.0
   var frame = 0
+  var shotFrom = Vec(x,y)
   def shouldDie: Boolean = {
     frame+=1
     frame==60

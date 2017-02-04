@@ -1,4 +1,4 @@
-package core.user_import
+package core.observerPattern
 
 import akka.actor.ActorRef
 import core.CoreMessage.Disconnect

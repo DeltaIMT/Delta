@@ -1,92 +1,81 @@
 package core
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Cancellable, Props}
+//import scala.concurrent.ExecutionContext.Implicits.global
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{get, handleWebSocketMessages, parameter}
 import akka.http.scaladsl.server.RouteResult
 import akka.stream.ActorMaterializer
-import core.CoreMessage.{Call, CallTrace}
-import core.`abstract`.ContainerHost
-import core.port_dispatch.ProviderPort
-import core.user_import.Zone
+import core.CoreMessage.Call
+import core.host._
+import core.provider.{Provider, ProviderPort}
 import kamon.Kamon
-import kamon.metric.instrument.Histogram
-import kamon.trace.TraceInfo
+
+import scala.concurrent.duration._
 import scala.reflect.runtime.{universe => ru}
 import ru._
-import scala.collection.immutable.IndexedSeq
 import scala.concurrent.ExecutionContextExecutor
-import scala.language.postfixOps
-import scala.concurrent.duration._
 import scala.reflect.ClassTag
-import scala.swing._
-
-class Suber extends Actor {
-
-  val hash = collection.mutable.HashMap[String, Histogram]()
-
-  override def receive: Receive = {
-    case t: TraceInfo => {
-      if (hash.contains(t.name))
-        hash(t.name).record(t.elapsedTime.nanos)
-      else {
-        hash += t.name -> Kamon.metrics.histogram(t.name)
-      }
-    }
-  }
-}
 
 
-class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provider[_] : TypeTag : ClassTag] {
+class AbstractMain[
+HostImpl <: Host : TypeTag : ClassTag,
+ProviderImpl <: Provider[_] : TypeTag : ClassTag,
+HostObserverImpl <: HostObserver[_] : TypeTag : ClassTag
+] {
+  val HP = HostPool[HostImpl,HostObserverImpl]
   var initialPort = 9001
   var numberOfClient = 30
-  var hostsGridWidth = 5
-  var hostsGridHeight = 5
-  var hostWidth = 600
-  var hostHeight = 600
 
-
-  var cancellable: Seq[Cancellable]=_
   implicit var actorSystem: ActorSystem=_
-  var hostPool: HostPool[HostType] = _
+  implicit var executionContext:ExecutionContextExecutor=_
 
-  def launch = {
+  def setHostInterval( hr : HostRef[HostImpl] , time : Int, func : HostImpl => Unit ) = {
+    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor , Call(func)  )
+  }
+
+  def setHostObserverInterval( hr : HostRef[HostObserverImpl] , time : Int, func : HostObserverImpl => Unit ) = {
+    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor , Call(func)  )
+  }
+
+  def launch(hosts : Iterable[HostImpl], hostObserver : HostObserverImpl) = {
     println("framework starting")
-    Kamon.start()
     actorSystem = ActorSystem("akka-system")
-    implicit val executionContext: ExecutionContextExecutor = actorSystem.dispatcher
+    executionContext = actorSystem.dispatcher
     implicit val flowMaterializer = ActorMaterializer()
 
-    val actorRefOfSubscriber: ActorRef = actorSystem.actorOf(Props[Suber], "suber")
-    hostPool = new HostPool[HostType](hostWidth, hostHeight, hostsGridWidth, hostsGridHeight)
-    val hosts: IndexedSeq[ActorRef] = 0 until hostsGridWidth * hostsGridHeight map { i => {
-      val zone = new Zone(hostPool.fromI2X(i) * hostWidth, hostPool.fromI2Y(i) * hostHeight, hostWidth, hostHeight)
-      val inside = createInstance[HostType](hostPool, zone)
-      actorSystem.actorOf(Props(new ContainerHost(hostPool, zone, inside)), "host_" + i)
-    }
-    }
-    val providerClients = 0 until numberOfClient - 1 map { i => actorSystem.actorOf(Props(createInstance[ProviderType](hostPool)), "provider_" + i) }
-    val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient, providerClients)), "providerPort")
-    Kamon.tracer.subscribe(actorRefOfSubscriber)
-    val providers = providerPort :: providerClients.toList
-    val websockets = -1 until numberOfClient - 1 map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i,flowMaterializer) }
-    hostPool.addHost(hosts)
-    val routes = websockets.map(x => {
-      x._1 ->
-        (get & parameter("id")) {
-          id => handleWebSocketMessages(x._2.flow(id, "region"))
-        }
+
+     hosts.foreach( h => {
+      val actor = actorSystem.actorOf(Props(new HostActor[HostImpl](h)))
+      val ref = new HostRef[HostImpl](actor)
+      HP.hosts +=  h.zone -> ref
     })
 
-    routes foreach { route =>
-      Http().bindAndHandle(RouteResult.route2HandlerFlow(route._2), "0.0.0.0", route._1)
+    val hostObserverActor = actorSystem.actorOf(Props(new HostActor[HostObserverImpl](hostObserver)))
+    HP.hostObserver = new HostRef[HostObserverImpl]( hostObserverActor)
+
+    val providerClients = 0 until numberOfClient - 1 map
+      { i => actorSystem.actorOf(Props(createInstance[ProviderImpl]()), "provider_" + i) }
+    val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient, providerClients)), "providerPort")
+    val providers = providerPort :: providerClients.toList
+    val websockets = -1 until numberOfClient - 1 map
+      { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i,flowMaterializer) }
+
+    val routes = websockets.map {
+      case (port, ws) => {
+        port->
+          (get & parameter("id")) {
+            id => handleWebSocketMessages(ws.flow(id))
+          }
+      }
     }
 
-   // cancellable = hosts map { h => actorSystem.scheduler.schedule(1000 milliseconds, 16.6 milliseconds, h, CallTrace((x: Host) => x.tick(),"tick")) }
+    routes foreach { case (port,route) =>
+      Http().bindAndHandle(RouteResult.route2HandlerFlow(route), "0.0.0.0", port)
+    }
 
     println("framework working")
   }
-
 
 
   def createInstance[T: TypeTag](arg: Any*): T = {
@@ -104,4 +93,7 @@ class AbstractMain[HostType <: Host : TypeTag : ClassTag, ProviderType <: Provid
     return instance
   }
 
+
 }
+
+

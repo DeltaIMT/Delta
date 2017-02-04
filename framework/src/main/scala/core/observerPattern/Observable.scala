@@ -1,6 +1,6 @@
-package core.user_import
+package core.observerPattern
 
-import core.`abstract`.Notify
+case class Notify(any:Any)
 
 trait Observable {
 

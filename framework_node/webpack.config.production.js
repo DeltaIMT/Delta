@@ -41,7 +41,7 @@
 /* eslint-disable no-var */
 var webpack = require('webpack');
 var path = require('path');
-var index = "Stgy/indexStgy"
+var index = "Paint/indexPaint"
 
 module.exports = {
   entry: './scripts/'+index,

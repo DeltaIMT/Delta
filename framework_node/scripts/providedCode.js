@@ -71,15 +71,8 @@ module.exports.launch = () => {
     }
     setTimeout(countFpsFunction, 1000)
 
-    var sendCommand = () => {
-        setTimeout(sendCommand, 33.3)
-        ws.send(defineCommandToServer())
-    }
-
 }
 module.exports.dataManipulation = (f) => { dataManipulationFunction = f }
-module.exports.startAutoSend = () => setTimeout(sendCommand, 1000)
-module.exports.commandToServer = (f) => { defineCommandToServer = f }
 module.exports.send = (str) => {
     ws.send(str)
 }

@@ -178,7 +178,7 @@ class Commander(var x : Double,var y : Double,var id : String,var clientId : Str
     canShootIn = 60 / (xp.toInt+1) + 20
     val targets = 1 to 10 map { i => target + Vec(Random.nextInt(50) - 25, Random.nextInt(50) - 25) }
     val arrows =targets.map( t => {
-     val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color, id)
+      val arrow = new Arrow(x, y, Random.alphanumeric.take(10).mkString, clientId, color, id)
       arrow.move=true
       val direction= (t-Vec(x,y)).normalize()
       arrow.target = Vec(x,y)+ (direction*1000.0)

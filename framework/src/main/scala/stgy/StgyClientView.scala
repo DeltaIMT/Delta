@@ -7,7 +7,7 @@ import core.host.{HostObserver, HostPool}
 import core.spatial.Zone
 
 
-class StgyClientView(val id :String) extends ClientView(id) {
+class StgyClientView(id :String) extends ClientView(id) {
 
   val HP = HostPool[StgyHost, StgyHostObserver]
   var pos = Vec(1500, 1500)

@@ -191,7 +191,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
     }
   }
 
-  override def getViewableFromZone(zone: Zone): Iterable[Viewable] = {
+  override def getViewableFromZone(id : String , zone: Zone): Iterable[Viewable] = {
     elements.values
   }
 }

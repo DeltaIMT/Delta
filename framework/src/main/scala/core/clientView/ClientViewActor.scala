@@ -71,7 +71,7 @@ class ClientViewActor[ClientViewImpl <: ClientView](client: ActorRef,clientView 
     hostInsideZones.foreach({
       _.call(
         inside => {
-          val res = inside.getViewableFromZone(zone).toList
+          val res = inside.getViewableFromZone(clientView.id, zone).toList
           self ! AnyParts(nextbufferCopy, res)
         })
     })

@@ -2,7 +2,7 @@ package core.clientView
 
 import core.spatial.Zone
 
-abstract class ClientView(id : String) {
+abstract class ClientView(val id : String) {
 
   def dataToViewZone(): Zone
 

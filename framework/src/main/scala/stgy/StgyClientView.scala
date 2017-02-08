@@ -18,7 +18,6 @@ class StgyClientView(id :String) extends ClientView(id) {
   var hashIdChangeHost = collection.mutable.Map[String, Boolean]()
   var hashTime = collection.mutable.Map[String, Int]()
 
-
   override def dataToViewZone(): Zone = new SquareZone(pos.x - 1920/2, pos.y - 1080/2, 1920, 1080)
 
   override def onNotify(any: Any): Unit = {

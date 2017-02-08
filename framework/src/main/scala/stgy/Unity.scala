@@ -2,11 +2,15 @@ package stgy
 
 import akka.actor.FSM.->
 import core.observerPattern.{Observable, Observer}
-import stgy.StgyTypes.{ClientId, Color, UnitId}
+import stgy.StgyTypes.UnitType.UnitType
+import stgy.StgyTypes.{ClientId, Color, UnitId, UnitType}
 
 import scala.util.Random
 
 
+trait MetaUnit{
+  val metaType : UnitType
+}
 
 trait Unity extends Element with Observable {
   var id: UnitId
@@ -91,8 +95,9 @@ trait Spawner extends Unity{
   }
 }
 
-class Commander(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Spawner with Evolving{
-  health = 2
+class Commander(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Spawner with Evolving with MetaUnit{
+  val metaType = UnitType .Com
+    health = 2
   maxHealth = 2
   var speed = 1.0
   var xpCost = 10.0
@@ -159,7 +164,8 @@ class Aggregator  {
 }
 
 
-class Swordman(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Evolving {
+class Swordman(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Evolving with MetaUnit {
+  val metaType = UnitType .Sword
   override var radius: Int = 20
   maxHealth = 3
   health = 3
@@ -184,7 +190,8 @@ class Swordman(var x : Double,var y : Double,var id : UnitId,var clientId : Clie
 
 }
 
-class Bowman(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Evolving {
+class Bowman(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Evolving with MetaUnit {
+  val metaType = UnitType .Bow
   var speed = 1.0
   var xpCost = 1.0
   override var radius: Int =  20

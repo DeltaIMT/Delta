@@ -60,7 +60,9 @@ module.exports.draw = (frame, msElapsed, time, ping, selectedIds, moveSquare, se
     cam.y = parseInt(clamp(currentPos.y - canvas.height / 2, 0, worldSize.y - canvas.height))
     context.setTransform(1, 0, 0, 1, 0, 0);  // because the transform matrix is cumulative
 
+    //context.scale(0.5, 0.5);
     context.translate(-cam.x, -cam.y);
+
     const pattern = context.createPattern(background, 'repeat')
     context.beginPath()
     context.rect(cam.x, cam.y, canvas.width + cam.x, canvas.height + cam.y);
@@ -78,8 +80,8 @@ module.exports.draw = (frame, msElapsed, time, ping, selectedIds, moveSquare, se
 
     if (moveSquare) drawMoveSquare(moveSquare)
     if (selectionSquare) drawSelectionSquare(selectionSquare)
-    context.translate(cam.x, cam.y);
-    if (trail.length > 1) drawTrail(trail,time)
+    context.setTransform(1, 0, 0, 1, 0, 0);  // because the transform matrix is cumulative
+    if (trail.length > 1) drawTrail(trail, time)
 
     context.shadowBlur = 30;
     context.shadowColor = "black"
@@ -91,7 +93,7 @@ module.exports.draw = (frame, msElapsed, time, ping, selectedIds, moveSquare, se
     context.font = "bold 18px Courier New";
     context.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
     if (other !== null)
-        context.fillText("xp : " + other.xp , 10, 30)
+        context.fillText("xp : " + other.xp, 10, 30)
     context.fillText("Units : " + other.n, 10, 50)
     context.fillText("Ping : " + parseInt(ping * 10) / 10.0, 10, 80)
     context.fillText("Draw fps        : " + parseInt(10000.0 / msElapsed) / 10.0, 10, 105)
@@ -274,7 +276,7 @@ const drawComs = (coms, canvasCacheCom) => {
         context.drawImage(canvasCacheCom, com.x - 40, com.y - 40)
         context.beginPath()
         roundRect(context, com.x - 22, com.y - 22, 44, 44, 7)
-        context.fillStyle =getColor(com)
+        context.fillStyle = getColor(com)
         context.fill()
     }
 }
@@ -315,7 +317,7 @@ const drawSelectionSquare = (selectionSquare) => {
     context.shadowBlur = 0;
 }
 
-const drawTrail = (trail,time) => {
+const drawTrail = (trail, time) => {
     context.shadowBlur = 30;
     context.beginPath()
     context.moveTo(trail[0].x, trail[0].y)
@@ -338,8 +340,8 @@ const drawIcons = () => {
     context.fill()
     roundRect(context, iconX, iconY + 1 * (iconSize + iconSize / 3), iconSize, iconSize, 7)
     context.fill()
-    roundRect(context, iconX, iconY + 2 * (iconSize + iconSize / 3), iconSize, iconSize, 7)
-    context.fill()
+    // roundRect(context, iconX, iconY + 2 * (iconSize + iconSize / 3), iconSize, iconSize, 7)
+    // context.fill()
     context.beginPath()
     context.arc(iconHalfX, iconY + iconSize / 2, 20, 0, Math.PI * 2)
     const x3 = parseInt(iconHalfX)
@@ -350,15 +352,15 @@ const drawIcons = () => {
     context.fillStyle = "rgba(" + 150 + ", " + 150 + ", " + 150 + "," + 1.0 + ")"
     context.fill()
     context.closePath()
-    roundRect(context, iconX + (iconSize - 44) / 2, iconY + 2 * (iconSize + iconSize / 3) + (iconSize - 44) / 2, 44, 44, 7)
-    context.fillStyle = "rgba(" + 150 + ", " + 150 + ", " + 150 + "," + 1.0 + ")"
-    context.fill()
+    // roundRect(context, iconX + (iconSize - 44) / 2, iconY + 2 * (iconSize + iconSize / 3) + (iconSize - 44) / 2, 44, 44, 7)
+    // context.fillStyle = "rgba(" + 150 + ", " + 150 + ", " + 150 + "," + 1.0 + ")"
+    // context.fill()
 
     context.beginPath()
     context.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
     context.fillText("1", iconHalfX - 5, 5 + iconY + iconSize / 2)
     context.fillText("2", iconHalfX - 5, 5 + iconY + 1 * (iconSize + iconSize / 3) + iconSize / 2)
-    context.fillText("3", iconHalfX - 5, 5 + iconY + 2 * (iconSize + iconSize / 3) + iconSize / 2)
+    // context.fillText("3", iconHalfX - 5, 5 + iconY + 2 * (iconSize + iconSize / 3) + iconSize / 2)
 }
 
 

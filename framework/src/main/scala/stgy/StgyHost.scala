@@ -34,7 +34,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
     val spawner = unitys collect { case e: Spawner => e }
     neighbours.foreach(h => h.call(_.receiveTarget(zone, damagable)))
     damagable.foreach(d => {
-      HP.hostObserver.call(ho => ho.aggreg(d.clientId, d.id, Vec(d.x, d.y)))
+      HP.hostObserver.call(ho => ho.updatePosition(d.id,Vec(d.x,d.y)))
     })
 
     arrows foreach {
@@ -67,7 +67,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
       if (u.canSpawn) {
         val spawned = u.spawn
         u.clientViews.foreach(cv => spawned.sub(cv))
-        elements += spawned.id -> spawned
+        addUnity(spawned)
       }
     })
     damagable.foreach(u => if (u.isDead) kill(u))
@@ -107,7 +107,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
       })
       if (A.canShoot && closest._1 < 350) {
         val arrow = A.shoot(closest._2)
-        elements += arrow.id -> arrow
+        addUnity(arrow)
       }
       //   A.notifyClientViews
     }
@@ -127,7 +127,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
       if (A.canShoot && closest._1 < 350) {
         val target = Vec(closest._2.x, closest._2.y)
         val arrows = A.shoot(target)
-        arrows.foreach(arrow => elements += arrow.id -> arrow)
+        arrows.foreach(addUnity(_))
       }
     }
     }
@@ -144,11 +144,16 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
 
   def kill(u : Unity)= {
     elements -= u.id
-    HP.hostObserver.call( ho => ho.deleteAggreg(u.clientId,u.id) )
+    HP.hostObserver.call( _.deleteUnity(u.id,u.clientId))
   }
 
   def addUnity(e: Unity) = {
     elements += e.id -> e
+    e match {
+      case e: MetaUnit =>         HP.hostObserver.call( _.addUnity(e.id,e.clientId,Vec(e.x,e.y),e.metaType))
+      case _=>
+    }
+
   }
 
   def receiveTarget(who: SquareZone, e: Iterable[Unity]) = {

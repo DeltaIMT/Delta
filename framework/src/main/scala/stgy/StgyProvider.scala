@@ -30,9 +30,10 @@ class StgyProvider extends Provider[StgyClientView] {
     val swordman = 0 until numberOfStartUnit map { i =>  new Swordman(randx + 40*(i%sqrt) , randy + 40*(i/sqrt), Random.alphanumeric.take(10).mkString, id, color)    }
     val bowmen = 0 until numberOfStartUnit map { i => new Bowman(randx + 40*(i%sqrt) , randy + 40*(i/sqrt), Random.alphanumeric.take(10).mkString, id, color) }
     val com = new Commander(randx, randy, Random.alphanumeric.take(10).mkString, id, color)
-    val spawned : List[Unity] = com::bowmen.toList :::swordman.toList //flag::
+    val spawned : List[Unity] = com::bowmen.toList :::swordman.toList
 
-    HP.hostObserver.call( ho => ho.clientId2Color+= id -> color)
+    HP.hostObserver.call(_.addClient(id,color))
+
 
     spawned foreach {
       b =>
@@ -44,6 +45,7 @@ class StgyProvider extends Provider[StgyClientView] {
 
   override def OnDisconnect(id: String, obs: Observer) = {
     obs.onDisconnect()
+    HP.hostObserver.call(_.deleteClient(id))
   }
 
   override def hostsStringToZone(s: String): Option[Zone] = {

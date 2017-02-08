@@ -14,9 +14,9 @@ class StgyClientView(id :String) extends ClientView(id) {
   var xp = 0.0
   var numberOfUnit = 1.0
 
-  var hashIdColor = collection.mutable.HashMap[String, Boolean]()
-  var hashIdChangeHost = collection.mutable.HashMap[String, Boolean]()
-  var hashTime = collection.mutable.HashMap[String, Int]()
+  var hashIdColor = collection.mutable.Map[String, Boolean]()
+  var hashIdChangeHost = collection.mutable.Map[String, Boolean]()
+  var hashTime = collection.mutable.Map[String, Int]()
 
 
   override def dataToViewZone(): Zone = new SquareZone(pos.x - 1920/2, pos.y - 1080/2, 1920, 1080)
@@ -68,7 +68,7 @@ class StgyClientView(id :String) extends ClientView(id) {
 
     val listString = list.map {
       case u: Unity => {
-        val colorString = if ((!hashIdColor(u.id)) || hashIdChangeHost(u.id)) s""","color":[${u.color(0)},${u.color(1)},${u.color(2)}]""" else ""
+        val colorString = if ((!hashIdColor(u.id)) || hashIdChangeHost(u.id)) s""","color":[${u.color.r},${u.color.g},${u.color.b}]""" else ""
         u match {
           case e: Commander => {
             s"""{"type":"com","id":"${e.id}","spawning":"${1.0 - e.canSpawnIn / e.frameToSpawn.toFloat}","xp":"${e.xp}","mine":${id == e.clientId},"health":"${e.health/e.maxHealth}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
@@ -81,9 +81,6 @@ class StgyClientView(id :String) extends ClientView(id) {
           }
           case e: Arrow => {
             s"""{"type":"arrow","id":"${e.id}","x":"${e.x.toInt}","y":"${e.y.toInt}"}"""
-          }
-          case e: Flag => {
-            s"""{"type":"flag","id":"${e.id}","spawning":"${1.0 - e.canSpawnIn / e.frameToSpawn.toFloat}","possessing":${e.possessing},"x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
           }
         }
       }

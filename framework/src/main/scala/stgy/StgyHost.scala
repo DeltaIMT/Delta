@@ -4,28 +4,24 @@ package stgy
 import core.host.{Host, HostPool, HostRef}
 import core.spatial.{Viewable, Zone}
 import play.api.libs.json.Json
+import stgy.StgyTypes.{ClientId, UnitId}
 
 import scala.util.Random
 
 class StgyHost(zone: SquareZone) extends Host(zone) {
 
   val HP = HostPool[StgyHost, StgyHostObserver]
-  var elements = collection.mutable.HashMap[String, Element]()
-
+  var elements = collection.mutable.Map[String, Element]()
   var rand = new Random()
-
-  var targetFromOtherHost = collection.mutable.HashMap[SquareZone, collection.mutable.HashMap[String, Unity]]()
+  var targetFromOtherHost = collection.mutable.Map[SquareZone, collection.mutable.Map[String, Unity]]()
   var neighbours = List[HostRef[StgyHost]]()
 
-
   def flush() = {
-    elements = collection.mutable.HashMap[String, Element]()
+    elements = collection.mutable.Map[UnitId, Element]()
   }
 
   def tick(): Unit = {
-
     val unitys = elements.filter(e => e._2.isInstanceOf[Unity]).values.asInstanceOf[Iterable[Unity]]
-
     val damagable = unitys collect { case d: Damagable => d }
     val bowmen = damagable collect { case e: Bowman => e }
     val coms = damagable collect { case e: Commander => e }
@@ -34,11 +30,9 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
     targetFromOtherHost.values.map(x => x.values).foreach(x => otherDamagable ++= x.asInstanceOf[Iterable[Damagable]])
     val otherBowmen = otherDamagable collect { case e: Bowman => e }
     val extendedDamagable = damagable ++ otherDamagable
-    val flags = elements.filter(e => e._2.isInstanceOf[Flag]).values.asInstanceOf[Iterable[Flag]]
-    val arrows = elements.filter(e => e._2.isInstanceOf[Arrow]).values.asInstanceOf[Iterable[Arrow]]
-    val spawner = elements.filter(e => e._2.isInstanceOf[Spawner]).values.asInstanceOf[Iterable[Spawner]]
+    val arrows = unitys collect { case e: Arrow => e }
+    val spawner = unitys collect { case e: Spawner => e }
     neighbours.foreach(h => h.call(_.receiveTarget(zone, damagable)))
-
     damagable.foreach(d => {
       HP.hostObserver.call(ho => ho.aggreg(d.clientId, d.id, Vec(d.x, d.y)))
     })
@@ -146,8 +140,6 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
       }
     }
     }
-
-
   }
 
   def kill(u : Unity)= {
@@ -161,7 +153,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
 
   def receiveTarget(who: SquareZone, e: Iterable[Unity]) = {
     if (!targetFromOtherHost.contains(who))
-      targetFromOtherHost += who -> collection.mutable.HashMap[String, Unity]()
+      targetFromOtherHost += who -> collection.mutable.Map[String, Unity]()
 
     targetFromOtherHost(who).clear()
     e.foreach(b => {
@@ -170,12 +162,12 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
   }
 
 
-  def gainxpAggreg(clientId: String, xp: Double) = {
+  def gainxpAggreg(clientId: ClientId, xp: Double) = {
     HP.hostObserver.call(h => h.gainxp(clientId, xp))
   }
 
 
-  override def clientInput(idClient: String, data: String): Unit = {
+  override def clientInput(idClient: ClientId, data: String): Unit = {
 
     //  println("received : " + data)
     val json = Json.parse(data)
@@ -191,7 +183,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
     }
   }
 
-  override def getViewableFromZone(id : String , zone: Zone): Iterable[Viewable] = {
+  override def getViewableFromZone(id : ClientId , zone: Zone): Iterable[Viewable] = {
     elements.values
   }
 }

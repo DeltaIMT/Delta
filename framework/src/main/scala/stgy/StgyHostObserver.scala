@@ -1,18 +1,23 @@
 package stgy
 
-import akka.actor.FSM.->
 import core.host.{HostObserver, HostPool}
 import play.api.libs.json.Json
+import stgy.StgyTypes.UnitType.UnitType
+import stgy.StgyTypes._
 
 import scala.util.Random
 
 class StgyHostObserver extends HostObserver[StgyClientView] {
 
-  var clientId2Color = collection.mutable.HashMap[String, Array[Int]]()
-  var clientId2Aggregator = collection.mutable.HashMap[String, Aggregator]()
-  var clientId2Xp = collection.mutable.HashMap[String, Double]()
+  var clientId2Color = collection.mutable.Map[ClientId, Color]()
+  var clientId2Aggregator = collection.mutable.Map[ClientId, Aggregator]()
+  var clientId2Xp = collection.mutable.Map[ClientId, Double]()
+  var clientId2ListObjId = collection.mutable.Map[ClientId, List[UnitId] ]()
+  var objId2pos = collection.mutable.Map[UnitId, Vec]()
+  var objId2Color = collection.mutable.Map[UnitId, Color]()
+  var objId2UnitType= collection.mutable.Map[UnitId, UnitType]()
 
-  def gainxp(clientId: String, xp: Double) = {
+  def gainxp(clientId: ClientId, xp: Double) = {
     if (clientId2Xp.contains(clientId))
       clientId2Xp(clientId) += xp
     else
@@ -20,12 +25,20 @@ class StgyHostObserver extends HostObserver[StgyClientView] {
   }
 
 
-  def aggreg(clientId: String, objId: String, position: Vec) = {
+
+  def aggreg(clientId2Info : Map[ClientId,List[(UnitId,Vec)]]): Unit = {
+    clientId2Info.foreach {case (clientId,list) => {
+      list.foreach {case (objId, position) => aggreg(clientId,objId,position)}
+    }}
+  }
+
+
+  def aggreg(clientId: ClientId, objId: UnitId, position: Vec) : Unit = {
     val aggregator = clientId2Aggregator.getOrElseUpdate(clientId, new Aggregator)
     aggregator.add(objId, position)
   }
 
-  def deleteAggreg(clientId: String, objId: String) = {
+  def deleteAggreg(clientId: ClientId, objId: UnitId) = {
     val aggregator = clientId2Aggregator.getOrElseUpdate(clientId, new Aggregator)
     aggregator.delete(objId)
   }
@@ -52,7 +65,7 @@ class StgyHostObserver extends HostObserver[StgyClientView] {
     }
   }
 
-  override def clientInput(clientId: String, data: String): Unit = {
+  override def clientInput(clientId: ClientId, data: String): Unit = {
 
 
     val json = Json.parse(data)

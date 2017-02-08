@@ -91,7 +91,7 @@ module.exports.draw = (frame, msElapsed, time, ping, selectedIds, moveSquare, se
     context.font = "bold 18px Courier New";
     context.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
     if (other !== null)
-        context.fillText("xp : " + other.xp + " used : " + other.usedXp, 10, 30)
+        context.fillText("xp : " + other.xp , 10, 30)
     context.fillText("Units : " + other.n, 10, 50)
     context.fillText("Ping : " + parseInt(ping * 10) / 10.0, 10, 80)
     context.fillText("Draw fps        : " + parseInt(10000.0 / msElapsed) / 10.0, 10, 105)

@@ -2,15 +2,16 @@ package stgy
 
 import akka.actor.FSM.->
 import core.observerPattern.{Observable, Observer}
+import stgy.StgyTypes.{ClientId, Color, UnitId}
 
 import scala.util.Random
 
 
 
 trait Unity extends Element with Observable {
-  var id: String
-  var clientId: String
-  var color: Array[Int]
+  var id: UnitId
+  var clientId: ClientId
+  var color: Color
 }
 
 trait Movable extends Unity {
@@ -90,72 +91,7 @@ trait Spawner extends Unity{
   }
 }
 
-class Flag(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Unity {
-
-  var numberOfUnitToConvertInOneFrame = 500.0
-  var frameToSpawn = 1300
-
-  var isPossessed = true
-  var possessing = 1.0
-
-  var canSpawnIn = 0
-
-  def computePossessing(units: Iterable[Unity]) = {
-
-    val unitsInRange = units.filter(u => (Vec(u.x, u.y) - Vec(x, y)).length() < 200)
-
-    val unitsAllyCount = unitsInRange.count(u => u.clientId == clientId)
-    val unitsEnemyCount = unitsInRange.count(u => u.clientId != clientId)
-
-    if( unitsAllyCount == 0)
-      possessing  = math.max(0.0, possessing - (10) / numberOfUnitToConvertInOneFrame)
-
-    if (unitsAllyCount < unitsEnemyCount)
-      possessing = math.max(0.0, possessing - (unitsEnemyCount - unitsAllyCount) / numberOfUnitToConvertInOneFrame)
-    else
-      possessing = math.min(1.0, possessing + (unitsAllyCount - unitsEnemyCount) / numberOfUnitToConvertInOneFrame)
-
-    if (possessing > 0.5)
-      isPossessed = true
-    else
-      isPossessed = false
-
-    if (possessing == 0 && unitsEnemyCount>0) {
-      isPossessed = false
-      clientViews = List[Observer]()
-      //We need to find the team with the most unit
-      var hash = collection.mutable.HashMap[String, (Int, Unity)]()
-
-      unitsInRange.foreach(u => {
-        if (hash.contains(u.clientId))
-          hash(u.clientId) = (hash(u.clientId)._1 + 1, hash(u.clientId)._2)
-        else
-          hash += u.clientId -> (1, u)
-      })
-      val pair = hash.reduce((a, b) => if (a._2._1 > b._2._1) a else b)
-      clientId = pair._1
-      color = pair._2._2.color
-      sub(pair._2._2.clientViews.head)
-    }
-  }
-
-  def step = {
-    if (canSpawnIn>0)
-      canSpawnIn -= 1
-  }
-
-  def canSpawn: Boolean = {
-    canSpawnIn == 0 && isPossessed
-  }
-
-  def spawn: Unity = {
-    canSpawnIn = frameToSpawn
-    new Bowman(x, y, Random.alphanumeric.take(10).mkString, clientId, color)
-  }
-
-}
-
-class Commander(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Spawner with Evolving{
+class Commander(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Spawner with Evolving{
   health = 2
   maxHealth = 2
   var speed = 1.0
@@ -223,7 +159,7 @@ class Aggregator  {
 }
 
 
-class Swordman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
+class Swordman(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Evolving {
   override var radius: Int = 20
   maxHealth = 3
   health = 3
@@ -248,7 +184,7 @@ class Swordman(var x : Double,var y : Double,var id : String,var clientId : Stri
 
 }
 
-class Bowman(var x : Double,var y : Double,var id : String,var clientId : String,var color : Array[Int]) extends Movable with Damagable with Shooter with Evolving {
+class Bowman(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color : Color) extends Movable with Damagable with Shooter with Evolving {
   var speed = 1.0
   var xpCost = 1.0
   override var radius: Int =  20
@@ -280,7 +216,7 @@ class Bowman(var x : Double,var y : Double,var id : String,var clientId : String
   }
 }
 
-class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,var color :Array[Int], var shooterId : String) extends Movable {
+class Arrow(var x : Double,var y : Double,var id : UnitId,var clientId : ClientId,var color :Color, var shooterId : UnitId) extends Movable {
   var speed = 10.0
   var frame = 0
   var shotFrom = Vec(x,y)
@@ -288,4 +224,7 @@ class Arrow(var x : Double,var y : Double,var id : String,var clientId : String,
     frame+=1
     frame==60
   }
+
+  val id2 : ClientId = id
+
 }

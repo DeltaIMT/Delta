@@ -22,7 +22,6 @@ object Drawer {
     context.fillStyle = "rgb(200,200,200"
     context.fill()
 
-
     frame.units.foreach( u => {
       context.beginPath()
       context.arc(u.x,u.y,20,0,Math.PI*2)

@@ -29,15 +29,17 @@ case class ArrowFront(id: String, x: Int, y: Int)
 
 object WebApp extends JSApp {
   type Context = dom.CanvasRenderingContext2D
+  var currentTime_ = 0.0
 
   val loop: (Double) => Unit = (currentTime) => {
+    currentTime_ =currentTime
     val elapsedTime = currentTime - lastTime
     lastTime = currentTime
-    val frame = Interp.interpFrame(currentTime)
+    val frame = Interp.interpFrame(currentTime.toFloat)
   if(frame != null)
     Drawer.draw(context, frame)
 
-    FrontFramework.getPing(println)
+ //   FrontFramework.getPing(println)
     window.requestAnimationFrame(loop)
   }
 
@@ -68,12 +70,12 @@ object WebApp extends JSApp {
       case b: Blob => {
         blob2ArrayBuffer(b).onComplete {
           case Success(ab) => {
-            println("Received : " + ab.byteLength + " bytes")
+       //     println("Received : " + ab.byteLength + " bytes")
             val bytebyffer = TypedArrayBuffer.wrap(ab)
 
             val frame = Unpickle[StgyFrame].fromBytes(bytebyffer)
 
-            Interp.addFrame(frame)
+            Interp.addFrame(frame,currentTime_)
 
           }
           case Failure(e) => {}

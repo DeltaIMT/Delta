@@ -2,7 +2,7 @@ scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions in ThisBuild ++= Seq("-feature", "-language:postfixOps")
 
-lazy val root = project in file(".") aggregate(framework,stgy_scalajs_server,stgy_scalajs_client,stgy_server, paint_server, championship_server, splatoon_server)
+lazy val root = project in file(".") aggregate(framework,demo_server,stgy_scalajs_server,stgy_scalajs_client,stgy_server, paint_server, championship_server, splatoon_server)
 
 
 lazy val framework = project in file("framework") settings(
@@ -32,5 +32,9 @@ lazy val championship_server = project in file("championship_server") settings(
 lazy val splatoon_server = project in file("splatoon_server") settings(
   version := "1.0.0"
 ) dependsOn(framework)
+
+lazy val demo_server = project in file("demo_server") settings(
+  version := "1.0.0"
+  ) dependsOn(framework)
 
 

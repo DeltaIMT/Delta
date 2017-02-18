@@ -39,5 +39,44 @@ class Websocket(val provider : ActorRef, val port : Int, implicit val mat : Mate
     FlowShape(messageToEventFlow.in, eventToMessageFlow.out)
   })
 }
+/*
 
+
+      Client                    Command
+        +                          +
+        |                          |
+        |                          |
+        v                          |
++-------+-------+       +----------v---------+
+|               |       |                    |
+|materialization|       | messageToEventFlow |
+|               |       |                    |
++-------+-------+       +----------+---------+
+        |                          |
+        |                          |
+        +--------+   +-------------+
+                 |   |
+                 |   |
+                 |   |
+                 |   |
+                 |   |
+                 |   |
+               +-v---v--+
+               |        |
+               | merge  |
+               |        |                     Client
+               +---+----+                       +
+                   |                            |
+                   |                            |
+                   |                 +----------v---------+
+           +-------v-------+         |                    |
+           |               |         | eventToMessageFlow |
+           |  ProviderSink |         |                    |
+           |               |         +--------------------+
+           +---------------+
+
+
+
+
+ */
 

@@ -1,4 +1,15 @@
-
+function generateUUID(){
+    var d = new Date().getTime();
+    if(window.performance && typeof window.performance.now === "function"){
+        d += performance.now(); //use high-precision timer if available
+    }
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+    });
+    return uuid;
+}
 
 var dataManipulationFunction = (arg) => { }
 var defineCommandToServer = () => { return "default message" }
@@ -6,8 +17,7 @@ var fps = 0
 var ws
 var getPing = () => { }
 module.exports.launch = () => {
-    var uuid = require('node-uuid');
-    var id = uuid.v4()
+    var id = generateUUID()
 
     var data = []
     var host = window.location.hostname

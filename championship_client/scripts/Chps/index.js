@@ -1,6 +1,6 @@
 const frameInterp = require('./frameInterp')
 const Drawer = require('./drawer')
-const client = require('../providedCode')
+const client = require('./../../../framework/src/main/node/deltaClient')
 const zlib = require('zlib')
 
 

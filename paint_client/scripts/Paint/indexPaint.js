@@ -1,5 +1,5 @@
 window.onload = () => {
-    var client = require('../providedCode')
+    const client = require('./../../../framework/src/main/node/deltaClient')
     client.launch()
     var zlib = require('zlib');
 

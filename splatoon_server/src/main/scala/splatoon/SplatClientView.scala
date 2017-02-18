@@ -19,7 +19,7 @@ class SplatClientView(id : String) extends ClientView(id) {
 
   override def onDisconnect(any: Any): Unit = {}
 
-  override def fromListToClientMsg(list: List[Any]): String = {
+  override def fromListToClientMsg(list: List[Any]) = {
     counterMiniMap += 1
 
     val shooters = list.filter(_.isInstanceOf[Shooter]).asInstanceOf[List[Shooter]]
@@ -45,7 +45,7 @@ class SplatClientView(id : String) extends ClientView(id) {
     }
 
     val string = listString.mkString("[", ",", "]")
-    string
+    Left(string)
   }
 
   def setPos(newX: Double, newY: Double): Unit = {

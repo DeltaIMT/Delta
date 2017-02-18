@@ -31,7 +31,6 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
     val otherBowmen = otherDamagable collect { case e: Bowman => e }
     val extendedDamagable = damagable ++ otherDamagable
     val arrows = unitys collect { case e: Arrow => e }
-    val spawner = unitys collect { case e: Spawner => e }
     neighbours.foreach(h => h.call(_.receiveTarget(zone, damagable)))
     damagable.foreach(d => {
       HP.hostObserver.call(ho => ho.updatePosition(d.id,Vec(d.x,d.y)))
@@ -62,14 +61,7 @@ class StgyHost(zone: SquareZone) extends Host(zone) {
       }
     }
 
-    spawner.foreach(u => {
-      u.spawnerStep
-      if (u.canSpawn) {
-        val spawned = u.spawn
-        u.clientViews.foreach(cv => spawned.sub(cv))
-        addUnity(spawned)
-      }
-    })
+
     damagable.foreach(u => if (u.isDead) kill(u))
 
 

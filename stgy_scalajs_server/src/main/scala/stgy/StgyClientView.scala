@@ -1,10 +1,13 @@
 package stgy
 
+import java.nio.ByteBuffer
+
 import akka.actor.ActorRef
 import akka.actor.FSM.->
 import core.clientView.{ClientView, ClientViewActor}
 import core.host.{HostObserver, HostPool}
 import core.spatial.Zone
+import boopickle.Default._
 
 
 class StgyClientView(id :String) extends ClientView(id) {
@@ -64,30 +67,19 @@ class StgyClientView(id :String) extends ClientView(id) {
     // while processing "fromListToClientMsg", we decrease the value of each key we have
     hashTime.keys.foreach(k => hashTime(k) = hashTime(k) - 1)
 
+    val arrows = list collect { case a:Arrow => ArrowFront(a.id,a.x.toInt,a.y.toInt) }
 
-    val listString = list.map {
-      case u: Unity => {
-        val colorString = if ((!hashIdColor(u.id)) || hashIdChangeHost(u.id)) s""","color":[${u.color.r},${u.color.g},${u.color.b}]""" else ""
-        u match {
-          case e: Commander => {
-            s"""{"type":"com","id":"${e.id}","spawning":"${1.0 - e.canSpawnIn / e.frameToSpawn.toFloat}","xp":"${e.xp}","mine":${id == e.clientId},"health":"${e.health/e.maxHealth}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
-          }
-          case e: Bowman => {
-            s"""{"type":"bowman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health/e.maxHealth}","xp":"${e.xp}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
-          }
-          case e: Swordman => {
-            s"""{"type":"swordman","id":"${e.id}","mine":${id == e.clientId},"health":"${e.health/e.maxHealth}","xp":"${e.xp}","x":"${e.x.toInt}","y":"${e.y.toInt}"${colorString}}"""
-          }
-          case e: Arrow => {
-            s"""{"type":"arrow","id":"${e.id}","x":"${e.x.toInt}","y":"${e.y.toInt}"}"""
-          }
-        }
-      }
-      case e => "NOT ELEMENT : " + e
-    } ++ List(
-      s"""{"type":"camera","id":"0","x":"${pos.x.toInt}","y":"${pos.y.toInt}"}""",
-      s"""{"type":"other","id":"1","n":"${numberOfUnit}","xp":"${xp}","usedXp":"${xp}"}""")
-    val string = listString.mkString("[", ",", "]")
-    Left(string)
+
+
+
+    val damagable =  list.collect {case a: Damagable => a }
+    val meta = damagable. collect { case a: MetaUnit => a}
+    val units = meta map {a => UnityFront(a.id,a.color, a.x.toInt,a.y.toInt , (a.health/a.maxHealth).toFloat )}
+
+    val frame = StgyFrame(units,arrows , pos.x.toFloat, pos.y.toFloat, xp.toFloat, numberOfUnit.toInt)
+
+
+    val buf = Pickle.intoBytes(frame)
+    Right(buf)
   }
 }

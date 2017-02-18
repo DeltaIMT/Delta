@@ -34,6 +34,8 @@ class Vec(var x: Double, var y: Double) extends Element {
     y /= n
   }
 
+  override def toString: String = s"""Vec(${x},${y})"""
+
   def length2() = x * x + y * y
 
   def length() = math.sqrt(length2())

@@ -3,7 +3,7 @@ package core.host
 import core.spatial.{Viewable, Zone}
 
 
-
+//Object that contains that knows the references to all the hosts
 object HostPool extends HostPoolImpl[Nothing,Nothing] {
     def apply[T <: InputReceiver,U <: InputReceiver] = this.asInstanceOf[HostPoolImpl[T,U]]
 }

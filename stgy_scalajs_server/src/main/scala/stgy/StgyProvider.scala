@@ -38,7 +38,6 @@ class StgyProvider extends Provider[StgyClientView] {
     spawned foreach {
       b =>
         HP.getHost(Vec(b.x, b.y)).call( i => i.addUnity(b)  )
-        b.sub(obs)
     }
 
   }

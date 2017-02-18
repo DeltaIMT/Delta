@@ -1,7 +1,4 @@
 window.onload = () => {
-    document.getElementById("root").style.visibility = "visible"
-    document.getElementById("root").style.display = "block"
-
     var client = require('../providedCode')
     client.launch()
     var zlib = require('zlib');

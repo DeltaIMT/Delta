@@ -18,6 +18,3 @@ addSbtPlugin("io.kamon" % "aspectj-runner" % "0.1.4")
 
 // Run!
 // aspectj-runner:run
-
-// ScalaJS
-//addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.14")

@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.{Flow, GraphDSL, Merge, Sink, Source}
 import akka.stream.{FlowShape, Materializer, OverflowStrategy}
+import akka.util.ByteString
 import core.CoreMessage._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -27,6 +28,7 @@ class Websocket(val provider : ActorRef, val port : Int, implicit val mat : Mate
     })
     val eventToMessageFlow= builder.add(Flow[Any].map{
       case PlayersUpdate(json) =>TextMessage(json)
+      case PlayersUpdateRaw(bytes) =>  akka.http.scaladsl.model.ws.BinaryMessage(ByteString.fromByteBuffer(bytes))
     })
     val ProviderSink = Sink.actorRef[Any](provider,DeleteClient(id))
 

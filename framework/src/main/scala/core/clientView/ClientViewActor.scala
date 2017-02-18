@@ -42,13 +42,21 @@ class ClientViewActor[ClientViewImpl <: ClientView](client: ActorRef,clientView 
           //println("Total parts : " + worker.fromListToClientMsg(buffers(num)._2))
           //      println("Buffer size:"+ buffers.values.size)
           val toDeflate = clientView.fromListToClientMsg(buffers(num)._2)
+          toDeflate match {
+            case Right(bytebuffer)=> {
+              client ! PlayersUpdateRaw(bytebuffer)
 
-          val arrOutputStream = new ByteArrayOutputStream()
-          val zipOutputStream = new GZIPOutputStream(arrOutputStream)
-          zipOutputStream.write(toDeflate.getBytes)
-          zipOutputStream.close()
+            }
+            case Left(string) => {
+              val arrOutputStream = new ByteArrayOutputStream()
+              val zipOutputStream = new GZIPOutputStream(arrOutputStream)
+              zipOutputStream.write(string.getBytes)
+              zipOutputStream.close()
+              client ! PlayersUpdate(Base64.getEncoder.encodeToString(arrOutputStream.toByteArray))
+            }
 
-          client ! PlayersUpdate(Base64.getEncoder.encodeToString(arrOutputStream.toByteArray))
+          }
+
         }
       }
       else {

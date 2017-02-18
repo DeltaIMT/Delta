@@ -1,5 +1,7 @@
 package core.clientView
 
+import java.nio.ByteBuffer
+
 import core.spatial.Zone
 
 abstract class ClientView(val id : String) {
@@ -10,7 +12,7 @@ abstract class ClientView(val id : String) {
 
   def onDisconnect(any: Any): Unit
 
-  def fromListToClientMsg(list: List[Any]): String
+  def fromListToClientMsg(list: List[Any]): Either[String,ByteBuffer]
 
 
 

@@ -23,15 +23,18 @@ class ClientViewActor[ClientViewImpl <: ClientView](client: ActorRef,clientView 
     case x: Notify => {
       clientView.onNotify(x.any)
     }
+    // udapte the area tha must be seen by the client
     case UpdateClient => {
       zoneToMessage(clientView.dataToViewZone())
       nextbuffer = nextbuffer + 1
       buffers -= nextbuffer - 4
     }
-
+    // call the function inside the clientViewActor
     case x:Call[ClientViewImpl]  => {
       x.func(clientView)
     }
+    // update the list that contains data if the data received is recent enough, and then transform it into a message and finally
+    // compress it before sending it to the client
     case x: AnyParts => {
       // println("Any part : destination : "+x.buffer + " content : " + worker.fromListToClientMsg(x.anys))
       var num = x.buffer

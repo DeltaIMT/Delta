@@ -9,9 +9,10 @@ import scala.util.Random
 
 class DemoProvider extends Provider[DemoClientView]{
 
+  frequency = 60
+
   override def hostsStringToZone(s: String): Option[Zone] = {
     val json = Json.parse(s).asInstanceOf[JsArray].value
-    //println(json)
     val x = json(0).as[Int]
     if(x == -1)
       return None

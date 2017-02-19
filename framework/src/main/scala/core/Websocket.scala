@@ -57,18 +57,14 @@ class Websocket(val provider : ActorRef, val port : Int, implicit val mat : Mate
         +--------+   +-------------+
                  |   |
                  |   |
-                 |   |
-                 |   |
-                 |   |
-                 |   |
                +-v---v--+
                |        |
                | merge  |
                |        |                     Client
-               +---+----+                       +
+               +---+----+                       A
                    |                            |
                    |                            |
-                   |                 +----------v---------+
+                   |                 +----------+---------+
            +-------v-------+         |                    |
            |               |         | eventToMessageFlow |
            |  ProviderSink |         |                    |

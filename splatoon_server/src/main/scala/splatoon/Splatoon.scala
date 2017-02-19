@@ -1,12 +1,12 @@
 package splatoon
 
-import core.AbstractMain
+import core.Delta
 
 import scala.swing._
 
 object Splatoon extends App{
 
-  val main = new AbstractMain[SplatHost, SplatProvider, SplatHostObserver]()
+  val main = new Delta[SplatHost, SplatProvider, SplatHostObserver]()
   main.numberOfClient = 100
 
   val hosts =(0 until 25).map {i => {

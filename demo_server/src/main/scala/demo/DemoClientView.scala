@@ -13,8 +13,6 @@ class DemoClientView(id : String) extends ClientView(id) {
     case ball :Ball =>  pos = ball
   }
 
-  override def onDisconnect(any: Any): Unit = {}
-
   override def fromListToClientMsg(list: List[Any]) = {
 
     val string = s"""{"camera":true,"x":"${pos.x}","y":"${pos.y}"}""" ::

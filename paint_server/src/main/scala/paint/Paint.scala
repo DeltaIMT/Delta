@@ -1,13 +1,13 @@
 package paint
 
 import core.observerPattern.Observable
-import core.{AbstractMain}
+import core.{Delta}
 import scala.collection.mutable.ListBuffer
 
 
 object Paint extends App{
 
-  val main = new AbstractMain[PaintHost, PaintProvider, PaintHostObserver]()
+  val main = new Delta[PaintHost, PaintProvider, PaintHostObserver]()
   main.numberOfClient = 100
 
   val hosts =(0 until 25).map {i => {

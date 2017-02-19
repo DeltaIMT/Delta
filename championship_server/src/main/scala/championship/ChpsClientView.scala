@@ -22,9 +22,6 @@ class ChpsClientView(id :String) extends ClientView(id) {
     }
   }
 
-  override def onDisconnect(any: Any): Unit = {
-  }
-
   override def fromListToClientMsg(list: List[Any]) = {
 
     val listString = list.map {

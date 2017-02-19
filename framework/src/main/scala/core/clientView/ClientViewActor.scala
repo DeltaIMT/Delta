@@ -66,10 +66,6 @@ class ClientViewActor[ClientViewImpl <: ClientView](client: ActorRef,clientView 
         // println("WARNING : Message too old from host to ClientView, delay : " + (nextbuffer - num)  )
       }
     }
-
-    case Disconnect => {
-      clientView.onDisconnect()
-    }
   }
 
   // USER JOB

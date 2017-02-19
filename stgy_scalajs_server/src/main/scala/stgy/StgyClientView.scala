@@ -32,10 +32,6 @@ class StgyClientView(id :String) extends ClientView(id) {
     }
   }
 
-  override def onDisconnect(any: Any): Unit = {
-    //  hostPool.getHyperHost(x, y).exec(l => l -= idBall)
-  }
-
   override def fromListToClientMsg(list: List[Any]) = {
 
     // hashTime uploaded each time "fromListToClientMsg is called :

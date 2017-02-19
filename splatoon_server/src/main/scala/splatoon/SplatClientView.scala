@@ -17,8 +17,6 @@ class SplatClientView(id : String) extends ClientView(id) {
 
   override def onNotify(any: Any): Unit = {}
 
-  override def onDisconnect(any: Any): Unit = {}
-
   override def fromListToClientMsg(list: List[Any]) = {
     counterMiniMap += 1
 

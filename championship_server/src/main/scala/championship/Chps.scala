@@ -1,7 +1,7 @@
 package championship
 
 
-import core.AbstractMain
+import core.Delta
 import core.host.HostPool
 import kamon.Kamon
 
@@ -10,7 +10,7 @@ import scala.util.Random
 
 object Chps extends App {
 
-  val main = new AbstractMain[ChpsHost, ChpsProvider,ChpsHostObserver]()
+  val main = new Delta[ChpsHost, ChpsProvider,ChpsHostObserver]()
   main.numberOfClient = 100
 
   val hosts =(0 until 25).map {i => {

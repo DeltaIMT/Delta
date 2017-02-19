@@ -34,7 +34,7 @@ document.addEventListener('mousemove', (event) => {
 document.addEventListener('mouseup', (event) => {
     const mouseUp = { x: event.pageX, y: event.pageY }
     const toTarget = { x: -mouseDown.x + mouseUp.x, y: -mouseDown.y + mouseUp.y }
-    const length = Math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y) * 0.3
+    const length = Math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y) * 0.2
     const dir = { x: parseFloat(toTarget.x / length), y: parseFloat(toTarget.y / length) }
     client.send(JSON.stringify([{
         hosts: JSON.stringify([parseInt(mouseDown.x), parseInt(mouseDown.y)]),

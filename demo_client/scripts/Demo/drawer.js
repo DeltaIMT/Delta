@@ -27,7 +27,7 @@ module.exports.draw = (frame, mouseDown, mouseMove) => {
         context.stroke()
         context.closePath()
         const toTarget = { x: -mouseDown.x + mouseMove.x, y: -mouseDown.y + mouseMove.y }
-        const length = Math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y) * 0.3
+        const length = Math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y) * 0.2
         const dir = { x: parseFloat(toTarget.x / length), y: parseFloat(toTarget.y / length) }
         context.fillStyle = "black"
         context.font = "30px Calibri";

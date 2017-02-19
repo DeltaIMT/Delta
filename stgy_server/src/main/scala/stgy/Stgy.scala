@@ -1,6 +1,6 @@
 package stgy
 
-import core.AbstractMain
+import core.Delta
 import core.CoreMessage.CallTrace
 import kamon.Kamon
 import scala.concurrent.duration._
@@ -8,7 +8,7 @@ import scala.swing._
 
 object Stgy extends App {
 
-  val main = new AbstractMain[StgyHost, StgyProvider, StgyHostObserver]()
+  val main = new Delta[StgyHost, StgyProvider, StgyHostObserver]()
   main.numberOfClient = 100
 
   val hosts = (0 until 25).map { i => {

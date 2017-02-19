@@ -24,11 +24,6 @@ class PaintClientView (id : String) extends ClientView(id) {
 
   override def dataToViewZone(): Zone = new SquareZone(x - 1500, y - 1500, 3000, 3000)
 
-
-  override def onDisconnect(any: Any): Unit = {
-
-  }
-
   override def fromListToClientMsg(list: List[Any]) = {
     list match {
       case points: List[Point] => {

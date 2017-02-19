@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.reflect.ClassTag
 
 
-class AbstractMain[
+class Delta[
 HostImpl <: Host : TypeTag : ClassTag,
 ProviderImpl <: Provider[_] : TypeTag : ClassTag,
 HostObserverImpl <: HostObserver[_] : TypeTag : ClassTag

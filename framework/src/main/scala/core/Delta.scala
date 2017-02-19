@@ -23,58 +23,58 @@ HostImpl <: Host : TypeTag : ClassTag,
 ProviderImpl <: Provider[_] : TypeTag : ClassTag,
 HostObserverImpl <: HostObserver[_] : TypeTag : ClassTag
 ] {
-  val HP = HostPool[HostImpl,HostObserverImpl]
+  val HP = HostPool[HostImpl, HostObserverImpl]
   var initialPort = 9001
   var numberOfClient = 30
 
-  implicit var actorSystem: ActorSystem=_
-  implicit var executionContext:ExecutionContextExecutor=_
+  implicit var actorSystem: ActorSystem = _
+  implicit var executionContext: ExecutionContextExecutor = _
 
-  def setHostInterval( hr : HostRef[HostImpl] , time : Int, func : HostImpl => Unit ) = {
-    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor , Call(func)  )
+  def setHostInterval(hr: HostRef[HostImpl], time: Int, func: HostImpl => Unit) = {
+    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor, Call(func))
   }
 
-  def setHostObserverInterval( hr : HostRef[HostObserverImpl] , time : Int, func : HostObserverImpl => Unit ) = {
-    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor , Call(func)  )
+  def setHostObserverInterval(hr: HostRef[HostObserverImpl], time: Int, func: HostObserverImpl => Unit) = {
+    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor, Call(func))
   }
 
-  def launch(hosts : Iterable[HostImpl], hostObserver : HostObserverImpl) = {
+  def launch(hosts: Iterable[HostImpl]) : Unit= {
     println("framework starting")
     actorSystem = ActorSystem("akka-system")
     executionContext = actorSystem.dispatcher
     implicit val flowMaterializer = ActorMaterializer()
-
-
-     hosts.foreach( h => {
+    hosts.foreach(h => {
       val actor = actorSystem.actorOf(Props(new HostActor[HostImpl](h)))
       val ref = new HostRef[HostImpl](actor)
-      HP.hosts +=  h.zone -> ref
+      HP.hosts += h.zone -> ref
     })
-
-    val hostObserverActor = actorSystem.actorOf(Props(new HostActor[HostObserverImpl](hostObserver)))
-    HP.hostObserver = new HostRef[HostObserverImpl]( hostObserverActor)
-
-    val providerClients = 0 until numberOfClient - 1 map
-      { i => actorSystem.actorOf(Props(createInstance[ProviderImpl]()), "provider_" + i) }
+    val providerClients = 0 until numberOfClient - 1 map { i => actorSystem.actorOf(Props(createInstance[ProviderImpl]()), "provider_" + i) }
     val providerPort = actorSystem.actorOf(Props(new ProviderPort(numberOfClient, providerClients)), "providerPort")
     val providers = providerPort :: providerClients.toList
-    val websockets = -1 until numberOfClient - 1 map
-      { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i,flowMaterializer) }
+    val websockets = -1 until numberOfClient - 1 map { i => initialPort + i -> new Websocket(providers(i + 1), initialPort + i, flowMaterializer) }
 
     val routes = websockets.map {
       case (port, ws) => {
-        port->
+        port ->
           (get & parameter("id")) {
             id => handleWebSocketMessages(ws.flow(id))
           }
       }
     }
-
-    routes foreach { case (port,route) =>
+    routes foreach { case (port, route) =>
       Http().bindAndHandle(RouteResult.route2HandlerFlow(route), "0.0.0.0", port)
     }
-
     println("framework working")
+  }
+
+
+  def launch(hosts: Iterable[HostImpl], hostObserver: HostObserverImpl) : Unit= {
+
+    launch(hosts)
+    val hostObserverActor = actorSystem.actorOf(Props(new HostActor[HostObserverImpl](hostObserver)))
+    HP.hostObserver = new HostRef[HostObserverImpl](hostObserverActor)
+
+
   }
 
 

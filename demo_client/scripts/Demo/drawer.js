@@ -1,33 +1,44 @@
 const canvas = document.getElementById("canvas")
 const context = canvas.getContext("2d")
-canvas.width = window.innerWidth
-canvas.height = window.innerHeight
+canvas.width = 900
+canvas.height = 900
 
+const background = new Image()
+background.src = './texture/background.png'
 
-
-module.exports.draw = (frame, camera) => {
-    context.setTransform(1, 0, 0, 1, 0, 0)
-
+module.exports.draw = (frame, mouseDown, mouseMove) => {
+    const pattern = context.createPattern(background, 'repeat')
     context.beginPath()
-    context.rect(0, 0, canvas.width, canvas.height)
-    context.fillStyle = "rgb(255,255,255)"
+    context.rect(0, 0, 900, 900)
+    context.fillStyle = pattern
     context.fill()
 
-    context.translate(-(camera.x - canvas.width / 2), -(camera.y - canvas.height / 2));
-     //   console.log("FRAME_____________")
-    frame.forEach(e => {
-        if (e.camera != true)
+    if (frame != null)
+        frame.forEach(e => {
             drawBall(e)
-    })
+        })
+
+    if (mouseMove != null && mouseDown != null) {
+        context.beginPath()
+        context.moveTo(mouseDown.x, mouseDown.y)
+        context.lineTo(mouseMove.x, mouseMove.y)
+        context.strokeStyle = "green"
+        context.lineWidth = 5
+        context.stroke()
+        context.closePath()
+        const toTarget = { x: -mouseDown.x + mouseMove.x, y: -mouseDown.y + mouseMove.y }
+        const length = Math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y) * 0.3
+        const dir = { x: parseFloat(toTarget.x / length), y: parseFloat(toTarget.y / length) }
+        context.fillStyle = "black"
+        context.font = "30px Calibri";
+        context.fillText(" x:" + mouseDown.x + " y:" + mouseDown.y, mouseDown.x, mouseDown.y);
+        context.fillText(" tx:" + parseInt(dir.x*100)/100 + " ty:" +parseInt(dir.y*100)/100, mouseMove.x, mouseMove.y);
+    }
 }
 
-
 const drawBall = (ball) => {
-
-//    console.log(ball)
     context.beginPath()
-    context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2)
+    context.arc(ball.x, ball.y, 20, 0, Math.PI * 2)
     context.fillStyle = "rgb(0,0,0)"
     context.fill()
-
 }

@@ -9,9 +9,7 @@ import scala.util.Random
 
 class DemoHost(zone: SquareZone) extends Host(zone){
 
-  var idMapBalls = collection.mutable.Map[String, Ball]()
-
-  def balls = idMapBalls.values.toList
+  var balls = List[Ball]()
 
   override def getViewableFromZone(id : String ,zone: Zone): Iterable[Viewable] = {
     balls.filter(zone.contains(_))
@@ -21,46 +19,26 @@ class DemoHost(zone: SquareZone) extends Host(zone){
     val json = Json.parse(data)
     val x = (json \ "x").get.as[Int]
     val y = (json \ "y").get.as[Int]
-    val target = Vec(x,y)
-    idMapBalls.get(id) match {
-      case Some(ball) => ball.speed = (target - ball).normalize()*2
-      case None =>
-    }
-
+    val tx = (json \ "tx").get.as[Double]
+    val ty = (json \ "ty").get.as[Double]
+    val origin = Vec(x,y)
+    val speed = Vec(tx,ty)
+    balls ::= new Ball(origin,speed)
   }
 
   def tick() = {
-
-    if(idMapBalls.size < 10){
-      val id = Random.nextDouble()+""
-      idMapBalls  += id ->    new Ball(id,Vec( zone.x + Random.nextInt(zone.w.toInt) , zone.y + Random.nextInt(zone.h.toInt)) )
-    }
-
-    balls.foreach(  _.addSpeed )
+    balls.foreach(_.tick)
     balls.combinations(2).foreach {
-      case List(a,b)  => {
-          if (a.collision(b)){
-            if( a.radius > b.radius ) {
-              a.eat(b)
-              idMapBalls-= b.client
-            }
-            else{
-              b.eat(a)
-              idMapBalls-= a.client
-            }
-          }
+      case List(a,b) if a collision b => {
+            val speed=  a.speed - b.speed
+            a.speed -= speed
+            b.speed += speed
       }
+      case _=>
     }
 
-    idMapBalls.foreach {
-      case (id,ball) => {
-        if(!zone.contains(ball)){
-          idMapBalls -= id
-          Demo.HP.getHost(ball).call( _.idMapBalls += id -> ball)
-        }
-      }
-    }
-
+    val ballsToRemove = balls.filter(!zone.contains(_))
+    ballsToRemove.foreach( ball => {Demo.HP.getHost(ball).call( remoteHost => remoteHost.balls::=ball)})
+    balls = balls.diff( ballsToRemove)
   }
-
 }

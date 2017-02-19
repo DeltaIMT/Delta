@@ -1,5 +1,7 @@
 package core
 
+import java.nio.ByteBuffer
+
 import akka.actor.ActorRef
 import core.host.Host
 
@@ -13,6 +15,7 @@ object CoreMessage {
   case class SetProvider(actor : ActorRef)
   case class ConnectClient(actor: ActorRef)
   case class PlayersUpdate(json: String)
+  case class PlayersUpdateRaw(bytes : ByteBuffer)
   case class AnyParts(buffer : Int,anys : List[Any])
   case object Tick
   case object Disconnect

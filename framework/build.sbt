@@ -23,7 +23,9 @@ libraryDependencies ++= Seq(
 
   "io.kamon" % "kamon-system-metrics_2.11" % "0.6.3",
   "io.spray" % "spray-http_2.11" % "1.3.4",
- "org.aspectj" % "aspectjweaver" % "1.8.10"
+ "org.aspectj" % "aspectjweaver" % "1.8.10",
+  "org.scala-js" % "scalajs-dom_sjs0.6_2.11" % "0.9.1",
+  "me.chrons" % "boopickle_2.11" % "1.2.5"
 
 )
-
+enablePlugins(ScalaJSPlugin)

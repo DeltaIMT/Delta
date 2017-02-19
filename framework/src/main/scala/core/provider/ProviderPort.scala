@@ -3,7 +3,7 @@ package core.provider
 import akka.actor.{Actor, ActorRef}
 import core.CoreMessage._
 
-
+//the provider that redirects the clients to the port of their attributed provider
 class ProviderPort(numberOfClient: Int, providers: Seq[ActorRef]) extends Actor {
   var availablePorts = (9001 to 9001 + numberOfClient - 1).toList
 

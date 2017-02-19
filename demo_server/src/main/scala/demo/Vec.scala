@@ -1,13 +1,16 @@
 package demo
 
+import core.spatial.Viewable
+
 object Vec {
   def apply(x: Double, y: Double) = new Vec(x, y)
 
   def apply() = new Vec(0, 0)
 }
 
-class Vec(var x: Double, var y: Double) extends Element {
+class Vec(var x: Double, var y: Double) extends Viewable {
 
+  def this(v: Vec) =this(v.x,v.y)
   def +(v: Vec) = Vec(x + v.x, y + v.y)
 
   def unary_- = Vec(-x, -y)

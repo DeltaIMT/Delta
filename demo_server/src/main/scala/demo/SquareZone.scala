@@ -5,7 +5,7 @@ import core.spatial.{Viewable, Zone}
 class SquareZone(var x :Double, var y: Double, var w : Double, var h : Double) extends Zone{
 
   override def contains(e : Viewable) = e match {
-    case e:Element =>
+    case e:Vec =>
       (e.x <= x + w) && (x<=e.x )&&  (e.y <= y + h) && (y<=e.y)
     case _ => false
 }
@@ -13,7 +13,7 @@ class SquareZone(var x :Double, var y: Double, var w : Double, var h : Double) e
   override def intersect(z2: Zone) : Boolean =   z2 match {
       case z2:SquareZone => {
         var bool = false
-        class FakeElement(var x: Double, var y :Double) extends Element{}
+        class FakeElement(x: Double, y :Double) extends Vec(x,y){}
         var fake = new FakeElement(x,y)
         fake.x = x
         fake.y = y

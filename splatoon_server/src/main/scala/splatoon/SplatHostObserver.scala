@@ -10,6 +10,15 @@ class SplatHostObserver extends HostObserver[SplatClientView] {
   var cases = collection.mutable.Map[(Int, Int), Case]()
   var mode = "Team play"
 
+
+  def kill( id: String) = {
+    if( players.contains(id) ){
+      val player = players(id)
+      HP.getHost(player).call(_.kill(id))
+      players -= id
+    }
+  }
+
   override def clientInput(id: String, data: String): Unit = {}
 
   def distribute(shooter: Shooter): Unit = {
@@ -33,6 +42,10 @@ class SplatHostObserver extends HostObserver[SplatClientView] {
   }
 
   def tick() = {
+
+    greenCount = 0
+    redCount = 0
+    players.foreach( p => if (p._2.color == 0) redCount+=1 else greenCount +=1 )
     id2ClientView.foreach{case (id, cv) => {
       if (players.contains(id))
         cv.call(_.setPos(players(id).x, players(id).y))

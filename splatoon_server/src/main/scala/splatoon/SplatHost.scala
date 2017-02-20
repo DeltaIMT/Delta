@@ -26,6 +26,10 @@ class SplatHost(zone: SquareZone, val pos: Int) extends Host(zone){
     cases += (x.toInt,y.toInt) -> c
   })
 
+  def kill(id : String) ={
+    if (players.contains(id))
+    players -= id
+  }
 
   override def getViewableFromZone(id : String ,zone: Zone): Iterable[Viewable] = {
     val caseToSend = cases.filter(c => zone.contains(c._2) && !c._2.hasItBeenSeenBy(id)  ).values

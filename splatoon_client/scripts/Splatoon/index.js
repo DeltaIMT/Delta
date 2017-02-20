@@ -27,7 +27,7 @@ window.onload = () => {
         startTime = endTime
         const frame = frameInterp.getInterp()
         centerPosition = frame['0']
-        
+
         //console.log(mapCases)
         Drawer.draw(frame, msElapsed, time, ping, knownCases, mapCases, extendMiniMap)
         window.requestAnimationFrame(loop)
@@ -74,6 +74,7 @@ setInterval(() => { client.getPing((ping1) => ping = ping1) }, 1000)
 
 const keys = { 90: "z", 83: "s", 81: "q", 68: "d", 32: "space" }
 
+const keysDown = { 90: false, 83: false, 81: false, 68: false }
 
 document.addEventListener('keydown', (event) => {
     const keyName = event.keyCode;
@@ -82,21 +83,28 @@ document.addEventListener('keydown', (event) => {
         extendMiniMap = true
     }
     const cam = Drawer.pos()
-    client.send(JSON.stringify([{
-        hosts: JSON.stringify([parseInt(cam.x) - 100, parseInt(cam.y) - 100, 200, 200]),
-        data: JSON.stringify({ keydown: keys[keyName] })
-    }]
-    ))
+
+    if (keysDown[keyName] == false) {
+        keysDown[keyName] = true
+        client.send(JSON.stringify([{
+            hosts: JSON.stringify([parseInt(cam.x) - 100, parseInt(cam.y) - 100, 200, 200]),
+            data: JSON.stringify({ keydown: keys[keyName] })
+        }]
+        ))
+
+    }
 }
 )
 
 document.addEventListener('keyup', (event) => {
     const keyName = event.keyCode;
 
+    keysDown[keyName] = false
+
     if (keyName == 32) {
         extendMiniMap = false
     }
-    
+
     const cam = Drawer.pos()
     client.send(JSON.stringify([{
         hosts: JSON.stringify([parseInt(cam.x) - 100, parseInt(cam.y) - 100, 200, 200]),
@@ -115,16 +123,16 @@ document.addEventListener('mousedown', (event) => {
     if (event.button == 0) {
         client.send(JSON.stringify([{
             hosts: JSON.stringify([parseInt(pos.x) - 100, parseInt(pos.y) - 100, 200, 200]),
-            data: JSON.stringify({x:mouseX+parseInt(cam.x), y: mouseY+parseInt(cam.y)})
+            data: JSON.stringify({ x: mouseX + parseInt(cam.x), y: mouseY + parseInt(cam.y) })
         }]
         ))
     }
     else if (event.button == 2) {
-        const toX = ((mouseX - (window.innerWidth-600)/2)/600)*3000
-        const toY = ((mouseY - (window.innerHeight-600)/2)/600)*3000
+        const toX = ((mouseX - (window.innerWidth - 600) / 2) / 600) * 3000
+        const toY = ((mouseY - (window.innerHeight - 600) / 2) / 600) * 3000
         client.send(JSON.stringify([{
             hosts: JSON.stringify([parseInt(pos.x) - 100, parseInt(pos.y) - 100, 200, 200]),
-            data: JSON.stringify({tx:parseInt(toX), ty:parseInt(toY)})
+            data: JSON.stringify({ tx: parseInt(toX), ty: parseInt(toY) })
         }]
         ))
     }

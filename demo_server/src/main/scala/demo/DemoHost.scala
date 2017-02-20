@@ -1,8 +1,9 @@
 package demo
 
-import core.host.{Host}
+import core.host.Host
 import core.spatial.{Viewable, Zone}
 import play.api.libs.json.Json
+import jason._
 
 class DemoHost(zone: SquareZone) extends Host(zone) {
 
@@ -13,11 +14,12 @@ class DemoHost(zone: SquareZone) extends Host(zone) {
   }
 
   override def clientInput(id: String, data: String): Unit = {
-    val json = Json.parse(data)
-    val x = (json \ "x").get.as[Int]
-    val y = (json \ "y").get.as[Int]
-    val tx = (json \ "tx").get.as[Double]
-    val ty = (json \ "ty").get.as[Double]
+//    val json = Json.parse(data)
+//    val x = (json \ "x").get.as[Int]
+//    val y = (json \ "y").get.as[Int]
+//    val tx = (json \ "tx").get.as[Double]
+//    val ty = (json \ "ty").get.as[Double]
+    val (x, y, tx, ty) = getJ4[Int, Int, Double, Double](data, "x", "y", "tx", "ty")
     val origin = Vec(x, y)
     val speed = Vec(tx, ty)
     balls ::= new Ball(origin, speed)

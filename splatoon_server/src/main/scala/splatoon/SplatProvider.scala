@@ -33,5 +33,9 @@ class SplatProvider extends Provider[SplatClientView]{
     HP.hostObserver.call(_.distribute(shooter))
   }
 
-  override def OnDisconnect(id: String, obs: Observer): Unit = {}
+  override def OnDisconnect(id: String, obs: Observer): Unit = {
+
+    HP.hostObserver.call(_.kill(id))
+
+  }
 }

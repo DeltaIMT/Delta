@@ -111,8 +111,8 @@ const createCachePlayer = () => {
 }
 
 const drawCases = (knownCases) => {
-    for (let x = Math.round((cam.x) / 150) * 150; x < cam.x + canvas.width; x += 150)
-        for (let y = Math.round((cam.y) / 150) * 150; y < cam.y + canvas.height; y += 150) {
+    for (let x = Math.round((cam.x) / 150 -1 ) * 150; x < cam.x + canvas.width; x += 150)
+        for (let y = Math.round((cam.y) / 150 -1 ) * 150; y < cam.y + canvas.height; y += 150) {
             //console.log("is " +parseInt(x) + "/" + parseInt(y) +" known ?")
             if (knownCases[parseInt(x) + "/" + parseInt(y)] !== undefined) {
 

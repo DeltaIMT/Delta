@@ -4,7 +4,7 @@ canvas.width = 900
 canvas.height = 900
 
 const background = new Image()
-background.src = './texture/backgroundd.png'
+background.src = './texture/background.png'
 
 module.exports.draw = (frame, mouseDown, mouseMove) => {
     const pattern = context.createPattern(background, 'repeat')

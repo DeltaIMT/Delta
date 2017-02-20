@@ -1,6 +1,7 @@
 package demo
 
 import core.clientView.ClientView
+import core.host.HostPool
 import core.spatial.Zone
 
 class DemoClientView(id : String) extends ClientView(id) {

@@ -91,8 +91,10 @@ module.exports.draw = (frame, msElapsed, time, ping) => {
     context.shadowBlur = 0
     context.font = "bold 18px Courier New"
     context.fillStyle = "rgb(" + 0 + ", " + 0 + ", " + 0 + ")"
-    if (other !== null)
-        context.fillText("xp : " + other.xp + " used : " + other.usedXp, 10, 30)
+    if (other !== null){
+        context.fillText("Follow the green arrow and" , 10, 30)
+        context.fillText("fuse with your partner !",10,50)
+    }
     context.fillText("Ping : " + parseInt(ping * 10) / 10.0, 10, 80)
     context.fillText("Draw fps        : " + parseInt(10000.0 / msElapsed) / 10.0, 10, 105)
 
@@ -180,18 +182,18 @@ const drawboats = (boats, canvasCacheboat) => {
             let targetToBoat = Math.sqrt(parseFloat((target.x - m.x) * (target.x - m.x) + (target.y - m.y) * (target.y - m.y)))
             let unitTargetDirection = { x: ((target.x - m.x) / targetToBoat), y: ((target.y - m.y) / targetToBoat) }
             let n = { x: -unitTargetDirection.y, y: unitTargetDirection.x }
-            let c = { x: cam.x + canvas.width * 14 / 15, y: cam.y + parseFloat(canvas.height) * 1 / 15 }//arrowCenter
+            let c = { x: cam.x + canvas.width * 14 / 15, y: cam.y + parseFloat(canvas.height) * 1 / 10 }//arrowCenter
             context.beginPath()
-            context.fillStyle = "rgb(167, 103, 38)"//gold
-            context.moveTo(c.x + n.x * 5, c.y + n.y * 5)
-            context.lineTo(c.x + n.x * 10, c.y + n.y * 10)
-            context.lineTo(c.x + 10 * unitTargetDirection.x, c.y + 10 * unitTargetDirection.y)
-            context.lineTo(c.x - n.x * 10, c.y - n.y * 10)
-            context.lineTo(c.x - n.x * 5, c.y - n.y * 5)
-            context.lineTo(c.x - 15 * unitTargetDirection.x - n.x * 5, c.y - 15 * unitTargetDirection.y - n.y * 5)
-            context.lineTo(c.x - 15 * unitTargetDirection.x + n.x * 5, c.y - 15 * unitTargetDirection.y + n.y * 5)
-            context.lineTo(c.x + n.x * 5, c.y + n.y * 5)
-            context.strokeStyle = "rgb(141, 64, 36)"
+            context.fillStyle = "rgb(20, 200, 50)"//gold
+            context.moveTo(c.x + n.x * 5*5, c.y + n.y * 5*5)
+            context.lineTo(c.x + n.x * 10*5, c.y + n.y * 10*5)
+            context.lineTo(c.x + 10 * unitTargetDirection.x*5, c.y + 10 * unitTargetDirection.y*5)
+            context.lineTo(c.x - n.x * 10*5, c.y - n.y * 10*5)
+            context.lineTo(c.x - n.x * 5*5, c.y - n.y * 5*5)
+            context.lineTo(c.x - 15 * unitTargetDirection.x *5- n.x * 5*5, c.y - 15 * unitTargetDirection.y*5 - n.y * 5*5)
+            context.lineTo(c.x - 15 * unitTargetDirection.x*5 + n.x * 5*5, c.y - 15 * unitTargetDirection.y*5 + n.y * 5*5)
+            context.lineTo(c.x + n.x * 5*5, c.y + n.y * 5*5)
+            context.strokeStyle = "rgb(255,255, 255)"
             context.stroke()
             context.fill()
             context.closePath()
@@ -242,7 +244,7 @@ const drawboats = (boats, canvasCacheboat) => {
         let healthLeft = (boat.health[0] / (2 + boat.size * 0.50))
         let healthRight = (boat.health[1] / (2 + boat.size * 0.50))
 
-        //healthBar
+        /*//healthBar
         context.beginPath()
         context.fillStyle = "rgba(" + 0 + ", " + 0 + ", " + 0 + "," + 1 + ")"
         context.rect(m.x - 25 - 30, m.y - 100, 50, 10)
@@ -254,7 +256,7 @@ const drawboats = (boats, canvasCacheboat) => {
         context.fill()
         context.closePath()
 
-
+*/
 
         let rand = Math.random() * length / 5
 
@@ -264,7 +266,7 @@ const drawboats = (boats, canvasCacheboat) => {
         if (healthRight < 0.5) {
             addParticles(m, u, v, -length / 3 + rand, width / 2)
         }
-
+/*
         context.beginPath()
         context.fillStyle = "rgba(" + 0 + ", " + 0 + ", " + 0 + "," + 1 + ")"
         context.rect(m.x - 25 + 30, m.y - 100, 50, 10)
@@ -275,7 +277,7 @@ const drawboats = (boats, canvasCacheboat) => {
         context.rect(m.x - 25 + 30, m.y - 100, 50.0 * healthRight, 10)
         context.fill()
         context.closePath()
-
+*/
         if (healthLeft < 0.9) {
 
             addParticles(m, u, v, length / 3 - rand, -width / 2)

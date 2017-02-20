@@ -1,15 +1,16 @@
 const canvas = document.getElementById("canvas")
 const context = canvas.getContext("2d")
-canvas.width = 900
-canvas.height = 900
+canvas.width = 600
+canvas.height = 600
 
 const background = new Image()
 background.src = './texture/background.png'
 
 module.exports.draw = (frame, mouseDown, mouseMove) => {
+
     const pattern = context.createPattern(background, 'repeat')
     context.beginPath()
-    context.rect(0, 0, 900, 900)
+    context.rect(0, 0, 600, 600)
     context.fillStyle = pattern
     context.fill()
 
@@ -32,7 +33,7 @@ module.exports.draw = (frame, mouseDown, mouseMove) => {
         context.fillStyle = "black"
         context.font = "30px Calibri";
         context.fillText(" x:" + mouseDown.x + " y:" + mouseDown.y, mouseDown.x, mouseDown.y);
-        context.fillText(" tx:" + parseInt(dir.x*100)/100 + " ty:" +parseInt(dir.y*100)/100, mouseMove.x, mouseMove.y);
+        context.fillText(" tx:" + parseInt(dir.x * 100) / 100 + " ty:" + parseInt(dir.y * 100) / 100, mouseMove.x, mouseMove.y);
     }
 }
 

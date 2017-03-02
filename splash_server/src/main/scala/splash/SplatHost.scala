@@ -3,9 +3,6 @@ package splash
 import core.host.{Host, HostPool, HostRef}
 import core.spatial.{Viewable, Zone}
 import play.api.libs.json.Json
-import shapeless.get
-
-import scala.util.Random
 
 class SplatHost(zone: SquareZone, val pos: Int) extends Host(zone){
   val HP = HostPool[SplatHost, SplatHostObserver]

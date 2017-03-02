@@ -9,7 +9,6 @@ import akka.stream.ActorMaterializer
 import core.CoreMessage.Call
 import core.host._
 import core.provider.{Provider, ProviderPort}
-import kamon.Kamon
 
 import scala.concurrent.duration._
 import scala.reflect.runtime.{universe => ru}

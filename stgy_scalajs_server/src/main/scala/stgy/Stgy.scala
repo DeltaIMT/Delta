@@ -32,34 +32,4 @@ object Stgy extends App {
   main.HP.hosts.values.foreach(hr => main.setHostInterval(hr, 16, h => h.tick))
   main.setHostObserverInterval(16, h => h.tick)
 
-  val ui = new UI
-  ui.visible = true
-
-  def shutdown = {
-    println("framework shutdown")
-    main.actorSystem.terminate()
-    Kamon.shutdown()
-    println("Done")
-  }
-
-  class UI extends MainFrame {
-    title = "GUI for Delta Server"
-    contents = new BoxPanel(Orientation.Vertical) {
-      contents += new Label("Server")
-      contents += Swing.VStrut(10)
-      contents += Swing.Glue
-      contents += Button("Shutdown") {
-        shutdown
-      }
-      contents += Button("Flush") {
-        main.HP.hosts.values foreach (_.call(_.flush()))
-      }
-      contents += Button("Close") {
-        shutdown
-        sys.exit(0)
-      }
-      border = Swing.EmptyBorder(10, 10, 10, 10)
-    }
-  }
-
 }

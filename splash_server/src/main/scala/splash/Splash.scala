@@ -2,8 +2,6 @@ package splash
 
 import core.Delta
 
-import scala.swing._
-
 object Splash extends App{
 
   val main = new Delta[SplatHost, SplatProvider, SplatHostObserver]()

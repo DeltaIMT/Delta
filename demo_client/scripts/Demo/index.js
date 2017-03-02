@@ -1,14 +1,14 @@
-
 const client = require('./../../../framework/src/main/node/deltaClient')
 const Drawer = require('./drawer')
 const zlib = require('zlib')
 
 let frame = null
-let camera = {x:0,y:0}
+let mouseDown = null
+let mouseMove = null
 window.onload = () => {
     const loop = () => {
-        if(frame !=null)
-        Drawer.draw(JSON.parse(JSON.stringify(frame)),camera)
+
+        Drawer.draw(JSON.parse(JSON.stringify(frame)), mouseDown, mouseMove)
         window.requestAnimationFrame(loop)
     }
     window.requestAnimationFrame(loop)
@@ -19,27 +19,28 @@ client.dataManipulation(dataZiped => {
     let data = zlib.gunzip(Buffer.from(dataZiped, 'base64'), (err, data) => {
         //console.log("Received :\n" + data)
         frame = JSON.parse(data)
-        frame.forEach( e => {
-            if( e.camera== true )  
-           camera= e 
-    })
     })
 })
 
 
 document.addEventListener('mousedown', (event) => {
-    const mouseX = event.pageX
-    const mouseY = event.pageY
-    if (event.button == 0) {
-        client.send(JSON.stringify([{
-            hosts: JSON.stringify([parseInt(camera.x) - 100, parseInt(camera.y) - 100, 200, 200]),
-            data: JSON.stringify({x:mouseX+parseInt(camera.x-window.innerWidth/2), y: mouseY+parseInt(camera.y-window.innerHeight/2)})
-        }]
-        ))
-    }
-}
-)
+    mouseDown = { x: event.pageX, y: event.pageY }
+})
 
-document.addEventListener("contextmenu", function (e) {
-    e.preventDefault()
+document.addEventListener('mousemove', (event) => {
+    mouseMove = { x: event.pageX, y: event.pageY }
+})
+
+document.addEventListener('mouseup', (event) => {
+    const mouseUp = { x: event.pageX, y: event.pageY }
+    const toTarget = { x: -mouseDown.x + mouseUp.x, y: -mouseDown.y + mouseUp.y }
+    const length = Math.sqrt(toTarget.x * toTarget.x + toTarget.y * toTarget.y) * 0.2
+    const dir = { x: parseFloat(toTarget.x / length), y: parseFloat(toTarget.y / length) }
+    client.send(JSON.stringify([{
+        hosts: JSON.stringify([parseInt(mouseDown.x), parseInt(mouseDown.y)]),
+        data: JSON.stringify({ x: mouseDown.x, y: mouseDown.y, tx: dir.x, ty: dir.y })
+    }]))
+    console.log(JSON.stringify({ x: mouseDown.x, y: mouseDown.y, tx: dir.x, ty: dir.y }, null, 1))
+    mouseDown = null
+    mouseMove = null
 })

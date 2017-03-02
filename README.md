@@ -15,7 +15,7 @@ It needs to be instanciated. Several examples have been implemented :
 - Splash   : a shooter game inspired by Splatoon.
 - Demo     : the most basic game that shows how the framework works
 
-![](demo.webm)
+![nogif](http://gph.is/2mj2Jb0)
 
 #### How to run the framework 
 

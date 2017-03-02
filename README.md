@@ -15,7 +15,7 @@ It needs to be instanciated. Several examples have been implemented :
 - Splash   : a shooter game inspired by Splatoon.
 - Demo     : the most basic game that shows how the framework works
 
-![nogif](http://i.giphy.com/xUA7aQTUTERA1vhMqI.gif)
+<iframe src="//giphy.com/embed/xUA7aQTUTERA1vhMqI" width="480" height="270" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="http://giphy.com/gifs/xUA7aQTUTERA1vhMqI">via GIPHY</a></p>
 
 #### How to run the framework 
 

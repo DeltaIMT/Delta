@@ -28,8 +28,8 @@ object Splatoon extends App{
   })
 
   main.HP.hosts.values.foreach( hr =>  main.setHostInterval(hr,16, h=> h.tick) )
-  main.setHostObserverInterval(main.HP.hostObserver,16, h=> h.tick)
-  main.setHostObserverInterval(main.HP.hostObserver,1000, h=>h.sendCases)
+  main.setHostObserverInterval(16, h=> h.tick)
+  main.setHostObserverInterval(1000, h=>h.sendCases)
 
   val ui = new UI
 

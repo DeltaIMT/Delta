@@ -1,47 +1,44 @@
 # Delta framework
 
-#### What's inside
-The framework is comprised of 2 directories. 
-- /framework/ contains a akka server 
-- /framework_node/ contains a node server
+![](delta_logo.png)
 
-Both need to be ran. The framework itself can't be launched.
-It needs to be instanciated. Several examples are present :
-- Stgy : a strategy game
-- Chps : a cooperative pirate ship game
+#### What's inside
+There are 2 kinds of directories in the repository : 
+- /framework/ contains the framework itself 
+- /xxxx_server/  and /xxxx_client/ contain the server and client sides of the instanced framework application named xxxx.
+
+Both a server and a client need to run in order for a game to be started. The framework itself can't be launched.
+It needs to be instanciated. Several examples have been implemented :
+- Stgy    : a strategy game
+- Chps    : a cooperative pirate-ship game
+- Paint   : a multi-user paint
+- Splatoon : a shooter game inspired by Splatoon.
+
+
+![](demo.webm)
 
 #### How to run the framework 
 
-
-##### Requirement
+##### Requirements
 - [Node] v6.9.5 LTS
 - [Scala] v2.11.8
-- [SBT] v0.13
+- [SBT] v0.13.
 
 ##### Procedure
 
-###### In the directory /framework
-
 With Intellij :
-Open the /framework directory
-Launch an instance, for example 
-framework/main/scala/stgy/Stgy.scala
+Open the \demo_server\src\main\scala\demo directory. Launch Demo.scala.
 
-Without : 
-http://www.scala-sbt.org/0.13/docs/index.html
-
-###### In the directory /framework_node
-
-In a command line
+Then with Node in the \demo_client\ directory, write in a command line :
 ```sh
 $ npm install
 $ npm start
 ```
-Open [localhost:5000]
+
+Open [localhost:5000].
 
    [SBT]:<http://www.scala-sbt.org/download.html>
    [Node]:<https://nodejs.org/en/>
    [Scala]:<https://www.scala-lang.org/download/2.11.8.html>
    [localhost:5000]: <http://localhost:5000>
   
-

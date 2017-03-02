@@ -16,8 +16,9 @@ import scala.reflect.runtime.{universe => ru}
 import ru._
 
 abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : ClassTag] extends Actor {
-
-  val HP0 =  HostPool[Host, HostObserver[ClientViewImpl]]
+  var frequency = 10
+  val HP0 = HostPool[Host, HostObserver[ClientViewImpl]]
+  lazy val HO = HP0.hostObserver
   var clients = collection.mutable.HashMap[String, (observerPattern.Observer, Cancellable)]()
   var clientRef: ActorRef = null
   var providerPort: ActorRef = null
@@ -29,17 +30,19 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
       clientRef = playerActorRef
       //Instanciation of ClientView layers
       val clientView = createInstance[ClientViewImpl](id)
-      val clientViewActor = context.actorOf(Props(new ClientViewActor(playerActorRef,clientView)), "clientview_" + id)
+      val clientViewActor = context.actorOf(Props(new ClientViewActor(playerActorRef, clientView)), "clientview_" + id)
       val clientViewRef = new ClientViewRef[ClientViewImpl](clientViewActor)
-      val HP = HostPool[Host, HostObserver[ClientViewImpl]]
-      HP.hostObserver.call(x => x.id2ClientView += id -> clientViewRef)
-      val cancellable = context.system.scheduler.schedule(100 milliseconds, 100 milliseconds, clientViewActor, UpdateClient)
+
+      if (HO != null) HO.call(x => x.id2ClientView += id -> clientViewRef)
+
+      //send the message UpdateClient to the clientViewActor every 100 miliseconds
+      val cancellable = context.system.scheduler.schedule(100 milliseconds, (1000 / frequency) milliseconds, clientViewActor, UpdateClient)
       clients += (id -> (new observerPattern.Observer(id, clientViewActor), cancellable))
       OnConnect(id, clients(id)._1)
     }
 
     case DeleteClient(id) => {
-      HostPool[Host, HostObserver[ClientViewImpl]].hostObserver.call(x => x.id2ClientView -= id)
+      if (HO != null) HO.call(x => x.id2ClientView -= id)
       clients(id)._2.cancel()
       OnDisconnect(id, clients(id)._1)
       clients -= id
@@ -58,6 +61,9 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
     case _ => {}
   }
 
+  //checks if the command contains a zone to send to
+  //if there is a zone, it sends to all the hosts in the zone the command
+  //if not, it sends the command to the hostObserver
   def clientInput(id: String, command: String): Unit = {
     if (command == "ping")
       clientRef ! PlayersUpdate("ping")
@@ -69,7 +75,7 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
 
         hostsZones match {
           case Some(zone) => {
-            val selectedHR =  HostPool[Host, HostObserver[_] ].getHosts(zone)
+            val selectedHR = HostPool[Host, HostObserver[_]].getHosts(zone)
             selectedHR.foreach(hostRef => hostRef.clientInput(id, data))
           }
           case None => HP0.hostObserver.clientInput(id, data)
@@ -83,6 +89,7 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
 
   def OnDisconnect(id: String, obs: observerPattern.Observer): Unit = {}
 
+  //create an instance of the type of class provided by the user
   def createInstance[T: TypeTag](arg: Any*): T = {
     createInstance(typeOf[T], arg).asInstanceOf[T]
   }
@@ -99,5 +106,6 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
   }
 
 
+  //defines the zone where the user wants to send its command
   def hostsStringToZone(s: String): Option[Zone]
 }

@@ -1,4 +1,4 @@
-package splatoon
+package splash
 
 //color code : 0: green, 1: red, 2: white
 class Case(var x : Double, var y : Double, var width : Double, var height : Double, var color : Int) extends Element{

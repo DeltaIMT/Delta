@@ -1,10 +1,10 @@
-package splatoon
+package splash
 
 import core.Delta
 
 import scala.swing._
 
-object Splatoon extends App{
+object Splash extends App{
 
   val main = new Delta[SplatHost, SplatProvider, SplatHostObserver]()
   main.numberOfClient = 100

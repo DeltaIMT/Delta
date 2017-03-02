@@ -1,4 +1,4 @@
-package splatoon
+package splash
 
 object Vec {
   def apply(x: Double, y: Double) = new Vec(x, y)

@@ -15,7 +15,6 @@ libraryDependencies ++= Seq(
   "io.kamon" %% "kamon-core" % "0.6.0",
   "org.slf4j" % "slf4j-api" % "1.7.22",
   "org.slf4j" % "slf4j-simple" % "1.7.22",
- // "de.choffmeister" % "kamon-influxdb_2.11" % "0.1.1"
   "io.kamon" % "kamon-influxdb_2.11" % "0.6.3",
   "io.kamon" % "kamon-akka_2.11" % "0.6.3",
   "io.kamon" % "kamon-scala_2.11" % "0.6.3",

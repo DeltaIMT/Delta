@@ -30,33 +30,4 @@ object Splash extends App{
   main.HP.hosts.values.foreach( hr =>  main.setHostInterval(hr,16, h=> h.tick) )
   main.setHostObserverInterval(16, h=> h.tick)
   main.setHostObserverInterval(1000, h=>h.sendCases)
-
-  val ui = new UI
-
-  def shutdown = {
-    println("framework shutdown")
-    main.actorSystem.terminate()
-    println("Done")
-  }
-
-  class UI extends MainFrame {
-    title = "GUI for Delta Server"
-    contents = new BoxPanel(Orientation.Vertical) {
-      contents += new Label("Server")
-      contents += Swing.VStrut(10)
-      contents += Swing.Glue
-      contents += Button("Shutdown") {
-        shutdown
-        sys.exit(0)
-      }
-      contents += Button("Team play") {
-        main.HP.hostObserver.call(_.setTeamMode())
-      }
-      contents += Button("Free for All") {
-        main.HP.hostObserver.call(_.setFreeMode())
-      }
-      border = Swing.EmptyBorder(10, 10, 10, 10)
-    }
-  }
-  ui.visible = true
 }

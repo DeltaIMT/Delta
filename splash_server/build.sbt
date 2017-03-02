@@ -1,4 +1,4 @@
-name := "framework"
+name := "splash_server"
 
 version := "1.0"
 

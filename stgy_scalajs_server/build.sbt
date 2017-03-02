@@ -1,6 +1,4 @@
-name := "stgy_server"
+name := "stgy_scalajs_server"
 
 version := "1.0"
-
-scalaVersion := "2.11.8"
 

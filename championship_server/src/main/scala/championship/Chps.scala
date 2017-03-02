@@ -48,7 +48,7 @@ object Chps extends App {
     })
   }}
 
-  main.setHostObserverInterval(main.HP.hostObserver,32, h=> h.tick)
+  main.setHostObserverInterval(32, h=> h.tick)
 
   val ui = new UI
 

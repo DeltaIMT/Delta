@@ -1,4 +1,4 @@
-package splatoon
+package splash
 
 import core.clientView.ClientView
 import core.host.HostPool

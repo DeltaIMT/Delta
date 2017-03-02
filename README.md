@@ -14,6 +14,9 @@ It needs to be instanciated. Several examples have been implemented :
 - Paint   : a multi-user paint
 - Splatoon : a shooter game inspired by Splatoon.
 
+
+![](demo.webm)
+
 #### How to run the framework 
 
 ##### Requirements

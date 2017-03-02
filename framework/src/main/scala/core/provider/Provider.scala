@@ -17,7 +17,8 @@ import ru._
 
 abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : ClassTag] extends Actor {
   var frequency = 10
-  val HP0 =  HostPool[Host, HostObserver[ClientViewImpl]]
+  val HP0 = HostPool[Host, HostObserver[ClientViewImpl]]
+  lazy val HO = HP0.hostObserver
   var clients = collection.mutable.HashMap[String, (observerPattern.Observer, Cancellable)]()
   var clientRef: ActorRef = null
   var providerPort: ActorRef = null
@@ -29,19 +30,19 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
       clientRef = playerActorRef
       //Instanciation of ClientView layers
       val clientView = createInstance[ClientViewImpl](id)
-      val clientViewActor = context.actorOf(Props(new ClientViewActor(playerActorRef,clientView)), "clientview_" + id)
+      val clientViewActor = context.actorOf(Props(new ClientViewActor(playerActorRef, clientView)), "clientview_" + id)
       val clientViewRef = new ClientViewRef[ClientViewImpl](clientViewActor)
-      val HP = HostPool[Host, HostObserver[ClientViewImpl]]
-      HP.hostObserver.call(x => x.id2ClientView += id -> clientViewRef)
+
+      if (HO != null) HO.call(x => x.id2ClientView += id -> clientViewRef)
 
       //send the message UpdateClient to the clientViewActor every 100 miliseconds
-      val cancellable = context.system.scheduler.schedule(100 milliseconds, (1000/frequency) milliseconds, clientViewActor, UpdateClient)
+      val cancellable = context.system.scheduler.schedule(100 milliseconds, (1000 / frequency) milliseconds, clientViewActor, UpdateClient)
       clients += (id -> (new observerPattern.Observer(id, clientViewActor), cancellable))
       OnConnect(id, clients(id)._1)
     }
 
     case DeleteClient(id) => {
-      HostPool[Host, HostObserver[ClientViewImpl]].hostObserver.call(x => x.id2ClientView -= id)
+      if (HO != null) HO.call(x => x.id2ClientView -= id)
       clients(id)._2.cancel()
       OnDisconnect(id, clients(id)._1)
       clients -= id
@@ -74,7 +75,7 @@ abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : Clas
 
         hostsZones match {
           case Some(zone) => {
-            val selectedHR =  HostPool[Host, HostObserver[_] ].getHosts(zone)
+            val selectedHR = HostPool[Host, HostObserver[_]].getHosts(zone)
             selectedHR.foreach(hostRef => hostRef.clientInput(id, data))
           }
           case None => HP0.hostObserver.clientInput(id, data)

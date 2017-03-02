@@ -1,4 +1,4 @@
-package splatoon
+package splash
 
 import scala.util.Random
 

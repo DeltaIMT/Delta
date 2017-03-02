@@ -22,6 +22,11 @@ class Vec(var x: Double, var y: Double) extends Viewable {
   def *(mul: Double) = Vec(x * mul, y * mul)
   def /(mul: Double) = Vec(x / mul, y / mul)
 
+  def +=(v: Vec) = {
+    x += v.x
+    y += v.y
+  }
+
   def *=(v: Vec) = {
     x *= v.x
     y *= v.y

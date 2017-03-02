@@ -34,8 +34,8 @@ HostObserverImpl <: HostObserver[_] : TypeTag : ClassTag
     actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor, Call(func))
   }
 
-  def setHostObserverInterval(hr: HostRef[HostObserverImpl], time: Int, func: HostObserverImpl => Unit) = {
-    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, hr.actor, Call(func))
+  def setHostObserverInterval(time: Int, func: HostObserverImpl => Unit) = {
+    actorSystem.scheduler.schedule(1000 milliseconds, time milliseconds, HP.hostObserver.actor, Call(func))
   }
 
   def launch(hosts: Iterable[HostImpl]) : Unit= {

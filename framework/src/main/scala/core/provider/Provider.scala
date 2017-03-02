@@ -18,7 +18,7 @@ import ru._
 abstract class Provider[ClientViewImpl <: clientView.ClientView : TypeTag : ClassTag] extends Actor {
   var frequency = 10
   val HP0 = HostPool[Host, HostObserver[ClientViewImpl]]
-  val HO = HP0.hostObserver
+  lazy val HO = HP0.hostObserver
   var clients = collection.mutable.HashMap[String, (observerPattern.Observer, Cancellable)]()
   var clientRef: ActorRef = null
   var providerPort: ActorRef = null
